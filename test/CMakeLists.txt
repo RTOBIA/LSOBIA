@@ -1,0 +1,29 @@
+#[[
+add_executable(LSBaatzSegmentation otbObiaLSBaatzSegmentation.cxx)
+target_link_libraries(LSBaatzSegmentation OTB_OBIA)
+
+add_executable(otbObiaLSMeanShift otbObiaLSMeanShift.cxx)
+target_link_libraries(otbObiaLSMeanShift OTB_OBIA)
+
+add_executable(otbObiaSmallRegionsMerging otbObiaSmallRegionsMerging.cxx)
+target_link_libraries(otbObiaSmallRegionsMerging OTB_OBIA)
+
+add_executable(otbObiaLSSmallRegionsMerging otbObiaLSSmallRegionsMerging.cxx)
+target_link_libraries(otbObiaLSSmallRegionsMerging OTB_OBIA)
+
+add_executable(otbObiaConvertGraphToImage otbObiaConvertGraphToImage.cxx)
+target_link_libraries(otbObiaConvertGraphToImage OTB_OBIA)
+
+add_executable(otbObiaSmallRegionMergingOnFile otbObiaSmallRegionMergingOnFile.cxx)
+target_link_libraries(otbObiaSmallRegionMergingOnFile OTB_OBIA)
+
+add_executable(otbObiaSplitGraph otbObiaSplitGraph.cxx)
+target_link_libraries(otbObiaSplitGraph OTB_OBIA)
+
+add_executable(otbObiaSmoothImage otbObiaSmoothImage.cxx)
+target_link_libraries(otbObiaSmoothImage OTB_OBIA)
+
+add_executable(otbObiaReadGraph otbObiaReadGraph.cxx)
+target_link_libraries(otbObiaReadGraph OTB_OBIA)]]
+
+otb_module_test()
