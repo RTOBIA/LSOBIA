@@ -1,6 +1,7 @@
 #ifndef otbObiaGraphToImageFilter_h
 #define otbObiaGraphToImageFilter_h
 #include "itkImageSource.h"
+#include "itkImageRegionIterator.h"
 
 namespace otb
 {

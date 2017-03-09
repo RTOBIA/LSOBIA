@@ -7,10 +7,10 @@
 #include "itkNthElementImageAdaptor.h"
 #include "itkImageFileReader.h"
 #include "otbImageFileWriter.h"
+#include <itksys/SystemTools.hxx>
 
 
-int main(int argc, char * argv[])
+int otbObiaSmoothImage(int argc, char * argv[])
 {
-
-  return 0;
+    return EXIT_SUCCESS;
 }

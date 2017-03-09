@@ -1,11 +1,11 @@
 #include <iostream>
 
-#include "otbObiaLSBaatzSegmentationScheduler.h"
-#include "otbObiaLSSmallRegionsMergingScheduler.h"
+#include "otbObiaLSBaatzSegmentationScheduler.txx"
+#include "otbObiaLSSmallRegionsMergingScheduler.txx"
 
-int main(int argc, char * argv[])
+int otbObiaLSSmallRegionsMerging(int argc, char * argv[])
 {
-if(argc < 12)
+	if(argc < 12)
 	{
 
 	  std::cerr << "Usage " << argv[0] << ": \n"
@@ -23,8 +23,8 @@ if(argc < 12)
 			<< "Argument 12: " << "[weights for each spectral band (optional)...]\n";
 	  return 1;
 	}
-    auto mpiConfig = otb::MPIConfig::Instance();
-    mpiConfig->Init(argc, argv);
+	auto mpiConfig = otb::MPIConfig::Instance();
+	mpiConfig->Init(argc, argv);
 
 	using InputImageType = otb::VectorImage<float, 2>;
 	using LSBaatzSegmentationSchedulerType = otb::obia::LSBaatzSegmentationScheduler<InputImageType>;
@@ -103,5 +103,5 @@ if(argc < 12)
 	lsSMR->Update();
 	std::cout << "SUCCESS for " <<  mpiConfig->GetMyRank() << std::endl;
 
-	return 0;
+	return EXIT_SUCCESS;
 }

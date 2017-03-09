@@ -1,4 +1,3 @@
-
 #ifndef otbObiaSmallRegionsMergingGraph_txx
 #define otbObiaSmallRegionsMergingGraph_txx
 #include "otbObiaSmallRegionsMergingGraph.h"

@@ -1,22 +1,14 @@
 #include <iostream>
 
-#include "otbObiaBaatzSegmentationFilter.h"
-#include "otbObiaBaatzGraphToSRMGraphFilter.h"
-#include "otbObiaImageToBaatzGraphFilter.h"
-#include "otbObiaLSMeanShiftScheduler.h"
-#include "otbObiaSmallRegionsMergingFilter.h"
+#include "otbObiaBaatzSegmentationFilter.txx"
+#include "otbObiaBaatzGraphToSRMGraphFilter.txx"
+#include "otbObiaImageToBaatzGraphFilter.txx"
+#include "otbObiaLSMeanShiftScheduler.txx"
+#include "otbObiaSmallRegionsMergingFilter.txx"
 
-using NodeType                     = otb::obia::Node< otb::obia::BaatzNodeAttribute, otb::obia::BaatzEdgeAttribute >;
-using EdgeType                     = typename NodeType::EdgeType;
-using InputGraphType              = otb::obia::Graph< NodeType >;
-using InputGraphPointerType       = typename InputGraphType::Pointer;
 
-using GraphOperationsType         = otb::obia::GraphOperations<InputGraphType>;
 
-InputGraphPointerType ReadGraph(std::string filepath);
-std::vector<otb::obia::ProcessingTile> ComputeTileFrames(uint32_t tileSizeX, uint32_t tileSizeY, InputGraphPointerType graph);
-
-int main(int argc, char * argv[])
+int otbObiaSplitGraph(int argc, char * argv[])
 {
 	if(argc < 4)
 	{
@@ -30,6 +22,13 @@ int main(int argc, char * argv[])
 
 	  return 1;
 	}
+
+	using NodeType                     = otb::obia::Node< otb::obia::BaatzNodeAttribute, otb::obia::BaatzEdgeAttribute >;
+	using EdgeType                     = typename NodeType::EdgeType;
+	using InputGraphType              = otb::obia::Graph< NodeType >;
+	using InputGraphPointerType       = typename InputGraphType::Pointer;
+	using GraphOperationsType         = otb::obia::GraphOperations<InputGraphType>;
+
 	// Input parameters
 	const std::string filename = argv[1];
 	const std::string tmpDir = argv[2];
@@ -47,10 +46,44 @@ int main(int argc, char * argv[])
 	std::stringstream os;
 	os << tmpDir << filename;
 
-	auto graph = ReadGraph(os.str());
+	auto graph = GraphOperationsType::ReadGraphFromDisk(os.str());
 
 	//Compute number of tiles X and Y
-	std::vector<otb::obia::ProcessingTile> tilesList = ComputeTileFrames(tileSizeX, tileSizeY, graph);
+	std::vector<otb::obia::ProcessingTile> tilesList;
+	
+	uint32_t imageWidth  = graph->GetImageWidth();
+	uint32_t imageHeight = graph->GetImageHeight();
+
+	std::cout << "Image width " << imageWidth << std::endl;
+	uint32_t numberOfTilesX = ceil(imageWidth / tileSizeX);
+	uint32_t numberOfTilesY = ceil(imageHeight/ tileSizeY);
+	uint32_t tid = 0;
+
+	for(uint32_t ty = 0; ty < numberOfTilesY; ty++)
+	{
+		for(uint32_t tx = 0; tx < numberOfTilesX; tx++)
+		{
+
+			std::cout << "Creating tile " << ty << "_" << tx << std::endl;
+
+			otb::obia::ProcessingTile tile;
+
+		  	tile.m_Tx = tx;
+		  	tile.m_Ty = ty;
+		  	tile.m_Frame.SetIndex(0, tx * tileSizeX);
+		  	tile.m_Frame.SetIndex(1, ty * tileSizeY);
+		  	tile.m_Frame.SetSize(0, std::min((long int)tileSizeX, (long int)imageWidth - tile.m_Frame.GetIndex(0)));
+		  	tile.m_Frame.SetSize(1, std::min((long int)tileSizeY, (long int)imageHeight - tile.m_Frame.GetIndex(1)));
+			tile.m_MarginValues.fill(0);
+
+
+		      tilesList.push_back(tile);
+
+		} // end if (mpiTools->IsMyTurn(tid))
+
+		    tid++;
+
+	} // end for(uint32_t tx = 0; tx < nbTilesX; tx++)
 
 	//Release the graph
 	graph->Reset();
@@ -66,7 +99,13 @@ int main(int argc, char * argv[])
 		std::cout << "Size margin 2 = " << tile.m_MarginValues[0] << std::endl;
 		std::cout << "Size margin 3 = " << tile.m_MarginValues[0] << std::endl;
 		//Create a new graph
-		auto subGraph =  ReadGraph(os.str());
+		auto subGraph =  GraphOperationsType::ReadGraphFromDisk(os.str());
+		subGraph->SetImageWidth(1000);
+		subGraph->SetImageHeight(1000);
+		subGraph->SetNumberOfSpectralBands(4);
+		std::cout << "Nombre noeud : " << graph->GetNumberOfNodes() << std::endl;
+		std::cout << "Noeud 1 " << graph->GetNodeAt(0)->m_Attributes.m_Area << std::endl;
+		std::cout << "Image width " << graph->GetImageWidth() << std::endl;
 
 		//remove nodes outside the tile
 		GraphOperationsType::RemoveUnstableNodes(subGraph, tile, subGraph->GetImageWidth());
@@ -81,63 +120,5 @@ int main(int argc, char * argv[])
 
 	std::cout << "Sucess" << std::endl;
 
-	  return 0;
-}
-
-InputGraphPointerType ReadGraph(std::string filepath)
-{
-
-	auto graph = GraphOperationsType::ReadGraphFromDisk(filepath);
-
-	/**TODO : A modifier plus tard en utiisant la lecture du header*/
-	graph->SetImageWidth(1000);
-	graph->SetImageHeight(1000);
-	graph->SetNumberOfSpectralBands(4);
-
-	std::cout << "Nombre noeud : " << graph->GetNumberOfNodes() << std::endl;
-
-	std::cout << "Noeud 1 " << graph->GetNodeAt(0)->m_Attributes.m_Area << std::endl;
-	std::cout << "Image width " << graph->GetImageWidth() << std::endl;
-	return  (graph);
-}
-std::vector<otb::obia::ProcessingTile> ComputeTileFrames(uint32_t tileSizeX, uint32_t tileSizeY, InputGraphPointerType graph)
-{
-
-	//Number of tiles
-	uint32_t imageWidth  = graph->GetImageWidth();
-	uint32_t imageHeight = graph->GetImageHeight();
-
-	std::cout << "Image width " << imageWidth << std::endl;
-	uint32_t numberOfTilesX = ceil(imageWidth / tileSizeX);
-	uint32_t numberOfTilesY = ceil(imageHeight/ tileSizeY);
-	uint32_t tid = 0;
-	std::vector<otb::obia::ProcessingTile> tilesList;
-
-    for(uint32_t ty = 0; ty < numberOfTilesY; ty++)
-    {
-        for(uint32_t tx = 0; tx < numberOfTilesX; tx++)
-        {
-
-        	std::cout << "Creating tile " << ty << "_" << tx << std::endl;
-
-              otb::obia::ProcessingTile tile;
-
-          		tile.m_Tx = tx;
-          		tile.m_Ty = ty;
-          		tile.m_Frame.SetIndex(0, tx * tileSizeX);
-          		tile.m_Frame.SetIndex(1, ty * tileSizeY);
-          		tile.m_Frame.SetSize(0, std::min((long int)tileSizeX, (long int)imageWidth - tile.m_Frame.GetIndex(0)));
-          		tile.m_Frame.SetSize(1, std::min((long int)tileSizeY, (long int)imageHeight - tile.m_Frame.GetIndex(1)));
-                tile.m_MarginValues.fill(0);
-
-
-              tilesList.push_back(tile);
-
-          } // end if (mpiTools->IsMyTurn(tid))
-
-            tid++;
-
-      } // end for(uint32_t tx = 0; tx < nbTilesX; tx++)
-
-    return tilesList;
+	  return EXIT_SUCCESS;
 }

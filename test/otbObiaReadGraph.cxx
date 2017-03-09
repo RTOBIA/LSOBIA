@@ -1,21 +1,14 @@
-/*
- * otbObiaConvertGraphToImage.cxx
- *
- *  Created on: 9 févr. 2017
- *      Author: isnard
- */
-
 #include "otbObiaGraphFileReader.h"
 #include "otbImage.h"
-#include "otbObiaImageToBaatzGraphFilter.h"
-#include "otbObiaGraphOperations.h"
-#include "otbObiaGraphToLabelImageFilter.h"
+#include "otbObiaImageToBaatzGraphFilter.txx"
+#include "otbObiaGraphOperations.txx"
+#include "otbObiaGraphToLabelImageFilter.txx"
 #include "itkRGBPixel.h"
 #include "itkLabelToRGBImageFilter.h"
 #include "otbImageFileWriter.h"
 
 
-int main(int argc, char * argv[])
+int otbObiaReadGraph(int argc, char * argv[])
 {
 	if(argc < 2)
 	{
@@ -28,12 +21,11 @@ int main(int argc, char * argv[])
 	const std::string filename = argv[1];
 	const std::string outputname = argv[2];
 
-
 	using InputImageType               = otb::Image<float, 2>;
 	using ImageToBaatz				   = otb::obia::ImageToBaatzGraphFilter<InputImageType>;
 	using GraphType                    = ImageToBaatz::OutputGraphType;
 	using GraphPointerType             = typename GraphType::Pointer;
-	using GraphReader				   = otb::obia::GraphFileReader<GraphType>;
+	using GraphReader		   = otb::obia::GraphFileReader<GraphType>;
 	using LabelPixelType               = unsigned int;
 	using LabelImageType               = otb::Image< LabelPixelType, 2 >;
 	using GraphToLabelImageFilterType  = otb::obia::GraphToLabelImageFilter<GraphType, LabelImageType>;
@@ -45,7 +37,6 @@ int main(int argc, char * argv[])
 
 
 	/* Pipeline setup */
-
 	// Read the input image
 	auto graphReader = GraphReader::New();
 	graphReader->SetFileName(filename);
@@ -63,6 +54,7 @@ int main(int argc, char * argv[])
 	rgbWriter->SetFileName(outputname);
 	rgbWriter->SetInput(labelToRGBFilter->GetOutput());
 	rgbWriter->Update();
+	return EXIT_SUCCESS;
 }
 
 

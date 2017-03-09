@@ -1,5 +1,5 @@
-#ifndef otbObiaLSSmallRegionsMergingFilter_h
-#define otbObiaLSSmallRegionsMergingFilter_h
+#ifndef otbObiaLSSmallRegionsMergingScheduler_h
+#define otbObiaLSSmallRegionsMergingScheduler_h
 #include <limits>
 
 #include "otbObiaLSBaatzSegmentationScheduler.h"
@@ -130,5 +130,6 @@ private:
 };
 }//End obia
 }//End otb
+	
 #include "otbObiaLSSmallRegionsMergingScheduler.txx"
 #endif

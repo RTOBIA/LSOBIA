@@ -693,8 +693,11 @@ LSBaatzSegmentationScheduler<TInputImage>
 
 				// Segmentation filter
 				auto baatzFilter = CreateFilter();
-
+				std::cout<<"Max Number of it : "<<m_MaxNumberOfIterations<<std::endl;
+				std::cout<<"PartialNumberOfIterations : "<<m_PartialNumberOfIterations<<std::endl;
+				
 				baatzFilter->SetMaxNumberOfIterations(std::min(m_PartialNumberOfIterations, m_MaxNumberOfIterations - m_CurrentNumberOfIterations + 1));
+
 				// Pipeline branching
 				baatzFilter->SetInput(this->m_Graph);
 

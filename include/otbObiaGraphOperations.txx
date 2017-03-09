@@ -492,6 +492,9 @@ GraphOperations<TGraph>::WriteGraphToDisk(const GraphPointerType graph,
 		std::cerr << "Cannot open ouput file to write the graph: " << outputPath << std::endl;
 		exit(EXIT_FAILURE);
 	}
+
+	/* Ecriture du header */
+	GraphOperations<TGraph>::WriteGraphHeader(outputPath, graph);
 }
 
 template< typename TGraph >
@@ -510,8 +513,16 @@ GraphOperations<TGraph>::ReadGraphFromDisk(const std::string inputPath)
 		std::vector<char> serializedGraph(numberOfBytes);
 		inFile.read(&serializedGraph[0], numberOfBytes * CharSize);
 		inFile.close();
+		
+		auto graph = DeSerializeGraph(serializedGraph);
 
-		return DeSerializeGraph(serializedGraph);
+		/* Lecture du header et update du graphe avec les informations */
+		GraphImageInfo info = GraphOperations<TGraph>::ReadGraphHeader(inputPath);
+		graph->SetImageWidth(info.m_width);
+		graph->SetImageHeight(info.m_height);
+		graph->SetNumberOfSpectralBands(info.m_nbBands);
+		graph->SetProjectionRef(info.m_projectionRef);
+		return graph;
 	}
 	else
 	{

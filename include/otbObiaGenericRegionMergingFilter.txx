@@ -1,5 +1,6 @@
 #ifndef __otbObiaGenericRegionMergingFilter_txx
 #define __otbObiaGenericRegionMergingFilter_txx
+#include "otbObiaGenericRegionMergingFilter.h"
 
 namespace otb
 {

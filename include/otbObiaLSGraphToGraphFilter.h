@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <sstream>
 #include "itkLightObject.h"
+#include "otbObiaGraphOperations.h"
+
 
 namespace otb
 {

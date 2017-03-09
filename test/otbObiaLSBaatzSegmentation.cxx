@@ -1,9 +1,9 @@
-#include "otbObiaLSBaatzSegmentationScheduler.h"
+#include "otbObiaLSBaatzSegmentationScheduler.txx"
 #include "otbVectorImage.h"
 
 #define NUM_ELEMENT 4
 
-int main(int argc, char *argv[])
+int otbObiaLSBaatzSegmentation(int argc, char *argv[])
 {
 	if(argc < 12)
 	{
@@ -25,9 +25,8 @@ int main(int argc, char *argv[])
 	}
 
 	/* Initialize MPI */
-    auto mpiConfig = otb::MPIConfig::Instance();
-    mpiConfig->Init(argc, argv);
-
+	auto mpiConfig = otb::MPIConfig::Instance();
+	mpiConfig->Init(argc, argv);
 
 	using InputImageType = otb::VectorImage<float, 2>;
 	using LSBaatzSegmentationSchedulerType = otb::obia::LSBaatzSegmentationScheduler<InputImageType>;
@@ -67,10 +66,10 @@ int main(int argc, char *argv[])
 	lsBaatzFilter->SetShapeWeight(shapeW);
 	lsBaatzFilter->SetBandWeights(bandWeights);
 	lsBaatzFilter->SetWriteLabelImage(true);
-    lsBaatzFilter->SetWriteGraph(true);
-    lsBaatzFilter->SetOutputDir(outDir);
+	lsBaatzFilter->SetWriteGraph(true);
+	lsBaatzFilter->SetOutputDir(outDir);
 	lsBaatzFilter->Update();
 
 	std::cout << "SUCCESS" << std::endl;
-	return 0;
+	return EXIT_SUCCESS;
 }

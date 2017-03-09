@@ -8,7 +8,7 @@
 
 
 
-int main(int argc, char * argv[])
+int otbObiaSmallRegionMergingOnFile(int argc, char * argv[])
 {
 	if(argc < 3)
 	{
@@ -75,5 +75,6 @@ int main(int argc, char * argv[])
 
 	std::cout << "End Write" <<std::endl;
 
-	  return 0;
-	}
+	  return EXIT_SUCCESS;
+}
+

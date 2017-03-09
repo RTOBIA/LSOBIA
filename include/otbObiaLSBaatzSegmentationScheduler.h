@@ -31,7 +31,6 @@ public:
   using GraphType                        = typename ImageToBaatzGraphFilterType::OutputGraphType;
   using NodeType                         = typename GraphType::NodeType;
   using GraphPointerType                 = typename GraphType::Pointer;
- // using BaatzSegmentationFilterType      = BaatzSegmentationFilter<GraphType>;
   using GraphOperationsType              = GraphOperations<GraphType>;
   using BaatzSegmentationFilterType	     = GenericRegionMergingFilter<GraphType, GraphType,
 		  	  	  	  	  	  	  	  	  	  	  	  	  	  	  	  BaatzMergingCost<float, GraphType> ,

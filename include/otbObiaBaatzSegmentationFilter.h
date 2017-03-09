@@ -15,9 +15,7 @@ namespace obia
 template< typename TCost, typename TGraph >
 class BaatzMergingCost
 {
-
 public:
-
 	/** Some convenient alias */
 	using ValueType 	   = TCost;
 	using GraphType        = TGraph;
@@ -31,7 +29,6 @@ public:
 	using ConstPointer = itk::SmartPointer< const Self>;
 
 	/** Method for creation through the object factory. */
-	//itkNewMacro(Self);
 	BaatzMergingCost();
 	~BaatzMergingCost();
 
@@ -40,24 +37,16 @@ public:
 	/** Get/Set methods */
 	void SetSpectralWeight(float spectralWeight){ m_SpectralWeight = spectralWeight;};
 	void SetShapeWeight(float shapeWeight){ m_ShapeWeight = shapeWeight;};
-	void SetBandWeights( std::vector<float> bandWeights){ m_BandWeights = bandWeights;};
+	void SetBandWeights(std::vector<float> bandWeights){ m_BandWeights = bandWeights;};
 	void SetThreshold(float threshold){m_Threshold = threshold;};
-	/*itkSetMacro(SpectralWeight, float);
-	itkSetMacro(ShapeWeight, float);
-	itkSetMacro(BandWeights, std::vector<float>);
-	itkSetMacro(Threshold, float);*/
 
 	const ValueType GetMax(){return m_MaxCost;};
 	bool ComputeMergingCostsForThisNode(NodeType* curNode);
 	bool ComputeMergingCostsForThisAdjNode(NodeType* curNode);
 	ValueType ComputeMergingCost(NodeType* NodeIn, NodeType* NodeOut);
-
 protected:
 
-	/*BaatzMergingCost();
-	~BaatzMergingCost();
-*/
-	/**Maximal cost of merging*/
+	// Maximal cost of merging
 	ValueType m_MaxCost;
 
 	// Relative inmportance given to the spectral information
@@ -102,25 +91,14 @@ public:
 	/** Get/Set methods */
 	void SetGraph(GraphPointerType graph){ m_Graph = graph;};
 	void SetThreshold(float threshold){m_Threshold = threshold;};
-	//itkSetMacro(Graph, GraphPointerType);
-	//itkSetMacro(Threshold, float);
-
-	//itkGetConstMacro(Graph, GraphPointerType);
-	//itkGetConstMacro(Threshold, float);
 
 protected:
 
-	/**Constructor*/
-	/*BaatzHeuristic();
-	~BaatzHeuristic();*/
-
-	/**Pointer to the graph*/
+	/** Pointer to the graph*/
 	GraphPointerType m_Graph;
 
 	/** Threshold for Baatz decision*/
 	float m_Threshold;
-
-
 };
 
 template<typename TGraph >
@@ -140,21 +118,12 @@ public:
 	using ConstPointer = itk::SmartPointer< const Self>;
 
 	/** Method for creation through the object factory. */
-	//itkNewMacro(Self);
 	BaatzUpdateAttribute();
 	~BaatzUpdateAttribute();
 
 	/**Update attributes of nodeIn*/
 	void UpdateAttributes(NodeType * nodeIn, NodeType *  nodeOut);
-
-protected:
-
-	/*BaatzUpdateAttribute();
-	~BaatzUpdateAttribute();*/
-
 };
-
-
 
 template< typename TGraph >
 class BaatzSegmentationFilter : public GraphToGraphFilter<TGraph, TGraph> 

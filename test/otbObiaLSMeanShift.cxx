@@ -1,9 +1,9 @@
 #include <iostream>
 
-#include "otbObiaLSMeanShiftScheduler.h"
+#include "otbObiaLSMeanShiftScheduler.txx"
 #include "otbVectorImage.h"
 
-int main(int argc, char * argv[])
+int otbObiaLSMeanShift(int argc, char * argv[])
 {
   if(argc < 13)
     {
@@ -65,7 +65,5 @@ int main(int argc, char * argv[])
 
   /** Retrieve the image dimension without allocating it */
   std::cout << "Optimal execution" << std::endl;
-  
-
-  return 0;
+  return EXIT_SUCCESS;
 }

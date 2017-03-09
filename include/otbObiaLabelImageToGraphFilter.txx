@@ -1,4 +1,4 @@
- #ifndef otbObiaLabelImageToGraphFilter_txx
+#ifndef otbObiaLabelImageToGraphFilter_txx
 #define otbObiaLabelImageToGraphFilter_txx
 #include "otbObiaLabelImageToGraphFilter.h"
 
