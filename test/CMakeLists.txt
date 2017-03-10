@@ -35,7 +35,7 @@ target_link_libraries(otbLSOBIAConvertGraphToImageTestDriver ${${otb-module}-Tes
 otb_module_target_label(otbLSOBIAConvertGraphToImageTestDriver)
 
 otb_add_test(NAME otbLSOBIAConvert COMMAND otbLSOBIAConvertGraphToImageTestDriver
-             otbLSOBIAConvertGraphToImage
+             otbObiaConvertGraphToImage
              ${LSOBIA_SOURCE_DIR}/data/Graph_0_1.dat
 	     ${TEMP}/image_from_graph.tif)
 
