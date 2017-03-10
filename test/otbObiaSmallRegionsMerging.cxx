@@ -1,16 +1,18 @@
 #include <iostream>
 
 #include "otbObiaBaatzSegmentationFilter.h"
-#include "otbObiaBaatzGraphToSRMGraphFilter.h"
 #include "otbObiaImageToBaatzGraphFilter.h"
 #include "otbObiaLSMeanShiftScheduler.h"
 #include "otbObiaSmallRegionsMergingFilter.h"
 #include "otbVectorImage.h"
 #include "itkRGBPixel.h"
 #include "itkLabelToRGBImageFilter.h"
+#include "otbObiaGenericRegionMergingFilter.h"
 
 int otbObiaSmallRegionsMerging(int argc, char * argv[])
 {
+	std::cout << "--------- Baatz + Small Region Merging -------------" << std::endl;
+
 	if(argc < 12)
 	{
 
@@ -57,15 +59,17 @@ int otbObiaSmallRegionsMerging(int argc, char * argv[])
 	using LabelPixelType              = unsigned int;
 
 	using ImageToBaatz				= otb::obia::ImageToBaatzGraphFilter<InputImageType>;
-	using BaatzSegmentation	        = otb::obia::BaatzSegmentationFilter<InputGraphType>;
-	using BaatzToSRMGraph				= otb::obia::BaatzToSRMGraphFilter;
-	using SmallRegionMergingFilter	= otb::obia::SmallRegionsMergingFilter<InputGraphType>;
+	using BaatzSegmentation			= otb::obia::GenericRegionMergingFilter<InputGraphType, InputGraphType,
+																			otb::obia::BaatzMergingCost<float, InputGraphType> ,
+																			otb::obia::BaatzHeuristic<InputGraphType>,
+																			otb::obia::BaatzUpdateAttribute<InputGraphType> >;
+	using SmallRegionMergingFilter	= otb::obia::GenericRegionMergingFilter<InputGraphType, InputGraphType,
+			
 	using LabelImageType               = otb::Image< LabelPixelType, 2 >;
 	using FillholeFilterType           = itk::GrayscaleFillholeImageFilter<LabelImageType,LabelImageType>;
 
 	auto imageToBaaz = ImageToBaatz::New();
 	auto baatzFilter = BaatzSegmentation::New();
-	auto baatzToSRM = BaatzToSRMGraph::New();
 	auto SRMFilter  = SmallRegionMergingFilter::New();
 
 
@@ -76,6 +80,13 @@ int otbObiaSmallRegionsMerging(int argc, char * argv[])
 
 	// Segmentation filter
 	baatzFilter->SetMaxNumberOfIterations(75);
+	baatzFilter->GetMergingCostFunc()->SetThreshold(threshold);
+	baatzFilter->GetMergingCostFunc()->SetSpectralWeight(spectralW);
+	baatzFilter->GetMergingCostFunc()->SetShapeWeight(shapeW);
+	baatzFilter->GetMergingCostFunc()->SetBandWeights(bandWeights);
+	baatzFilter->GetHeuristicFunc()->SetThreshold(threshold);
+
+
 	baatzFilter->SetThreshold(threshold);
 	baatzFilter->SetSpectralWeight(spectralW);
 	baatzFilter->SetShapeWeight(shapeW);
@@ -89,7 +100,9 @@ int otbObiaSmallRegionsMerging(int argc, char * argv[])
 	//baatzToSRM->SetInput( baatzFilter->GetOutput());
 
 	SRMFilter->SetInput(const_cast< InputGraphType * > (baatzFilter->GetOutput() ));
-	SRMFilter->SetMinimalSurface(200);
+	SRMFilter->GetMergingCostFunc()->SetMinimalSurface(200);
+	SRMFilter->SetMaxNumberOfIterations(2);
+
 	SRMFilter->UpdateLargestPossibleRegion();
 	//SRMFilter->Update();
 

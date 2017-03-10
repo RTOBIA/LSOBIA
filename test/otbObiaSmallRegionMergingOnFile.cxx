@@ -5,6 +5,7 @@
 #include "otbObiaImageToBaatzGraphFilter.h"
 #include "otbObiaLSMeanShiftScheduler.h"
 #include "otbObiaSmallRegionsMergingFilter.h"
+#include "otbObiaGenericRegionMergingFilter.h"
 
 
 
@@ -29,7 +30,11 @@ int otbObiaSmallRegionMergingOnFile(int argc, char * argv[])
 	using InputGraphType			  = otb::obia::Graph<otb::obia::Node < otb::obia::BaatzNodeAttribute,
 																		 	 otb::obia::BaatzEdgeAttribute> >;
 	using GraphPointerType 			  = typename InputGraphType::Pointer;
-	using SmallRegionMergingFilter	= otb::obia::SmallRegionsMergingFilter<InputGraphType>;
+	using SmallRegionMergingFilter	= otb::obia::GenericRegionMergingFilter<InputGraphType, InputGraphType,
+            otb::obia::SRMMergingCost<float, InputGraphType> ,
+            otb::obia::SRMHeuristic<InputGraphType>,
+            otb::obia::SRMUpdateAttribute<InputGraphType> >;
+
 
 	//Lecture gu graphe
 	using GraphOperationsType         = otb::obia::GraphOperations<InputGraphType>;
@@ -46,7 +51,7 @@ int otbObiaSmallRegionMergingOnFile(int argc, char * argv[])
 
 
 	SRMFilter->SetInput(GraphPointerType (graph) );
-	SRMFilter->SetMinimalSurface(minimalSurface);
+	SRMFilter->GetMergingCostFunc()->SetMinimalSurface(minimalSurface);
 	SRMFilter->UpdateLargestPossibleRegion();
 
 

@@ -26,6 +26,8 @@ int otbObiaConvertGraphToImage(int argc, char * argv[])
 	using RGBImageType = otb::Image<RGBPixelType, 2>;
 	using LabelToRGBFilterType = itk::LabelToRGBImageFilter<LabelImageType, RGBImageType>;
 	using RGBWriterType = otb::ImageFileWriter< RGBImageType >;
+	using FillholeFilterType           = itk::GrayscaleFillholeImageFilter<LabelImageType,LabelImageType>;
+
 
 	if(argc < 2)
 	{
@@ -58,10 +60,13 @@ int otbObiaConvertGraphToImage(int argc, char * argv[])
 	auto rgbWriter = RGBWriterType::New();
 	rgbWriter->SetFileName(outputname);
 	graphToLabelFilter->SetInput(graph);
-	graphToLabelFilter->Update();
+	//graphToLabelFilter->Update();
+	
+	auto fillHoleFilter = FillholeFilterType::New();
+	fillHoleFilter->SetInput(graphToLabelFilter->GetOutput());
 
 	std::cout<< "Graph to Label done" << std::endl;
-	labelToRGBFilter->SetInput(graphToLabelFilter->GetOutput());
+	labelToRGBFilter->SetInput(fillHoleFilter->GetOutput());
 
 
 	labelToRGBFilter->ResetColors();

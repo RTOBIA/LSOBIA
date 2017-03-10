@@ -68,6 +68,7 @@ int otbObiaLSBaatzSegmentation(int argc, char *argv[])
 	lsBaatzFilter->SetWriteLabelImage(true);
 	lsBaatzFilter->SetWriteGraph(true);
 	lsBaatzFilter->SetOutputDir(outDir);
+        lsBaatzFilter->SetAggregateGraphs(true);
 	lsBaatzFilter->Update();
 
 	std::cout << "SUCCESS" << std::endl;

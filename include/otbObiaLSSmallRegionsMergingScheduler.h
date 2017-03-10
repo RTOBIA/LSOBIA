@@ -1,9 +1,10 @@
-#ifndef otbObiaLSSmallRegionsMergingScheduler_h
-#define otbObiaLSSmallRegionsMergingScheduler_h
+#ifndef otbObiaLSSmallRegionsMergingFilter_h
+#define otbObiaLSSmallRegionsMergingFilter_h
 #include <limits>
 
-#include "otbObiaLSBaatzSegmentationScheduler.h"
+#include "otbObiaSmallRegionsMergingFilter.h"
 #include "otbObiaLSGraphToGraphFilter.h"
+
 #include "itkMacro.h"
 #include "itkSmartPointer.h"
 //#include "otbObiaSmallRegionsMergingGraph.h"
@@ -36,6 +37,12 @@ public:
 	using NodeType                    = typename GraphType::NodeType;
 	using GraphPointerType            = typename GraphType::Pointer;
 	using GraphOperationsType         = GraphOperations<GraphType>;
+	/*using SRMFilterType	     		  = GenericRegionMergingFilter<GraphType, GraphType,
+																	SRMMergingCost<float, GraphType> ,
+																    SRMHeuristic<GraphType>,
+																    SRMUpdateAttribute<GraphType> >;*/
+	/**TODO : Temporaire*/
+	using SRMFilterType = SmallRegionsMergingFilter<GraphType>;
 
 	/** Method for creation through the object factory. */
 	itkNewMacro(Self);
@@ -46,6 +53,9 @@ public:
 	/** Get/Set methods */
 	void SetMinimalSurface(const uint32_t minimalSurface){m_MinimalSurface = minimalSurface;};
 	void SetNumberOfIterations(const uint32_t numberOfIterations){m_NumberOfIterations = numberOfIterations;};
+	void SetWriteImage(bool writeImage){m_WriteImage = writeImage;};
+	void SetAggregateGraph(bool aggregateGraph){m_AggregateGraph = aggregateGraph;};
+
 protected:
 
 	/** Constructor */
@@ -62,6 +72,13 @@ protected:
 	virtual void NoTilingExecution();
 
 	virtual void TilingExecution();
+
+	void AggregateGraph();
+
+   /**Create Filter*/
+   itk::SmartPointer<SRMFilterType> CreateFilter();
+
+   //itk::SmartPointer<SmallRegionsFilterType> CreateFilter();
 
 private:
 
@@ -83,7 +100,7 @@ private:
 	void AggregateStabilityMargins();
 
 	/**Merging small regions*/
-	int PartialFusion(unsigned long int& accumulatedMemory);
+	int PartialFusion(unsigned long int& accumulatedMemory,  int& globalFusion);
 
 	/** Extract small regions node*/
 	std::vector< NodeType* > ExtractSmallRegionsNodes(std::vector< NodeType* > borderNodes);
@@ -103,6 +120,9 @@ private:
 
 	/** Check if duplicated node*/
 	bool HasDuplicatedNodes();
+
+	/**Reconditionning graph*/
+	void ReconditionGraph();
 
 	/**Create output*/
 	void CreateOutput();
@@ -124,12 +144,20 @@ private:
 	// The number of iteration
 	int m_NumberOfIterations;
 
+	// Global fusion state
+	int m_GlobalFusion;
+
 	// Flag indicating if fusion is over
 	bool m_FusionOver;
+
+	// Write graph
+	bool m_WriteImage;
+
+	//Aggregate graph
+	bool m_AggregateGraph;
 
 };
 }//End obia
 }//End otb
-	
 #include "otbObiaLSSmallRegionsMergingScheduler.txx"
 #endif

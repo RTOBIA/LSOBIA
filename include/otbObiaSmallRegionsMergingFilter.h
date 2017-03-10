@@ -11,6 +11,140 @@ namespace otb
 namespace obia
 {
 
+
+/**Class specializing the merging cost function required by the generic filter*/
+template< typename TCost, typename TGraph >
+class SRMMergingCost
+{
+
+public:
+
+	/** Some convenient alias */
+	using ValueType 	   = TCost;
+	using GraphType        = TGraph;
+	using GraphPointerType = typename GraphType::Pointer;
+	using NodeType         = typename GraphType::NodeType;
+	using EdgeType         = typename GraphType::EdgeType;
+
+	/** Standard class alias */
+	using Self         = SRMMergingCost;
+	using Pointer      = itk::SmartPointer<Self>;
+	using ConstPointer = itk::SmartPointer< const Self>;
+
+	/** Method for creation through the object factory. */
+	//itkNewMacro(Self);
+	SRMMergingCost();
+	~SRMMergingCost();
+
+	static ValueType Max(){return std::numeric_limits<TCost>::max();};
+
+	/** Get/Set methods */
+	void SetMinimalSurface(uint32_t minimalSurface){m_MinimalSurface = minimalSurface;};
+
+	const ValueType GetMax(){return m_MaxCost;};
+	bool ComputeMergingCostsForThisNode(NodeType* curNode);
+	bool ComputeMergingCostsForThisAdjNode(NodeType* curNode);
+	ValueType ComputeMergingCost(NodeType* NodeIn, NodeType* NodeOut);
+
+protected:
+
+	/**Maximal cost of merging*/
+	ValueType m_MaxCost;
+
+	/**Minimal surface*/
+	uint32_t m_MinimalSurface;
+
+};
+
+/**Class specializing the heuristic function required by the generic filter*/
+template<typename TGraph >
+class SRMHeuristic
+{
+
+public:
+	/** Some convenient alias */
+	using GraphType        = TGraph;
+	using GraphPointerType = typename GraphType::Pointer;
+	using NodeType         = typename GraphType::NodeType;
+	using EdgeType         = typename GraphType::EdgeType;
+
+	/** Standard class alias */
+	using Self         = SRMHeuristic;
+	using Pointer      = itk::SmartPointer<Self>;
+	using ConstPointer = itk::SmartPointer< const Self>;
+
+
+	/** Method for creation through the object factory. */
+	//itkNewMacro(Self);
+	SRMHeuristic();
+	~SRMHeuristic();
+
+	NodeType* GetBestAdjacentNode(NodeType* curNode);
+	NodeType* GetNodeOut(NodeType* nodeIn);
+	void ValidateNodeIn(NodeType* nodeIn);
+	void SortEdges(NodeType* node);
+
+	/** Get/Set methods */
+	void SetGraph(GraphPointerType graph){ m_Graph = graph;};
+	void SetThreshold(float threshold){m_Threshold = threshold;};
+	void SetMinimalSurface(uint32_t minimalSurface){m_MinimalSurface = minimalSurface;};
+	//itkSetMacro(Graph, GraphPointerType);
+	//itkSetMacro(Threshold, float);
+
+	//itkGetConstMacro(Graph, GraphPointerType);
+	//itkGetConstMacro(Threshold, float);
+
+protected:
+
+	/**Constructor*/
+	/*BaatzHeuristic();
+	~BaatzHeuristic();*/
+
+	/**Compute spectral distance*/
+	float ComputeSpectralDistance(NodeType* node1, NodeType* node2);
+
+	/**Pointer to the graph*/
+	GraphPointerType m_Graph;
+
+	/** Threshold for Baatz decision*/
+	float m_Threshold;
+
+	/**Minimal surface*/
+	uint32_t m_MinimalSurface;
+
+
+};
+
+template<typename TGraph >
+class SRMUpdateAttribute
+{
+
+public:
+	/** Some convenient alias */
+	using GraphType        = TGraph;
+	using GraphPointerType = typename GraphType::Pointer;
+	using NodeType         = typename GraphType::NodeType;
+	using EdgeType         = typename GraphType::EdgeType;
+
+	/** Standard class alias */
+	using Self         = SRMUpdateAttribute;
+	using Pointer      = itk::SmartPointer<Self>;
+	using ConstPointer = itk::SmartPointer< const Self>;
+
+	/** Method for creation through the object factory. */
+	//itkNewMacro(Self);
+	SRMUpdateAttribute();
+	~SRMUpdateAttribute();
+
+	/**Update attributes of nodeIn*/
+	void UpdateAttributes(NodeType * nodeIn, NodeType *  nodeOut);
+
+protected:
+
+};
+
+
+
 /** \class SmallRegionMergingFilter
  *	\brief Class that builds an adjacency graph where all smalls regions are merged
  *
@@ -44,8 +178,8 @@ public:
 
 	itkSetMacro(MinimalSurface, uint32_t);
 	itkGetMacro(MinimalSurface, uint32_t);
-	itkSetMacro(MergeOver, bool);
-	itkGetMacro(MergeOver, bool);
+	itkSetMacro(MergingOver, bool);
+	itkGetMacro(MergingOver, bool);
 	itkSetMacro(NumberOfIterations, int32_t);
 	itkGetMacro(NumberOfIterations, int32_t);
 
@@ -91,7 +225,7 @@ private:
 	uint32_t m_MinimalSurface;
 
 	/**Boolean which flag if all small regions merged*/
-	bool m_MergeOver;
+	bool m_MergingOver;
 
 	/**Max iteration*/
 	int32_t m_NumberOfIterations;
@@ -101,3 +235,4 @@ private:
 } // end of namespace otb
 #include "otbObiaSmallRegionsMergingFilter.txx"
 #endif
+

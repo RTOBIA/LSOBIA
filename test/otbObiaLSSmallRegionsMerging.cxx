@@ -92,8 +92,9 @@ int otbObiaLSSmallRegionsMerging(int argc, char * argv[])
 	lsSMR->SetNumberOfTilesY(lsBaatzFilter->GetNumberOfTilesY());
 
 	lsSMR->SetMaxNumberOfTilesPerProcessor(lsBaatzFilter->GetMaxNumberOfTilesPerProcessor());
-	lsSMR->SetMinimalSurface(60);
-	lsSMR->SetNumberOfIterations(-1);
+	lsSMR->SetMinimalSurface(200);
+	lsSMR->SetNumberOfIterations(2);
+	lsSMR->SetAggregateGraph(true);
 	if(lsBaatzFilter->GetTileMap().size() <= 1)
 	{
 		std::cout << "Adding Graph" << std::endl;

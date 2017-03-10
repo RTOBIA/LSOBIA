@@ -6,10 +6,316 @@ namespace otb
 namespace obia
 {
 
+
+template< typename TCost, typename TGraph >
+SRMMergingCost<TCost, TGraph>
+::SRMMergingCost()
+{
+	std::cout << "New SMR Cost" << std::endl;
+}
+
+template< typename TCost, typename TGraph >
+SRMMergingCost<TCost, TGraph>
+::~SRMMergingCost()
+{
+
+}
+
+template< typename TCost, typename TGraph >
+bool
+SRMMergingCost<TCost, TGraph>::ComputeMergingCostsForThisNode(NodeType* curNode)
+{
+	//return true;
+	return false;
+}
+
+template< typename TCost, typename TGraph >
+bool
+SRMMergingCost<TCost, TGraph>::ComputeMergingCostsForThisAdjNode(NodeType* curNode)
+{
+	//return true;
+	return false;
+}
+
+template< typename TCost, typename TGraph >
+typename SRMMergingCost< TCost, TGraph>::ValueType
+SRMMergingCost<TCost, TGraph>::ComputeMergingCost(NodeType* n1, NodeType* n2)
+{
+	//Number of bands
+	uint32_t nbBands = n1->m_Attributes.m_AvgSpec.size();
+
+	//Distance
+	double spec_distance = 0;
+
+	for(uint32_t band = 0; band < nbBands; ++band)
+	{
+		//Average Spectral Value for each node
+		float avgSpec_1 = n1->m_Attributes.m_AvgSpec[band];
+		float avgSpec_2 = n2->m_Attributes.m_AvgSpec[band];
+
+		//Compute distance
+		spec_distance += (avgSpec_1 - avgSpec_2)*(avgSpec_1 - avgSpec_2);
+	}
+
+	return spec_distance;
+	//return 0;
+}
+
+template< typename TGraph >
+SRMHeuristic<TGraph>
+::SRMHeuristic()
+{
+
+}
+
+template< typename TGraph >
+SRMHeuristic<TGraph>
+::~SRMHeuristic()
+{
+
+}
+/*
+template< typename TGraph >
+typename SRMHeuristic<TGraph>::NodeType*
+SRMHeuristic<TGraph>
+::GetBestAdjacentNode(NodeType* node)
+{
+	//If this node has an area too big, do not consider it
+	if(node->m_Attributes.m_Area > m_MinimalSurface){
+		return nullptr;
+	}
+
+	auto outputGraph = this->m_Graph;
+
+	if(node->m_Valid)
+	{
+		//Get the best adjcent node (the one with the lowest cost)
+		auto bestAdjNode = outputGraph->GetNodeAt(node->m_Edges.front().m_TargetId);
+
+		//Check if node is valid
+		if(bestAdjNode->m_Valid)
+		{
+			return bestAdjNode;
+			if(bestAdjNode->GetFirstPixelCoords() < node->GetFirstPixelCoords())
+			{
+				return bestAdjNode;
+			}
+			else
+			{
+				return node;
+			}
+		}
+	}
+
+	return nullptr;
+}*/
+
+template< typename TGraph >
+typename SRMHeuristic<TGraph>::NodeType*
+SRMHeuristic<TGraph>
+::GetBestAdjacentNode(NodeType* node)
+{
+
+
+	//If the node's surface is greater than minimal surface, then return null because we do not need to search for node in order
+	// to increase its surface.
+	if(node->m_Attributes.m_Area >= m_MinimalSurface || node->m_HasToBeRemoved)
+	{
+		return nullptr;
+	}
+
+	//Else, return node as nodeIn
+	return node;
+
+
+}
+
+template< typename TGraph >
+typename SRMHeuristic<TGraph>::NodeType*
+SRMHeuristic<TGraph>
+::GetNodeOut(NodeType* nodeIn)
+{
+	auto outputGraph = this->m_Graph;
+	double min_spec_distance = std::numeric_limits<double>::max();
+
+	NodeType * similar_node = nullptr;
+
+	//Looping across adjacent node
+	//Get Edges
+	for(auto edgeIt = nodeIn->Begin(); edgeIt != nodeIn->End(); edgeIt++)
+	{
+		//Get Target Node
+		auto target_node = m_Graph->GetNodeAt(edgeIt->m_TargetId);
+
+		//Si le noeud ne doit pas être supprimé, on regarde sa distance
+		if(!target_node->m_HasToBeRemoved)
+		{
+			//Compute Spectral Distance
+			double spec_distance(ComputeSpectralDistance(nodeIn, target_node));
+
+			//If this distance is the minimum, update value
+			if(spec_distance < min_spec_distance)
+			{
+				//Update distance
+				min_spec_distance = spec_distance;
+
+				//Update node
+				similar_node = target_node;
+			}
+		}
+	}
+
+	return similar_node;
+}
+template< typename TGraph >
+float
+SRMHeuristic<TGraph>
+::ComputeSpectralDistance(NodeType* node1, NodeType* node2)
+{
+	//Number of bands
+	uint32_t nbBands = node1->m_Attributes.m_AvgSpec.size();
+
+	//Distance
+	double spec_distance = 0;
+
+	for(uint32_t band = 0; band < nbBands; ++band)
+	{
+		//Average Spectral Value for each node
+		float avgSpec_1 = node1->m_Attributes.m_AvgSpec[band];
+		float avgSpec_2 = node2->m_Attributes.m_AvgSpec[band];
+
+		//Compute distance
+		spec_distance += (avgSpec_1 - avgSpec_2)*(avgSpec_1 - avgSpec_2);
+	}
+
+	return spec_distance;
+}
+
+
+template< typename TGraph >
+void
+SRMHeuristic<TGraph>
+::ValidateNodeIn(NodeType* nodeIn)
+{
+
+	/*auto outputGraph = this->m_Graph;
+
+
+	//nodeIn->m_Valid = true;
+	//Compute new cost
+	//Loop over edge
+	for(auto edgeIt = nodeIn->Begin(); edgeIt != nodeIn->End(); edgeIt++)
+	{
+		auto adjNode = outputGraph->GetNodeAt(edgeIt->m_TargetId);
+
+		//Update merging cost for both node
+		auto cost =  ComputeSpectralDistance(nodeIn, adjNode);
+		edgeIt->m_Attributes.m_MergingCost = cost;
+		adjNode->FindEdge(nodeIn->m_Id)->m_Attributes.m_MergingCost = cost;
+
+		//SortEdges(adjNode);
+	}*/
+	nodeIn->m_Valid = true;
+	//SortEdges(nodeIn);
+}
+
+template< typename TGraph >
+void
+SRMHeuristic<TGraph>
+::SortEdges(NodeType* node)
+{
+	auto outputGraph = this->m_Graph;
+	double maxCost = std::numeric_limits<double>::max();
+	//Loop edge
+	int idx =0 ;
+	int minIdx = 0;
+	int minCoord = 0;
+	for(auto edgeIt = node->Begin(); edgeIt != node->End(); edgeIt++)
+	{
+		auto cost = edgeIt->m_Attributes.m_MergingCost;
+		if(cost < maxCost)
+		{
+			//Update index
+			minIdx = idx;
+
+			//Update coord
+			minCoord = outputGraph->GetNodeAt(node->m_Edges[minIdx].m_TargetId)->GetFirstPixelCoords();
+			//Update max cost
+			maxCost = cost;
+
+
+		}else if(cost == maxCost){
+			//Get Id of the current idx
+			auto adjNode_2 = outputGraph->GetNodeAt(edgeIt->m_TargetId);
+			if(adjNode_2->GetFirstPixelCoords() < minCoord){
+
+				//Update index
+				minIdx = idx;
+
+				//Update coord
+				minCoord = adjNode_2->GetFirstPixelCoords();
+			}
+		}
+		idx++;
+	}
+
+	//SWAP
+	std::swap(node->m_Edges[0], node->m_Edges[minIdx]);
+
+}
+template< typename TGraph >
+SRMUpdateAttribute<TGraph>
+::SRMUpdateAttribute()
+{
+
+}
+
+template< typename TGraph >
+SRMUpdateAttribute<TGraph>
+::~SRMUpdateAttribute()
+{
+
+}
+template<typename TGraph >
+void
+SRMUpdateAttribute<TGraph>
+::UpdateAttributes(NodeType * nodeIn, NodeType *  nodeOut)
+ {
+
+	//nodeIn->m_Valid = true;
+
+	// Update statistical attributes
+		const float aArea = static_cast<float>(nodeIn->m_Attributes.m_Area);
+		const float bArea = static_cast<float>(nodeOut->m_Attributes.m_Area);
+		const float a_sum = aArea + bArea;
+
+		float mean;
+		float stddev;
+		float stddevTmp;
+
+		for(unsigned int b = 0; b < nodeIn->m_Attributes.m_AvgSpec.size(); ++b)
+		{
+			mean = (nodeIn->m_Attributes.m_AvgSpec[b] * aArea + nodeOut->m_Attributes.m_AvgSpec[b] * bArea) / a_sum;
+			stddevTmp = aArea * nodeIn->m_Attributes.m_StdSpec[b] * nodeIn->m_Attributes.m_StdSpec[b];
+			stddevTmp += bArea * nodeOut->m_Attributes.m_StdSpec[b] * nodeOut->m_Attributes.m_StdSpec[b];
+			stddevTmp += aArea * (nodeIn->m_Attributes.m_AvgSpec[b] - mean) * (nodeIn->m_Attributes.m_AvgSpec[b] - mean);
+			stddevTmp += bArea * (nodeOut->m_Attributes.m_AvgSpec[b] - mean) * (nodeOut->m_Attributes.m_AvgSpec[b] - mean);
+			stddev = std::sqrt(stddevTmp / a_sum);
+			nodeIn->m_Attributes.m_AvgSpec[b] = mean;
+			nodeIn->m_Attributes.m_StdSpec[b] = stddev;
+		}
+
+		nodeIn->m_Attributes.m_Area = a_sum;
+		nodeIn->m_Attributes.m_Perimeter += (nodeOut->m_Attributes.m_Perimeter - 2*(nodeIn->FindEdge(nodeOut->m_Id)->m_Boundary));
+
+		nodeIn->m_Attributes.m_HasPreviouslyMerged = true;
+}
+
+
 template< typename TGraph >
 SmallRegionsMergingFilter<TGraph>
 ::SmallRegionsMergingFilter() :
-m_MinimalSurface(1), m_MergeOver(false), m_NumberOfIterations(-1)
+m_MinimalSurface(1), m_MergingOver(false), m_NumberOfIterations(-1)
 {
 
 }
@@ -45,28 +351,28 @@ SmallRegionsMergingFilter<TGraph>
 	// Release the input graph.
 	inputGraphPtr->Reset();
 
-	//Iterate until no small regions found (meaning : m_MergeOver = true)
-	m_MergeOver = false;
+	//Iterate until no small regions found (meaning : m_MergingOver = true)
+	m_MergingOver = false;
 	uint32_t currIt = 0;
 	if(m_NumberOfIterations < 0)
 	{
 		//Infinite loop
-		while(!m_MergeOver)
+		while(!m_MergingOver)
 		{
 			std::cout << "Merge iteration : " << currIt << " size graph : " << outputGraph->GetNumberOfNodes() << std::endl;
 			//IsGraphValid();
-			m_MergeOver = DoOneIteration();
+			m_MergingOver = DoOneIteration();
 			currIt++;
 		}
 	}
 	else
 	{
-		int32_t current_iteration = 0;
+		uint32_t current_iteration = 0;
 		while(current_iteration < m_NumberOfIterations)
 		{
 			std::cout << "Iteration merge " << current_iteration << std::endl;
 			current_iteration++;
-			m_MergeOver = DoOneIteration();
+			m_MergingOver = DoOneIteration();
 		}
 	}
 
@@ -91,10 +397,19 @@ SmallRegionsMergingFilter<TGraph>
 
 	//Looping across nodes
 	//for(auto nodeIt = outputGraph->Begin(); nodeIt != outputGraph->End(); nodeIt++)
-	for(uint32_t k = 0; k < nbNodes; ++k)
+	for(auto nodeIt =outputGraph->Begin(); nodeIt != outputGraph->End(); nodeIt++)
+	//for(uint32_t k = 0; k < nbNodes; ++k)
 	{
+		auto node = nodeIt;
 		//std::cout << "Noeud " << k << std::endl;
-		NodeType* nodeIt = outputGraph->GetNodeAt(k);
+		//NodeType* nodeIt = outputGraph->GetNodeAt(k);
+
+		if((node->GetFirstPixelCoords() == 472498)){
+			std::cout << "Recherche noeud similaire" << std::endl;
+		}
+		if(node->GetFirstPixelCoords() == 451503){
+			std::cout << "Merging " << nodeIt->GetFirstPixelCoords() << std::endl;
+		}
 		if(!nodeIt->m_HasToBeRemoved)
 		{
 			//Check if node is too small
@@ -102,21 +417,47 @@ SmallRegionsMergingFilter<TGraph>
 			{
 
 				//Get most similar adjacent node
-				auto similar_node = GetMostSimilarNode(nodeIt);//GetMostSimilarNode(&(*nodeIt));
+				auto similar_node = GetMostSimilarNode(&(*node));//GetMostSimilarNode(&(*nodeIt));
 
+				/*if((node->GetFirstPixelCoords() == 472498)){
+					std::cout << "Fusion entre : " << node->GetFirstPixelCoords() << " et " << similar_node->GetFirstPixelCoords() << std::endl;
+					std::cout << "ID : " << nodeIt->m_Id << "/" << similar_node->m_Id << std::endl;
+				}
+
+				if(node->GetFirstPixelCoords() == 451503){
+					std::cout << "Fusion entre : " << node->GetFirstPixelCoords() << " et " << similar_node->GetFirstPixelCoords() << std::endl;
+					std::cout << "ID : " << node->m_Id << "/" << similar_node->m_Id << std::endl;
+					std::cout << "Aire : " << node->m_Attributes.m_Area << "/ " << similar_node->m_Attributes.m_Area << std::endl;
+				}*/
 				//std::cout << "Small Area (" << nodeIt->m_Attributes.m_Area << " < " << m_MinimalSurface << ") for node " << nodeIt->m_Id << std::endl;
 				//std::cout << "Target : " << similar_node->m_Id << std::endl;
 				if(similar_node != nullptr)
 				{
-					auto nodeIn = nodeIt; //&(*nodeIt);
+					/*if(similar_node->GetFirstPixelCoords() == 472498){
+						std::cout << "Fusion entre : " << node->GetFirstPixelCoords() << " et " << similar_node->GetFirstPixelCoords() << std::endl;
+						std::cout << "ID : " << node->m_Id << "/" << similar_node->m_Id << std::endl;
+					}
+					if(similar_node->GetFirstPixelCoords() == 451503){
+											std::cout << "Fusion entre : " << node->GetFirstPixelCoords() << " et " << similar_node->GetFirstPixelCoords() << std::endl;
+											std::cout << "ID : " << node->m_Id << "/" << similar_node->m_Id << std::endl;
+											std::cout << "Aire : " << node->m_Attributes.m_Area << "/ " << similar_node->m_Attributes.m_Area << std::endl;
+					}*/
+					auto nodeIn = &(*node); //&(*nodeIt);
 					auto nodeOut = similar_node;
 
 					//Check ID, and eventually swap
-					if(nodeIn->m_Contour.GetStartingCoords() > nodeOut->m_Contour.GetStartingCoords())
+					if(nodeIn->GetFirstPixelCoords() > nodeOut->GetFirstPixelCoords())
 					{
+						/*if((node->GetFirstPixelCoords() == 472498) || similar_node->GetFirstPixelCoords() == 472498){
+							std::cout << "SWAP" << std::endl;
+						}
+						if((node->GetFirstPixelCoords() == 451503) || similar_node->GetFirstPixelCoords() == 451503){
+							std::cout << "SWAP" << std::endl;
+						}*/
 						//std::cout << "SWAP " << nodeIn->m_Id << " and " << nodeOut->m_Id << std::endl;
-						nodeIn = similar_node;
-						nodeOut = nodeIt;//&(*nodeIt);
+						auto tmp = nodeOut;
+						nodeOut = nodeIn;
+						nodeIn = tmp;//&(*nodeIt);
 					}
 
 					//Merge node
@@ -125,7 +466,15 @@ SmallRegionsMergingFilter<TGraph>
 
 					//Update attributes
 					//std::cout << "Update attributes " << std::endl;
-					UpdateSpecificAttributes(nodeIn, nodeOut);
+					//UpdateSpecificAttributes(nodeIn, nodeOut);
+					/*if((node->GetFirstPixelCoords() == 472498) || similar_node->GetFirstPixelCoords() == 472498){
+								std::cout << "nodeIn " << nodeIn->GetFirstPixelCoords() << std::endl;
+								std::cout << "New Area : " << nodeIn->m_Attributes.m_Area << std::endl;
+					}
+					if((node->GetFirstPixelCoords() == 451503) || similar_node->GetFirstPixelCoords() == 451503){
+													std::cout << "nodeIn " << nodeIn->GetFirstPixelCoords() << std::endl;
+													std::cout << "New Area : " << nodeIn->m_Attributes.m_Area << std::endl;
+					}*/
 
 					//Flag to indicate small region has been found (merge not over)
 					merge_over = false;
@@ -136,8 +485,10 @@ SmallRegionsMergingFilter<TGraph>
 	}
 
 	//Remove nodes who merged
-	std::cout << "Remove Nodes" << std::endl;
+	std::cout << "Remove Nodes (" << outputGraph->GetNumberOfNodes() << ")" << std::endl;
 	outputGraph->RemoveNodes();
+
+	std::cout << "After removes node : " << outputGraph->GetNumberOfNodes() << std::endl;
 
 	//Reconditionning graph
 	auto lambdaValide = [](NodeType& node){ node.m_Valid = true;};
@@ -152,6 +503,7 @@ typename SmallRegionsMergingFilter<TGraph>::NodeType*
 SmallRegionsMergingFilter<TGraph>
 ::GetMostSimilarNode(NodeType * node)
 {
+
 	auto outputGraph = const_cast< GraphType * > (this->GetOutput() );
 	double min_spec_distance = std::numeric_limits<double>::max();
 
@@ -165,6 +517,7 @@ SmallRegionsMergingFilter<TGraph>
 		auto target_node = outputGraph->GetNodeAt(edgeIt->m_TargetId);
 
 		if(target_node->m_Valid)
+		//if(!target_node->m_HasToBeRemoved)
 		{
 			//Compute Spectral Distance
 			double spec_distance(ComputeSpectralDistance(node, target_node));
@@ -201,9 +554,12 @@ void
 SmallRegionsMergingFilter<TGraph>
 ::Merge(NodeType* nodeIn, NodeType * nodeOut)
 {
-	//UpdateSpecificAttributes(nodeIn, nodeOut);
+	UpdateSpecificAttributes(nodeIn, nodeOut);
 	auto outputGraph = this->GetOutput();
 	outputGraph->Merge(nodeIn, nodeOut);
+
+	//nodeIn->m_Valid = true;
+
 }
 
 template< typename TGraph >
@@ -216,7 +572,8 @@ SmallRegionsMergingFilter<TGraph>
 	double area_2 = nodeOut->m_Attributes.m_Area;
 
 	nodeIn->m_Attributes.m_Area = area_1 + area_2;
-	//std::cout << "Old area " << area_1 << " New area : " << nodeIn->m_Attributes.m_Area << "(" << area_1 << " + " << area_2 << ")";
+	/*std::cout << "Old area " << area_1 << " New area : "
+			  << nodeIn->m_Attributes.m_Area << "(" << area_1 << " + " << area_2 << ")" << std::endl;*/
 
 	//Update average spectral value
 	//Number of bands
@@ -229,9 +586,8 @@ SmallRegionsMergingFilter<TGraph>
 
 		nodeIn->m_Attributes.m_AvgSpec[band] = (area_1*avgSpec_1 + area_2*avgSpec_2)/(area_1 + area_2);
 	}
-
-	nodeIn->m_Valid = true;
 }
+
 
 template< typename TGraph >
 float
@@ -254,6 +610,7 @@ SmallRegionsMergingFilter<TGraph>
 		spec_distance += (avgSpec_1 - avgSpec_2)*(avgSpec_1 - avgSpec_2);
 	}
 
+	/**TODO Maybe not usefull to use sqrt. We do not need the rea lvalue, only the square value is necesary to sort cost*/
 	return sqrt(spec_distance);
 }
 
@@ -292,3 +649,4 @@ SmallRegionsMergingFilter<TGraph>
 }//End otb
 
 #endif
+

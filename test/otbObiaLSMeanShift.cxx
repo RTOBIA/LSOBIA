@@ -58,8 +58,8 @@ int otbObiaLSMeanShift(int argc, char * argv[])
   lsMSFilter->SetSpectralRangeRamp(ranger);
   lsMSFilter->SetModeSearch(modeSearch);
   lsMSFilter->SetOutputDir(outDir);
-  lsMSFilter->SetWriteLabelImage(false);
-  lsMSFilter->SetWriteGraph(false);
+  lsMSFilter->SetWriteLabelImage(true);
+  lsMSFilter->SetWriteGraph(true);
   lsMSFilter->Update();
   
 
