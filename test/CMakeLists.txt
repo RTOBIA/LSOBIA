@@ -1,4 +1,16 @@
-otb_module_test()
+
+if (BUILD_TESTING)
+	otb_module_test()
+	# Handle multiple build environments
+	MESSAGE("REP : ${LSOBIA_BINARY_DIR}/Testing/Temporary/")
+	if(NOT OTB_SOURCE_DIR)
+	    set(TEMP_DIR ${LSOBIA_BINARY_DIR}/Testing/Temporary/)
+	else()
+	    otb_module_impl()
+	    set(TEMP_DIR ${TEMP})
+	endif()
+
+endif()
 
 
 # ----------------------------------------------------------------------------------------------
@@ -10,8 +22,8 @@ otb_module_test()
 otb_test_application(NAME apLSOBIA_BaatzOneProc
 	APP LSSegmentation
 	OPTIONS -io.im ${LSOBIA_SOURCE_DIR}/data/pleiades_1000_1000.tif
-	-io.out ${TEMP}
-	-io.temp ${TEMP}
+	-io.out ${TEMP_DIR}
+	-io.temp ${TEMP_DIR}
 	-algorithm baatz
 	-algorithm.baatz.numitfirstpartial 5
 	-algorithm.baatz.numitpartial 5
@@ -37,7 +49,7 @@ otb_module_target_label(otbLSOBIAConvertGraphToImageTestDriver)
 otb_add_test(NAME otbLSOBIAConvert COMMAND otbLSOBIAConvertGraphToImageTestDriver
              otbObiaConvertGraphToImage
              ${LSOBIA_SOURCE_DIR}/data/Graph_0_1.dat
-	     ${TEMP}/image_from_graph.tif)
+	     ${TEMP_DIR}/image_from_graph.tif)
 
 # ----------------------------------------------------------------------------------------------
 # Large Scale Mean Shift test driver
@@ -75,7 +87,7 @@ otb_module_target_label(otbLSOBIAReadGraphTestDriver)
 otb_add_test(NAME otbLSOBIAReadGraph COMMAND otbLSOBIAReadGraphTestDriver
              otbObiaReadGraph
              ${LSOBIA_SOURCE_DIR}/data/Graph_0_1.dat
-	     ${TEMP}/image_from_graph_without_gdal.tif)
+	     ${TEMP_DIR}/image_from_graph_without_gdal.tif)
 
 
 # ----------------------------------------------------------------------------------------------
