@@ -117,7 +117,8 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
 			auto nodeOut = outputGraph->GetNodeAt(nodeIn->m_Edges.front().m_TargetId);
 
 			auto cost = nodeIn->m_Edges.front().m_Attributes.m_MergingCost;
-			
+			(void) cost;
+
 			Merge(nodeIn, nodeOut);
 
 			merged = true;
@@ -161,7 +162,8 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
 
 
 	MergingCostValueType minCost;
-	uint64_t minNodeId, idx, minIdx;
+	// Fix : uninitialized variable
+	uint64_t minNodeId = outputGraph->GetNumberOfNodes()+1, idx, minIdx;
 
 	// The nodes must have a boolean attribute called m_CostUpdated.
 	for(auto nodeIt =outputGraph->Begin(); nodeIt != outputGraph->End(); nodeIt++)

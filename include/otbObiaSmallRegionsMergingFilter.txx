@@ -61,7 +61,7 @@ SmallRegionsMergingFilter<TGraph>
 	}
 	else
 	{
-		uint32_t current_iteration = 0;
+		int32_t current_iteration = 0;
 		while(current_iteration < m_NumberOfIterations)
 		{
 			std::cout << "Iteration merge " << current_iteration << std::endl;

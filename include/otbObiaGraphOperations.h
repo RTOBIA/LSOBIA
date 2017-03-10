@@ -137,8 +137,6 @@ namespace obia
       // of the tile with the adjacent tiles a node
       static std::unordered_map<CoordValueType, std::vector<NodeType*> > BuildBorderNodesMap(const GraphPointerType graph,
 											     const ProcessingTile& tile,
-											     const uint32_t tileWidth,
-											     const uint32_t tileHeight,
 											     const uint32_t nbTilesX,
 											     const uint32_t nbTilesY,
 											     const uint32_t inputLSImageWidth);

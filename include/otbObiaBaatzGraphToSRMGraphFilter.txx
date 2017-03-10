@@ -50,8 +50,10 @@ BaatzToSRMGraphFilter
 	//Looping across the nodes
 	for(auto nodeIt = inputPtr->Begin(); nodeIt != inputPtr->End(); nodeIt++)
 	{
-		//Create a new node
+		// Create a new node
 		auto new_node = convertInputNode(&(*nodeIt));
+		// Nothing is done on the output
+		(void) new_node;
 	}
 
 	//Release input graph

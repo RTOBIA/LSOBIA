@@ -16,7 +16,6 @@ int otbObiaConvertGraphToImage(int argc, char * argv[])
 	using InputImageType = otb::VectorImage<float, 2>;
 	using ImageToBaatz				   = otb::obia::ImageToBaatzGraphFilter<InputImageType>;
 	using GraphType                    = ImageToBaatz::OutputGraphType;
-	using GraphPointerType            = typename GraphType::Pointer;
 	using GraphOperationsType         = otb::obia::GraphOperations<GraphType>;
 
 

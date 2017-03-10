@@ -24,7 +24,6 @@ int otbObiaReadGraph(int argc, char * argv[])
 	using InputImageType               = otb::Image<float, 2>;
 	using ImageToBaatz				   = otb::obia::ImageToBaatzGraphFilter<InputImageType>;
 	using GraphType                    = ImageToBaatz::OutputGraphType;
-	using GraphPointerType             = typename GraphType::Pointer;
 	using GraphReader		   = otb::obia::GraphFileReader<GraphType>;
 	using LabelPixelType               = unsigned int;
 	using LabelImageType               = otb::Image< LabelPixelType, 2 >;

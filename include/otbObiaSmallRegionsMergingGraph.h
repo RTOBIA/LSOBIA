@@ -27,9 +27,25 @@ struct SRMEdgeAttribute : GraphAttribute
 
 	virtual uint64_t GetNumberOfBytesToSerialize() const;
 
-	virtual void Serialize(std::vector<char>& stream, uint64_t& position) const{}
+	virtual void Serialize(std::vector<char>& stream, uint64_t& position) const
+	{
+		AvoidCompilationWarings(stream, position);
+	}
 
-	virtual void DeSerialize(const std::vector<char>& stream, uint64_t& position){}
+	virtual void DeSerialize(const std::vector<char>& stream, uint64_t& position)
+	{
+		AvoidCompilationWarings(stream, position);
+	}
+
+private:
+	// Does nothing
+	virtual void AvoidCompilationWarings(const std::vector<char>& stream, uint64_t& position) const
+	{
+		// Avoid compilation warnings...
+		(void)stream;
+		(void)position;
+	}
+
 };
 
 struct SRMNodeAttribute : GraphAttribute

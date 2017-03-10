@@ -539,9 +539,6 @@ GraphOperations<TGraph>::GetListOfBorderNodes(const GraphPointerType graph,
 											  const uint32_t nbTilesY,
 											  const uint32_t inputLSImageWidth)
 {
-	// Local variable to represent the x and y coordinates of a border pixel
-  	uint32_t x, y;
-
 	// Lower and upper bounds of the tile without the margin
 	// Lower and upper bounds of the tile without the margin
 	const uint32_t lowerCol = tile.m_Frame.GetIndex(0);
@@ -790,9 +787,6 @@ GraphOperations<TGraph>::BuildBorderNodesMapForFinalAggregation(const GraphPoint
 							    								std::unordered_set<uint32_t>& colBounds,
 							    								const uint32_t inputLSImageWidth)
 {
-	// Local x,y coordinates.
-  uint32_t x, y;
-
   // Map : pix coords -> list of nodes.
   std::unordered_map<CoordValueType, std::vector< NodeType*> > borderNodeMap;
 
@@ -826,16 +820,12 @@ template <typename TGraph >
 std::unordered_map<CoordValueType, std::vector< typename GraphOperations<TGraph>::NodeType*> > 
 GraphOperations<TGraph>::BuildBorderNodesMap(const GraphPointerType graph,
 											 const ProcessingTile& tile,
-											 const uint32_t tileWidth,
-											 const uint32_t tileHeight,
 											 const uint32_t nbTilesX,
 											 const uint32_t nbTilesY,
 											 const uint32_t inputLSImageWidth)
 {
-  	uint32_t x, y;
   	std::unordered_set< uint32_t > rowBounds;
   	std::unordered_set< uint32_t > colBounds;
-
   	std::unordered_map<CoordValueType, std::vector< NodeType*> > borderNodeMap;
 
 	if(tile.m_Ty > 0)
@@ -914,7 +904,7 @@ GraphOperations<TGraph>
 
       		// Step 1: determine the node which will stay (the one with the lower id)
       		auto remainingNode = kv.second.front();
-      		uint64_t refStartingCoords = remainingNode->GetFirstPixelCoords();
+      		//uint64_t refStartingCoords = remainingNode->GetFirstPixelCoords();
 
       		// Step 2: Loop over the duplicated nodes
       		auto nodePtrIt = kv.second.begin();
@@ -939,8 +929,8 @@ GraphOperations<TGraph>
 	      			// Determine if the adjacent node of the duplicated node is an adjacent
 	      			// node of the reference node.
 	      			auto isAdjToRefNode = std::find_if(remainingNode->m_Edges.begin(), remainingNode->m_Edges.end(),
-						 				  [&](const EdgeType& edg)->bool{
-						   					return (graph->GetNodeAt(edg.m_TargetId))->GetFirstPixelCoords() == adjToDNode->GetFirstPixelCoords();
+						 				  [&](const EdgeType& edgIn)->bool{
+						   					return (graph->GetNodeAt(edgIn.m_TargetId))->GetFirstPixelCoords() == adjToDNode->GetFirstPixelCoords();
 					});
 
 	      			// Determine according to the previous operation if edges has to be created.
@@ -1080,9 +1070,9 @@ GraphOperations<TGraph>::DetectNewAdjacentNodes(std::unordered_map<CoordValueTyp
 					      	// Step 2: Add edges
 
 					      	// Edge : currBorderNode -> neighBorderNode
-					      	auto currToNeigh = currBorderNode->AddEdge();
-					      	currToNeigh->m_TargetId = neighBorderNode->m_Id;
-					      	currToNeigh->m_Boundary = boundary;
+					      	auto currToNeighIn = currBorderNode->AddEdge();
+					      	currToNeighIn->m_TargetId = neighBorderNode->m_Id;
+					      	currToNeighIn->m_Boundary = boundary;
 
 					      	// Edge : neighBorderNode -> currBorderNode
 					      	auto neighToCurr = neighBorderNode->AddEdge();

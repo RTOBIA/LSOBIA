@@ -29,9 +29,17 @@ struct BaatzEdgeAttribute : GraphAttribute
 
 	virtual uint64_t GetNumberOfBytesToSerialize() const;
 	
-	virtual void Serialize(std::vector<char>& stream, uint64_t& position) const{}
+	virtual void Serialize(std::vector<char>& stream, uint64_t& position) const
+	{
+		(void) stream;
+		(void) position;
+	}
 	
-	virtual void DeSerialize(const std::vector<char>& stream, uint64_t& position){}
+	virtual void DeSerialize(const std::vector<char>& stream, uint64_t& position)
+	{
+		(void) stream;
+		(void) position;
+	}
 };
 
 struct BaatzNodeAttribute : GraphAttribute

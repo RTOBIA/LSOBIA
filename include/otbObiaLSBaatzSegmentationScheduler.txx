@@ -114,6 +114,13 @@ LSBaatzSegmentationScheduler<TInputImage>
 			std::cout << "NO_AGGR_AND_SEG" << std::endl;
 			NoAggregationAndPartialSegmentation();
 			this->m_SplittedGraph = true;
+			break;
+			case SEG_STATE_UNDEF:
+			std::cout << "SEG_STATE_UNDEF, should stop" << std::endl;
+			break;
+			default:
+				std::cout << "DEFAULT state, should stop" << std::endl;
+			
 		}
 	}
 }
@@ -320,6 +327,9 @@ LSBaatzSegmentationScheduler<TInputImage>
 			return AGGR_NO_SEG;
 		else
 			return SEG_OVER_NO_AGGR;
+	}else
+	{
+		return SEG_STATE_UNDEF;
 	}
 
 }
@@ -634,9 +644,7 @@ LSBaatzSegmentationScheduler<TInputImage>
 
 				// Remove duplicated nodes
 				auto borderNodeMap = GraphOperationsType::BuildBorderNodesMap(this->m_Graph, 
-																			  tile, 
-																			  this->m_MaxTileSizeX, 
-																			  this->m_MaxTileSizeY,
+																			  tile,
 																			  this->m_NumberOfTilesX, 
 																			  this->m_NumberOfTilesY,
 																			  this->m_ImageWidth);
@@ -877,7 +885,7 @@ LSBaatzSegmentationScheduler<TInputImage>
 		std::vector< std::vector<char> > serializedOtherGraphs(mpiConfig->GetNbProcs() - 1, std::vector<char>(m_MaxNumberOfBytes, char()));
 		std::vector< int > numberOfRecvBytesPerGraph(mpiConfig->GetNbProcs()-1, 0);
 
-		for(int r = 1; r < mpiConfig->GetNbProcs(); r++)
+		for(unsigned int r = 1; r < mpiConfig->GetNbProcs(); r++)
 		{
 			serializedOtherGraphs[r-1].assign(m_MaxNumberOfBytes, char());
 			MPI_Irecv(&(serializedOtherGraphs[r-1][0]),
@@ -905,7 +913,7 @@ LSBaatzSegmentationScheduler<TInputImage>
 		}
 
 		// Deserialize and aggregate the graph into mainGraph
-		for(int r = 1; r < mpiConfig->GetNbProcs(); r++)
+		for(unsigned int r = 1; r < mpiConfig->GetNbProcs(); r++)
 		{
 			auto otherGraph = GraphOperationsType::DeSerializeGraph(serializedOtherGraphs[r-1]);
 			serializedOtherGraphs[r-1].clear();
@@ -916,10 +924,9 @@ LSBaatzSegmentationScheduler<TInputImage>
 		std::unordered_set< uint32_t > rowBounds;
 		std::unordered_set< uint32_t > colBounds;
 
-		uint32_t tid = 0;
-		for(uint32_t ty = 0; ty < this->m_NumberOfTilesY; ty++)
+		for(uint32_t ty = 0; ty < (unsigned int) this->m_NumberOfTilesY; ty++)
 		{
-			for(uint32_t tx = 0; tx < this->m_NumberOfTilesX; tx++)
+			for(uint32_t tx = 0; tx < (unsigned int) this->m_NumberOfTilesX; tx++)
 			{
 
 				if(ty > 0)

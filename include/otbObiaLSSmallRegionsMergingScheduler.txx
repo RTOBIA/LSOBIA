@@ -73,7 +73,6 @@ LSSmallRegionsMergingScheduler<TGraph>
 	uint32_t maxDepth = std::numeric_limits<uint32_t>::min();
 
 	//For each tile
-	uint32_t tid = 0;
 	for(auto& kv : this->m_TileMap)
 	{
 		uint32_t tx = kv.first % this->m_NumberOfTilesX;
@@ -275,9 +274,6 @@ LSSmallRegionsMergingScheduler<TGraph>
 		uint32_t ty = kv.first / this->m_NumberOfTilesX;
 
 		std::cout << "------ SHARE TUILE : " << ty << "_" << tx << " for processor : " << mpiConfig->GetMyRank()<< std::endl;
-		// Retrieve the tile by reference since it will be modified.
-		auto& tile = kv.second;
-
 		if(this->m_TileMap.size() > 1)
 		{
 			std::stringstream os;
@@ -424,13 +420,11 @@ LSSmallRegionsMergingScheduler<TGraph>
 		// Remove duplicated nodes
 		auto borderNodeMap = GraphOperationsType::BuildBorderNodesMap(this->m_Graph,
 																	  tile,
-																	  this->m_MaxTileSizeX,
-																	  this->m_MaxTileSizeY,
 																	  this->m_NumberOfTilesX,
 																	  this->m_NumberOfTilesY,
 																	  this->m_ImageWidth);
 		//std::cout << "Nombre avant : " <<  this->m_Graph->GetNumberOfNodes() << std::endl;
-		uint32_t nb_nodes_before = this->m_Graph->GetNumberOfNodes();
+		//uint32_t nb_nodes_before = this->m_Graph->GetNumberOfNodes();
 		GraphOperationsType::RemoveDuplicatedNodes(borderNodeMap, this->m_Graph, this->m_ImageWidth);
 
 		// Update edges

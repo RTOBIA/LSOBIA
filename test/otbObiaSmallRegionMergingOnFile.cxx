@@ -29,7 +29,6 @@ int otbObiaSmallRegionMergingOnFile(int argc, char * argv[])
 	using InputGraphType			  = otb::obia::Graph<otb::obia::Node < otb::obia::BaatzNodeAttribute,
 																		 	 otb::obia::BaatzEdgeAttribute> >;
 	using GraphPointerType 			  = typename InputGraphType::Pointer;
-	using LabelPixelType              = unsigned int;
 	using SmallRegionMergingFilter	= otb::obia::SmallRegionsMergingFilter<InputGraphType>;
 
 	//Lecture gu graphe
@@ -51,8 +50,8 @@ int otbObiaSmallRegionMergingOnFile(int argc, char * argv[])
 	SRMFilter->UpdateLargestPossibleRegion();
 
 
-	using LabelPixelType1 = unsigned int;
-	using LabelImageType = otb::Image< LabelPixelType1, 2 >;
+	using LabelPixelType = unsigned int;
+	using LabelImageType = otb::Image< LabelPixelType, 2 >;
 	using GraphToLabelImageFilterType = otb::obia::GraphToLabelImageFilter<InputGraphType, LabelImageType>;
 
 	using RGBPixelType = itk::RGBPixel<unsigned char>;
@@ -75,6 +74,6 @@ int otbObiaSmallRegionMergingOnFile(int argc, char * argv[])
 
 	std::cout << "End Write" <<std::endl;
 
-	  return EXIT_SUCCESS;
+        return EXIT_SUCCESS;
 }
 

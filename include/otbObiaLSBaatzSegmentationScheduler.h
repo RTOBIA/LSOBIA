@@ -80,7 +80,8 @@ private:
 		SEG_OVER_NO_AGGR, // Next step is to do nothing, segmentation is over and graphs cannot be merged
 		AGGR_AND_SEG, // Next step is merging the graphs and achieve the segmentation
 		NO_AGGR_AND_SEG,//No aggregation but keep segmenting
-		AGGR_NO_SEG // Next step is merging the graphs. 
+		AGGR_NO_SEG, // Next step is merging the graphs. 
+		SEG_STATE_UNDEF
 	};
 
   void RescaleGraph(ProcessingTile& tile);

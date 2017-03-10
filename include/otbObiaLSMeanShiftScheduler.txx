@@ -419,8 +419,6 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
 
 				std::unordered_map<CoordValueType, NodeType* > refBorderNodeMap;
 				std::vector< std::unordered_map<CoordValueType, NodeType* > > adjBorderNodeMaps(adjSubGraphs.size());
-				// Local x,y coordinates.
-  				uint32_t x, y;
   				// Loop over the nodes
 				for(auto nodeIt = this->m_Graph->Begin(); nodeIt != this->m_Graph->End(); nodeIt++)
 				{

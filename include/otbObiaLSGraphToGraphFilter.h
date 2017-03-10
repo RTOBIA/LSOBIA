@@ -97,17 +97,17 @@ public:
    /** Display function*/
    void DisplayAttributes();
 
-	/** Output directory where the final(s) graphs and the output label image (if necessary) are stored. */
-	std::string m_OutputDir;
-	bool m_SplittedGraph;
-	bool m_WriteGraph;
+    /** Output directory where the final(s) graphs and the output label image (if necessary) are stored. */
+    std::string m_OutputDir;
+    bool m_SplittedGraph;
+    bool m_WriteGraph;
 
 
-	/** Available memory in bytes (in the master node) */
-	uint64_t m_AvailableMemory;
+    /** Available memory in bytes (in the master node) */
+    uint64_t m_AvailableMemory;
 
-	/** The temporary directory to store intermediate results */
-	std::string m_TemporaryDirectory;
+    /** The temporary directory to store intermediate results */
+    std::string m_TemporaryDirectory;
 
     /** The projection ref */
     std::string m_ProjectionRef;
@@ -133,23 +133,23 @@ public:
     /** Number of spectral bands of the input large scale image */
     uint32_t m_NumberOfSpectralBands;
 
-	/** Tiles processed by this processor */
-	std::map< uint32_t, ProcessingTile > m_TileMap;
+    /** Tiles processed by this processor */
+    std::map< uint32_t, ProcessingTile > m_TileMap;
 
-	/** List of tiles per processor */
-	std::map< int, std::set<uint32_t> > m_TilesPerProcessor;
+    /** List of tiles per processor */
+    std::map< int, std::set<uint32_t> > m_TilesPerProcessor;
 
-	/** Maximum number of tiles for one processor */
-	uint32_t m_MaxNumberOfTilesPerProcessor;
+    /** Maximum number of tiles for one processor */
+    uint32_t m_MaxNumberOfTilesPerProcessor;
 
-	/** Width of the crown of pixels to consider around the tiles */
-	uint32_t m_PaddingValue;
+    /** Width of the crown of pixels to consider around the tiles */
+    uint32_t m_PaddingValue;
 
-	/**Input graph*/
-	InputGraphPointerType m_InputGraph;
+    /**Input graph*/
+    InputGraphPointerType m_InputGraph;
 
-	/**Output Graph*/
-	OutputGraphPointerType m_Graph;
+    /**Output Graph*/
+    OutputGraphPointerType m_Graph;
 
 private:
 

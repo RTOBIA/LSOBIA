@@ -13,10 +13,10 @@ namespace obia
   ::LSGraphToGraphFilter() :
   m_AvailableMemory(0),
   m_TemporaryDirectory(""),
-  m_MaxNumberOfTilesPerProcessor(0),
   m_OutputDir(""),
   m_SplittedGraph(false),
   m_WriteGraph(false),
+  m_MaxNumberOfTilesPerProcessor(0),
   m_PaddingValue(0),
   m_InputGraph(nullptr),
   m_Graph(nullptr)

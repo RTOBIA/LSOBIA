@@ -36,19 +36,16 @@ void
 GraphToImageFilter<TInputGraph, TOutputImage>::
 UpdateOutputInformation()
 {
-	std::cout<<"UpdateOutputInformation for the GraphToImage"<<std::endl;
 	Superclass::UpdateOutputInformation();
 	auto graph = this->GetInput();
 
 	typename OutputImageType::IndexType index;
 	typename OutputImageType::SizeType size;
 	typename OutputImageType::RegionType region;
-	typename OutputImageType::InternalPixelType noDataLabel = 0;
 
 	index[0] = 0; index[1] = 0;
 	size[0] = graph->GetImageWidth();
 	size[1] = graph->GetImageHeight();
-	std::cout<<"Graph size : "<<size[0]<<"; "<<size[1]<<std::endl;
 
 	region.SetIndex(index);
 	region.SetSize(size);

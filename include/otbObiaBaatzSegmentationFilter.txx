@@ -25,6 +25,7 @@ template< typename TCost, typename TGraph >
 bool
 BaatzMergingCost<TCost, TGraph>::ComputeMergingCostsForThisNode(NodeType* curNode)
 {
+	(void) curNode;
 	return true;
 }
 
@@ -32,6 +33,7 @@ template< typename TCost, typename TGraph >
 bool
 BaatzMergingCost<TCost, TGraph>::ComputeMergingCostsForThisAdjNode(NodeType* curNode)
 {
+	(void) curNode;
 	return true;
 }
 
@@ -76,13 +78,8 @@ BaatzMergingCost<TCost, TGraph>::ComputeMergingCost(NodeType* n1, NodeType* n2)
 
 	if(H < this->m_Threshold)
 	{
-		const float aArea = n1->m_Attributes.m_Area;
-		const float bArea = n2->m_Attributes.m_Area;
 		const float aPerimeter = n1->m_Attributes.m_Perimeter;
 		const float bPerimeter = n2->m_Attributes.m_Perimeter;
-
-		// Compute total area covered by both nodes
-		const float areaSum = aArea + bArea;
 
 		// Compute perimeter of the merged nodes
 		const float boundaryLength = (n1->FindEdge(n2->m_Id))->m_Boundary;
@@ -530,13 +527,8 @@ BaatzSegmentationFilter<TGraph>
 
 	if(H < this->m_Threshold)
 	{
-		const float aArea = n1->m_Attributes.m_Area;
-		const float bArea = n2->m_Attributes.m_Area;
 		const float aPerimeter = n1->m_Attributes.m_Perimeter;
 		const float bPerimeter = n2->m_Attributes.m_Perimeter;
-
-		// Compute total area covered by both nodes
-		const float areaSum = aArea + bArea;
 
 		// Compute perimeter of the merged nodes
 		const float boundaryLength = (n1->FindEdge(n2->m_Id))->m_Boundary;
