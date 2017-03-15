@@ -6,10 +6,8 @@ if (BUILD_TESTING)
 	if(NOT OTB_SOURCE_DIR)
 	    set(TEMP_DIR ${LSOBIA_BINARY_DIR}/Testing/Temporary/)
 	else()
-	    otb_module_impl()
 	    set(TEMP_DIR ${TEMP})
 	endif()
-
 endif()
 
 
