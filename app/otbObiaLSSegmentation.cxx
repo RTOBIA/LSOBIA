@@ -97,10 +97,6 @@ private:
 		AddParameter(ParameterType_Int,"processing.maxtilesizex","Maximum size of tiles along x axis");
 		AddParameter(ParameterType_Int,"processing.maxtilesizey","Maximum size of tiles along x axis");
 
-		// TODO : remove this? seems wrong
-		AddParameter(ParameterType_Int,"processing.numproc","Number of processors");
-		
-
 		/* TODO : remove this when the default values and choices have been implemented
 		MandatoryOff("fusion.sylvester.linearcombination.image");
 		AddParameter(ParameterType_Float,"fusion.glp.ratio","Resolutions ratio between the Panchromatic and the multispectral inputs");
@@ -122,19 +118,8 @@ private:
 	// Execute App
 	void DoExecute()
 	{
-		// TODO : remove this? seems wrong
-		auto mpiConfig = otb::MPIConfig::Instance();
-		int argc=3;
-		int numproc = GetParameterInt("processing.numproc");
-		stringstream ss;
-		ss << numproc;
-		std::string numprocStr = ss.str();
-		char* argvf[] = { "prog", "-np", &numprocStr[0]};
-		char** argv = argvf;
-		mpiConfig->Init(argc, argv);
-
-		/* Global parameters */
 		
+		/* Global parameters */
 		std::string filename = GetParameterString("io.im");
 		std::string outDir = GetParameterString("io.out");
 		std::string tmpDir = GetParameterString("io.temp");
