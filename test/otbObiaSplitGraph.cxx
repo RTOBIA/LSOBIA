@@ -44,7 +44,7 @@ int otbObiaSplitGraph(int argc, char * argv[])
 	std::cout << "Tile Size X " << tileSizeX << "/ Tile Size Y " << tileSizeY << std::endl;
 
 	std::stringstream os;
-	os << tmpDir << filename;
+	os << filename;
 
 	auto graph = GraphOperationsType::ReadGraphFromDisk(os.str());
 
@@ -98,21 +98,20 @@ int otbObiaSplitGraph(int argc, char * argv[])
 		std::cout << "Size margin 1 = " << tile.m_MarginValues[0] << std::endl;
 		std::cout << "Size margin 2 = " << tile.m_MarginValues[0] << std::endl;
 		std::cout << "Size margin 3 = " << tile.m_MarginValues[0] << std::endl;
+		std::cout << "Read graph from disk : " << os.str() << std::endl;
 		//Create a new graph
 		auto subGraph =  GraphOperationsType::ReadGraphFromDisk(os.str());
-		subGraph->SetImageWidth(1000);
-		subGraph->SetImageHeight(1000);
-		subGraph->SetNumberOfSpectralBands(4);
-		std::cout << "Nombre noeud : " << graph->GetNumberOfNodes() << std::endl;
-		std::cout << "Noeud 1 " << graph->GetNodeAt(0)->m_Attributes.m_Area << std::endl;
-		std::cout << "Image width " << graph->GetImageWidth() << std::endl;
+
+		std::cout << "Nombre noeud : " << subGraph->GetNumberOfNodes() << std::endl;
+		std::cout << "Noeud 1 " << subGraph->GetNodeAt(0)->m_Attributes.m_Area << std::endl;
+		std::cout << "Image width " << subGraph->GetImageWidth() << std::endl;
 
 		//remove nodes outside the tile
 		GraphOperationsType::RemoveUnstableNodes(subGraph, tile, subGraph->GetImageWidth());
 
 		//Write Graph to disk
 		std::stringstream oso;
-		oso << tmpDir << "Splitted_Graph_" << tile.m_Ty << "_" << tile.m_Tx << ".dat" ;
+		oso << tmpDir <<"/"<< "Splitted_Graph_" << tile.m_Ty << "_" << tile.m_Tx << ".dat" ;
 		GraphOperationsType::WriteGraphToDisk(subGraph, oso.str());
 
 		subGraph->Reset();

@@ -17,6 +17,9 @@ endif()
 # TODO : ADD: use all the available drivers to add tests
 # TODO : ADD: change app parameters to test both Baatz and MeanShift
 
+# ----------------------------------------------------------------------------------------------
+# Segmentation Application Tests
+# - Baatz Tests
 otb_test_application(NAME apLSOBIA_BaatzOneProc
 	APP LSSegmentation
 	OPTIONS -io.im ${LSOBIA_SOURCE_DIR}/data/pleiades_1000_1000.tif
@@ -28,6 +31,27 @@ otb_test_application(NAME apLSOBIA_BaatzOneProc
 	-algorithm.baatz.stopping 40
 	-algorithm.baatz.spectralweight 0.5
 	-algorithm.baatz.geomweight 0.5
+	-processing.memory 2000
+	-processing.maxtilesizex 1000
+	-processing.maxtilesizey 1000
+	)
+
+
+# ----------------------------------------------------------------------------------------------
+# Segmentation Application Tests
+# - Mean Shift Tests
+otb_test_application(NAME apLSOBIA_MeanShiftOneProc
+	APP LSSegmentation
+	OPTIONS -io.im ${LSOBIA_SOURCE_DIR}/data/pleiades_1000_1000.tif
+	-io.out ${TEMP_DIR}
+	-io.temp ${TEMP_DIR}
+	-algorithm meanshift
+	-algorithm.meanshift.maxiter 100
+	-algorithm.meanshift.spatialr 15
+	-algorithm.meanshift.spectralr 16
+	-algorithm.meanshift.threshold 0.01
+	-algorithm.meanshift.ranger 0
+	-algorithm.meanshift.modesearch "off"
 	-processing.memory 2000
 	-processing.maxtilesizex 1000
 	-processing.maxtilesizey 1000
@@ -51,6 +75,7 @@ otb_add_test(NAME otbLSOBIAConvert COMMAND otbLSOBIAConvertGraphToImageTestDrive
 
 # ----------------------------------------------------------------------------------------------
 # Large Scale Mean Shift test driver
+# TODO : add mpi test
 set(${otb-module}LSMeanShiftTests
     otbLSOBIALSMeanShiftTestDriver.cxx
     otbObiaLSMeanShift.cxx
@@ -60,8 +85,25 @@ add_executable(otbLSOBIALSMeanShiftTestDriver ${${otb-module}LSMeanShiftTests})
 target_link_libraries(otbLSOBIALSMeanShiftTestDriver ${${otb-module}-Test_LIBRARIES})
 otb_module_target_label(otbLSOBIALSMeanShiftTestDriver)
 
+otb_add_test(NAME otbLSOBIALSMeanShift COMMAND otbLSOBIALSMeanShiftTestDriver
+             otbObiaLSMeanShift
+             ${LSOBIA_SOURCE_DIR}/data/pleiades_1000_1000.tif
+             1000
+             1000
+             2000
+             ${TEMP_DIR}
+             100
+             15
+             16
+             0.1
+             0
+             0
+             ${TEMP_DIR}
+	     )
+
 # ----------------------------------------------------------------------------------------------
 # Large Scale Small Regions Merging test driver
+# TODO : add mpi test
 set(${otb-module}LSSmallRegionsMergingTests
     otbLSOBIALSSmallRegionsMergingTestDriver.cxx
     otbObiaLSSmallRegionsMerging.cxx
@@ -99,9 +141,17 @@ add_executable(otbLSOBIASmallRegionMergingOnFileTestDriver ${${otb-module}SmallR
 target_link_libraries(otbLSOBIASmallRegionMergingOnFileTestDriver ${${otb-module}-Test_LIBRARIES})
 otb_module_target_label(otbLSOBIASmallRegionMergingOnFileTestDriver)
 
+# TODO : add test when SmallRegionMerging is operational
+#otb_add_test(NAME otbLSOBIASmallRegionMergingOnFile COMMAND otbLSOBIASmallRegionMergingOnFileTestDriver
+#             otbObiaSmallRegionMergingOnFile
+#             ${LSOBIA_SOURCE_DIR}/data/Graph_0_0.dat
+#	     500
+#             ${TEMP_DIR}
+#             )
 
 # ----------------------------------------------------------------------------------------------
 # Image Smoothing test driver
+# TODO : implement driver and add tests
 set(${otb-module}SmoothImageTests
     otbLSOBIASmoothImageTestDriver.cxx
     otbObiaSmoothImage.cxx
@@ -124,5 +174,10 @@ add_executable(otbLSOBIASplitGraphTestDriver ${${otb-module}SplitGraphTests})
 target_link_libraries(otbLSOBIASplitGraphTestDriver ${${otb-module}-Test_LIBRARIES})
 otb_module_target_label(otbLSOBIASplitGraphTestDriver)
 
-
-
+otb_add_test(NAME otbLSOBIASplitGraph COMMAND otbLSOBIASplitGraphTestDriver
+             otbObiaSplitGraph
+             ${LSOBIA_SOURCE_DIR}/data/Graph_0_0.dat
+             ${TEMP_DIR}
+	     250
+             250
+             )
