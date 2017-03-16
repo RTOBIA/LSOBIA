@@ -249,6 +249,8 @@ LSBaatzSegmentationScheduler<TInputImage>
 
 				// Segmentation filter
 				auto baatzFilter = CreateFilter();
+				
+				baatzFilter->SetMaxNumberOfIterations(m_StartingNumberOfIterations);
 				// Baatz & Shäpe segmentation
 				/*auto baatzFilter = BaatzSegmentationFilterType::New();
 				baatzFilter->SetMaxNumberOfIterations(m_StartingNumberOfIterations);
