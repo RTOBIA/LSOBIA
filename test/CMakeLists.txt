@@ -31,7 +31,7 @@ otb_test_application(NAME apLSOBIA_BaatzOneProc
 	-processing.memory 2000
 	-processing.maxtilesizex 1000
 	-processing.maxtilesizey 1000
-	-processing.numproc 1)
+	)
 
 # ----------------------------------------------------------------------------------------------
 # Graph to image conversion test driver
