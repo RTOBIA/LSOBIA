@@ -12,7 +12,7 @@ How to use it
 LSOBIA provides an OTBApplication, LSSegmentation (Large Scale Segmentation).
 
 ```bash
-  otbcli_LSSegmentation -io.im ${INPUT_IMAGE_PATH} -io.out ${OUTPUT_DIRECTORY} -algorithm baatz -algorithm.baatz.numitfirstpartial 1 -algorithm.baatz.numitpartial 1 -algorithm.baatz.stopping 10 -algorithm.baatz.spectralweight 0.05 -algorithm.baatz.geomweight 0.95 -processing.memory 2000 -processing.maxtilesizex 1000 -processing.maxtilesizey 1000 -io.temp ${TEMP_DIRECTORY}
+  otbcli_LSSegmentation -io.im ${INPUT_IMAGE_PATH} -io.out ${OUTPUT_DIRECTORY} -algorithm baatz -algorithm.baatz.numitfirstpartial 1 -algorithm.baatz.numitpartial 1 -algorithm.baatz.stopping 10 -algorithm.baatz.spectralweight 0.05 -algorithm.baatz.geomweight 0.95 -processing.memory 2000 -processing.maxtilesizex 1000 -processing.maxtilesizey 1000 -io.temp ${TEMP_DIRECTORY} -processing.writeimages "on" -processing.writegraphs "on" -processing.aggregategraphs "on"
 ```
 
 This produces an image output containing labels of the Baatz Segmentation algorithm.

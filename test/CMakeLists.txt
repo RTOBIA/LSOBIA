@@ -31,9 +31,31 @@ otb_test_application(NAME apLSOBIA_BaatzOneProc
 	-algorithm.baatz.stopping 40
 	-algorithm.baatz.spectralweight 0.5
 	-algorithm.baatz.geomweight 0.5
+	-processing.writeimages "on"
+	-processing.writegraphs "on"
+	-processing.aggregategraphs "on"
 	-processing.memory 2000
 	-processing.maxtilesizex 1000
 	-processing.maxtilesizey 1000
+	)
+
+otb_test_application(NAME apLSOBIA_BaatzOneProcTiled
+	APP LSSegmentation
+	OPTIONS -io.im ${LSOBIA_SOURCE_DIR}/data/pleiades_1000_1000.tif
+	-io.out ${TEMP_DIR}
+	-io.temp ${TEMP_DIR}
+	-algorithm baatz
+	-algorithm.baatz.numitfirstpartial 5
+	-algorithm.baatz.numitpartial 5
+	-algorithm.baatz.stopping 40
+	-algorithm.baatz.spectralweight 0.5
+	-algorithm.baatz.geomweight 0.5
+	-processing.writeimages "on"
+	-processing.writegraphs "on"
+	-processing.aggregategraphs "on"
+	-processing.memory 2000
+	-processing.maxtilesizex 250
+	-processing.maxtilesizey 250
 	)
 
 
@@ -85,11 +107,6 @@ add_executable(otbLSOBIALSBaatzSegmentationTestDriver ${${otb-module}LSBaatzSegm
 target_link_libraries(otbLSOBIALSBaatzSegmentationTestDriver ${${otb-module}-Test_LIBRARIES})
 otb_module_target_label(otbLSOBIALSBaatzSegmentationTestDriver)
 
-#otb_add_test_mpi(NAME otbMPIConfigTest
-#   NBPROCS 2
-#   COMMAND otbMPIConfigTestDriver otbMPIConfigTest )
-
-
 otb_add_test(NAME otbLSOBIALSBaatzSegmentation COMMAND otbLSOBIALSBaatzSegmentationTestDriver
              otbObiaLSBaatzSegmentation
              ${LSOBIA_SOURCE_DIR}/data/pleiades_1000_1000.tif
@@ -103,6 +120,9 @@ otb_add_test(NAME otbLSOBIALSBaatzSegmentation COMMAND otbLSOBIALSBaatzSegmentat
              0.05
              0.95
              ${TEMP_DIR}
+	     "on"
+             "on"
+             "on"
 	     )
 
 otb_add_test_mpi(NAME otbLSOBIALSBaatzSegmentationMPI COMMAND otbLSOBIALSBaatzSegmentationTestDriver
@@ -119,12 +139,15 @@ otb_add_test_mpi(NAME otbLSOBIALSBaatzSegmentationMPI COMMAND otbLSOBIALSBaatzSe
              0.05
              0.95
              ${TEMP_DIR}
+	     "on"
+             "on"
+             "on"
 	     )
 
 
 # ----------------------------------------------------------------------------------------------
 # Large Scale Mean Shift test driver
-# TODO : add mpi test
+
 set(${otb-module}LSMeanShiftTests
     otbLSOBIALSMeanShiftTestDriver.cxx
     otbObiaLSMeanShift.cxx
@@ -149,6 +172,24 @@ otb_add_test(NAME otbLSOBIALSMeanShift COMMAND otbLSOBIALSMeanShiftTestDriver
              0
              ${TEMP_DIR}
 	     )
+
+otb_add_test_mpi(NAME otbLSOBIALSMeanShiftMPI COMMAND otbLSOBIALSMeanShiftTestDriver
+             NBPROCS 4
+             otbObiaLSMeanShift
+             ${LSOBIA_SOURCE_DIR}/data/pleiades_1000_1000.tif
+             1000
+             1000
+             2000
+             ${TEMP_DIR}
+             100
+             15
+             16
+             0.1
+             0
+             0
+             ${TEMP_DIR}
+	     )
+
 
 # ----------------------------------------------------------------------------------------------
 # Large Scale Small Regions Merging test driver
