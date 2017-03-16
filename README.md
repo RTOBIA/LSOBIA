@@ -2,9 +2,24 @@
 
 OTB Module providing Large Scale Object Based Image Analysis functionalities.
 
-Relies on OTB, MPI
+How to build it
+==============
+LSOBIA can be built like any other [otb remote module](https://wiki.orfeo-toolbox.org/index.php/How_to_write_a_remote_module)
+You can build it either from within OTB's sources or outside it.
 
-The code still has to be updated to be considered as a proper OTB Remote Module.
+How to use it
+============
+LSOBIA provides an OTBApplication, LSSegmentation (Large Scale Segmentation).
+
+```bash
+  otbcli_LSSegmentation -io.im ${INPUT_IMAGE_PATH} -io.out ${OUTPUT_DIRECTORY} -algorithm baatz -algorithm.baatz.numitfirstpartial 1 -algorithm.baatz.numitpartial 1 -algorithm.baatz.stopping 10 -algorithm.baatz.spectralweight 0.05 -algorithm.baatz.geomweight 0.95 -processing.memory 2000 -processing.maxtilesizex 1000 -processing.maxtilesizey 1000 -io.temp ${TEMP_DIRECTORY}
+```
+
+This produces an image output containing labels of the Baatz Segmentation algorithm.
+
+Dependencies
+===========
+[OTB](https://www.orfeo-toolbox.org/), MPI
 
 Licence
 =======
