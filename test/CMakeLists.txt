@@ -74,6 +74,55 @@ otb_add_test(NAME otbLSOBIAConvert COMMAND otbLSOBIAConvertGraphToImageTestDrive
 	     ${TEMP_DIR}/image_from_graph.tif)
 
 # ----------------------------------------------------------------------------------------------
+# Large Scale Baatz Segmentation test driver
+# TODO : add mpi test
+set(${otb-module}LSBaatzSegmentationTests
+    otbLSOBIALSBaatzSegmentationTestDriver.cxx
+    otbObiaLSBaatzSegmentation.cxx
+    )
+
+add_executable(otbLSOBIALSBaatzSegmentationTestDriver ${${otb-module}LSBaatzSegmentationTests})
+target_link_libraries(otbLSOBIALSBaatzSegmentationTestDriver ${${otb-module}-Test_LIBRARIES})
+otb_module_target_label(otbLSOBIALSBaatzSegmentationTestDriver)
+
+#otb_add_test_mpi(NAME otbMPIConfigTest
+#   NBPROCS 2
+#   COMMAND otbMPIConfigTestDriver otbMPIConfigTest )
+
+
+otb_add_test(NAME otbLSOBIALSBaatzSegmentation COMMAND otbLSOBIALSBaatzSegmentationTestDriver
+             otbObiaLSBaatzSegmentation
+             ${LSOBIA_SOURCE_DIR}/data/pleiades_1000_1000.tif
+             1000
+             1000
+             5
+             5
+             ${TEMP_DIR}
+             2000
+             40
+             0.05
+             0.95
+             ${TEMP_DIR}
+	     )
+
+otb_add_test_mpi(NAME otbLSOBIALSBaatzSegmentationMPI COMMAND otbLSOBIALSBaatzSegmentationTestDriver
+             NBPROCS 4
+             otbObiaLSBaatzSegmentation
+             ${LSOBIA_SOURCE_DIR}/data/pleiades_1000_1000.tif
+             250
+             250
+             5
+             5
+             ${TEMP_DIR}
+             2000
+             40
+             0.05
+             0.95
+             ${TEMP_DIR}
+	     )
+
+
+# ----------------------------------------------------------------------------------------------
 # Large Scale Mean Shift test driver
 # TODO : add mpi test
 set(${otb-module}LSMeanShiftTests

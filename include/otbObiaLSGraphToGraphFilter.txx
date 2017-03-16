@@ -94,9 +94,6 @@ LSGraphToGraphFilter<TInputGraph, TOutputGraph>
       std::stringstream in;
       in << m_TemporaryDirectory << "Graph_" << ty << "_" << tx << ".dat";
       m_Graph = GraphOperationsType::ReadGraphFromDisk(in.str());
-      m_Graph->SetImageWidth(m_ImageWidth);
-      m_Graph->SetImageHeight(m_ImageHeight);
-      m_Graph->SetNumberOfSpectralBands(m_NumberOfSpectralBands);
     }
 }
 

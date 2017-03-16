@@ -1012,7 +1012,9 @@ LSBaatzSegmentationScheduler<TInputImage>
 {
 	auto mpiConfig = MPIConfig::Instance();
 	auto mpiTools = MPITools::Instance();
-
+	std::cout<<"----------------------"<<std::endl;
+	std::cout<<"---ACHIEVING SEGMENTATION -"<<std::endl;
+	std::cout<<"----------------------"<<std::endl;
 	if(mpiConfig->GetMyRank() == 0 && m_AggregateGraphs)
 	{
 		std::cout << "Baatz Filter avec " << m_MaxNumberOfIterations + 1 - m_CurrentNumberOfIterations << std::endl;
