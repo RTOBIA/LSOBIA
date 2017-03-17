@@ -4,7 +4,8 @@ OTB Module providing Large Scale Object Based Image Analysis functionalities.
 
 Dependencies
 ===========
-[OTB](https://www.orfeo-toolbox.org/) and all its dependencies, MPI (developped and validated with mpich-3.2)
+* [OTB](https://www.orfeo-toolbox.org/)
+* MPI (developped and validated with mpich-3.2)
 
 
 How to build it
@@ -34,6 +35,14 @@ Simply add *mpirun -np ${NUM_PROC}*
 This produces an image output containing labels of the Baatz Segmentation algorithm.
 
 You can find useful application and binaries execution examples in the unitary tests. To enable these tests, simply build the module with BUILD_TESTING=ON.
+
+
+Output Samples
+==============
+
+
+Todo
+====
 
 
 Licence
