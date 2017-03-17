@@ -551,38 +551,38 @@ GraphOperations<TGraph>::GetListOfBorderNodes(const GraphPointerType graph,
 
     auto lambdaOp = [&](NodeType& node){
 
-	    if(!SpatialTools::IsBboxStrictlyInsideBoundaries(node.m_BoundingBox,
-		                                                    lowerCol,
-		                                                    lowerRow,
-		                                                    upperCol,
-		                                                    upperRow))
-	    {
-		// The node may not be strictly within the tile, it can overlap the borders.
-		std::unordered_set<CoordValueType> borderPixels;
-		node.m_Contour.GenerateBorderPixels(borderPixels, inputLSImageWidth);
+        if(!SpatialTools::IsBboxStrictlyInsideBoundaries(node.m_BoundingBox,
+                                                            lowerCol,
+                                                            lowerRow,
+                                                            upperCol,
+                                                            upperRow))
+        {
+        // The node may not be strictly within the tile, it can overlap the borders.
+        std::unordered_set<CoordValueType> borderPixels;
+        node.m_Contour.GenerateBorderPixels(borderPixels, inputLSImageWidth);
 
-		// Loop over the pixels
-		for(const auto& pix : borderPixels)
-		{
+        // Loop over the pixels
+        for(const auto& pix : borderPixels)
+        {
 
-		    if(SpatialTools::IsPixelAtTileBorder(pix,
-		                                         tile.m_Tx,
-		                                         tile.m_Ty,
-		                                         lowerCol,
-		                                         lowerRow,
-		                                         upperCol,
-		                                         upperRow,
-		                                         nbTilesX,
-		                                         nbTilesY,
-		                                         inputLSImageWidth))
-		    {
-		        listOfBorderNodes.push_back(&node);
-		        break;
-		    }            
+            if(SpatialTools::IsPixelAtTileBorder(pix,
+                                                 tile.m_Tx,
+                                                 tile.m_Ty,
+                                                 lowerCol,
+                                                 lowerRow,
+                                                 upperCol,
+                                                 upperRow,
+                                                 nbTilesX,
+                                                 nbTilesY,
+                                                 inputLSImageWidth))
+            {
+                listOfBorderNodes.push_back(&node);
+                break;
+            }            
 
-		} // end for(const auto& pix : borderPixels)
+        } // end for(const auto& pix : borderPixels)
 
-	    }
+        }
 
     }; // end of lambdaOp
 

@@ -15,11 +15,10 @@ namespace obia
 template< typename TInputGraph, typename TOutputGraph>
 class LSGraphToGraphFilter : public itk::LightObject
 {
-
 public:
 
    /** Standard class alias */
-   using Self 	      = LSGraphToGraphFilter;
+   using Self         = LSGraphToGraphFilter;
    using SuperClass   = itk::Object;
    using Pointer      = itk::SmartPointer< Self >;
    using ConstPointer = itk::SmartPointer< const Self >;
@@ -65,8 +64,8 @@ public:
    virtual ~LSGraphToGraphFilter();
 
    /**
-	Abstract method that computes the initial width of padding crown to consider around
-	the tiles to be processed.
+    Abstract method that computes the initial width of padding crown to consider around
+    the tiles to be processed.
     */
    virtual void ComputePaddingValue() = 0;
 
@@ -80,11 +79,11 @@ public:
    virtual void PreProcessing();
 
    /**
-	   Simple method that writes a graph if the number of tiles to be processed per
-	   processor is greater than 1.
+       Simple method that writes a graph if the number of tiles to be processed per
+       processor is greater than 1.
     */
    void WriteGraphIfNecessary(const unsigned int ty,
-			                   const unsigned int tx);
+                               const unsigned int tx);
 
    /**
        Simple method that loads a graph if the number of tiles per processor is

@@ -45,7 +45,7 @@ public:
 
 
 /** \class GraphFileReader
- *	\brief Base class for all process objects that output graph data.
+ *    \brief Base class for all process objects that output graph data.
  *
  * GraphFileReader is the base class for all process objects that output
  * graph data. Specifically, this class defines the GetOutput() method
@@ -56,35 +56,35 @@ class GraphFileReader : public otb::obia::GraphSource<TOutputGraph>
 {
 public:
 
-	/** Standard class alias. */
-	using Self         = GraphFileReader;
-	using Superclass   = itk::ProcessObject;
-	using Pointer      = itk::SmartPointer<Self>;
-	using ConstPointer = itk::SmartPointer< const Self >;
+    /** Standard class alias. */
+    using Self         = GraphFileReader;
+    using Superclass   = itk::ProcessObject;
+    using Pointer      = itk::SmartPointer<Self>;
+    using ConstPointer = itk::SmartPointer< const Self >;
 
-	/** Method for creation through the object factory. */
-	itkNewMacro(Self);
-	/** Run-time type information (and related methods). */
-	itkTypeMacro(GraphFileReader, ProcessObject);
+    /** Method for creation through the object factory. */
+    itkNewMacro(Self);
+    /** Run-time type information (and related methods). */
+    itkTypeMacro(GraphFileReader, ProcessObject);
 
-	/** Some convenient alias */
-	using OutputGraphType = TOutputGraph;
+    /** Some convenient alias */
+    using OutputGraphType = TOutputGraph;
 
-	/** */
-	void SetFileName(std::string extendedFileName)
-	{
-		m_FileName = extendedFileName;
-	}
+    /** */
+    void SetFileName(std::string extendedFileName)
+    {
+        m_FileName = extendedFileName;
+    }
 
 protected:
 
     /** Does the real work */
-	virtual void GenerateData();
-	GraphFileReader();
-  	virtual ~GraphFileReader() {}
+    virtual void GenerateData();
+    GraphFileReader();
+      virtual ~GraphFileReader() {}
     virtual void PrintSelf(std::ostream& os, itk::Indent indent) const ITK_OVERRIDE;
 
-	virtual void UpdateOutputInformation();
+    virtual void UpdateOutputInformation();
 private:
     /** Test whether the given filename exist and it is readable,
         this is intended to be called before attempting to use

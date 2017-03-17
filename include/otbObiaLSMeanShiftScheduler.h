@@ -12,11 +12,11 @@ namespace otb
 namespace obia
 {
 
-  template< typename TInputImage, typename TLabelPixel>
-    class LSMeanShiftScheduler : public LSImageToGraphScheduler< TInputImage,
+template< typename TInputImage, typename TLabelPixel>
+class LSMeanShiftScheduler : public LSImageToGraphScheduler< TInputImage,
     typename LabelImageToGraphFilter<TLabelPixel>::OutputGraphType >
-  {
-  public:
+{
+    public:
 
     /** Some convenient class alias */
     using InputImageType = TInputImage;
@@ -36,7 +36,7 @@ namespace obia
     using GraphOperationsType = GraphOperations<OutputGraphType>;
 
     /** Standard class alias */
-    using Self 	       = LSMeanShiftScheduler;    
+    using Self            = LSMeanShiftScheduler;    
     using SuperClass   = LSImageToGraphScheduler<InputImageType, OutputGraphType>;
     using Pointer      = itk::SmartPointer< Self >;
     using ConstPointer = itk::SmartPointer< const Self >; 
@@ -55,7 +55,7 @@ namespace obia
     inline void SetModeSearch(const bool modeSearch){ m_ModeSearch = modeSearch; }
 
 
-  protected:
+protected:
     
     LSMeanShiftScheduler();
     virtual ~LSMeanShiftScheduler();
@@ -64,9 +64,9 @@ namespace obia
     virtual void GenerateData();
 
     /** 
-	Compute the stability margin of the Mean-Shift algorithm using
-	the Connected Component algorithm. (Refer to the publication of
-	David Youssefi and Julien Michel).
+    Compute the stability margin of the Mean-Shift algorithm using
+    the Connected Component algorithm. (Refer to the publication of
+    David Youssefi and Julien Michel).
      */
     virtual void ComputePaddingValue();
 
@@ -76,7 +76,7 @@ namespace obia
     /** Achieve the construction of the nodes located at the borders of the graph */
     void PostProcessing();
 
-  private:
+private:
 
     void ComputeExtractionParametersForCC(ProcessingTile& tile,
                                           uint32_t& startX,
@@ -117,7 +117,7 @@ namespace obia
     // The shared buffer that can be accessed by other processors
     std::vector< char > m_SharedBuffer;
 
-  }; 
+}; 
 
 } // end of namespace obia
 } // end of namespace otb
