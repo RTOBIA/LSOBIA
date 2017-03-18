@@ -53,7 +53,7 @@ Parameters:
 ```
 
 ### Multiprocessor execution
-*
+
 Simply add *mpirun -np ${NUM_PROC}* 
 
 ```bash
