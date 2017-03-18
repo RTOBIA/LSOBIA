@@ -72,9 +72,10 @@ You can find useful application and binaries execution examples in the unitary t
 
 ## Baatz segmentation
 
-The next image is obtained with the previous Monoprocessor command ran on the [sample image data/pleiades_1000_1000.tif](data/pleiades_1000_1000.tif) : 
+The next image is obtained with the previous Monoprocessor command ran on a sample image
 
-![baatz-segmentation](https://cloud.githubusercontent.com/assets/26165185/24074026/b7a80e6e-0c01-11e7-8d09-a98da0f14157.jpg)
+![input file](https://cloud.githubusercontent.com/assets/26165185/24074238/073c72b4-0c05-11e7-82e3-497a28d10db1.png) : 
+![baatz-segmentation](https://cloud.githubusercontent.com/assets/26165185/24074247/3a061d62-0c05-11e7-9266-31a16d203afc.jpg)
 
 
 # TODO
