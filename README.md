@@ -21,7 +21,7 @@ LSOBIA provides an OTBApplication, LSSegmentation (Large Scale Segmentation).
 Monoprocessor execution :
 
 ```bash
-  otbcli_LSSegmentation -io.im ${INPUT_IMAGE_PATH} -io.out ${OUTPUT_DIRECTORY} -algorithm baatz -algorithm.baatz.numitfirstpartial 1 -algorithm.baatz.numitpartial 1 -algorithm.baatz.stopping 10 -algorithm.baatz.spectralweight 0.05 -algorithm.baatz.geomweight 0.95 -processing.memory 2000 -processing.maxtilesizex 1000 -processing.maxtilesizey 1000 -io.temp ${TEMP_DIRECTORY} -processing.writeimages "on" -processing.writegraphs "on" -processing.aggregategraphs "on"
+  otbcli_LSSegmentation "-io.im" "${INPUT_IMAGE}" "-io.out" "${OUTPUT_DIRECTORY}" "-io.temp" "${TEMP}" "-algorithm" "baatz" "-algorithm.baatz.numitfirstpartial" "5" "-algorithm.baatz.numitpartial" "5" "-algorithm.baatz.stopping" "40" "-algorithm.baatz.spectralweight" "0.5" "-algorithm.baatz.geomweight" "0.5" "-algorithm.baatz.aggregategraphs" "on" "-processing.writeimages" "on" "-processing.writegraphs" "on" "-processing.memory" "2000" "-processing.maxtilesizex" "1000" "-processing.maxtilesizey" "1000"
 ```
 
 Multiprocessor execution :
@@ -29,7 +29,7 @@ Multiprocessor execution :
 Simply add *mpirun -np ${NUM_PROC}* 
 
 ```bash
-  mpirun -np 4 otbcli_LSSegmentation -io.im ${INPUT_IMAGE_PATH} -io.out ${OUTPUT_DIRECTORY} -algorithm baatz -algorithm.baatz.numitfirstpartial 1 -algorithm.baatz.numitpartial 1 -algorithm.baatz.stopping 10 -algorithm.baatz.spectralweight 0.05 -algorithm.baatz.geomweight 0.95 -processing.memory 2000 -processing.maxtilesizex 1000 -processing.maxtilesizey 1000 -io.temp ${TEMP_DIRECTORY} -processing.writeimages "on" -processing.writegraphs "on" -processing.aggregategraphs "on"
+  mpirun -np 4 otbcli_LSSegmentation "-io.im" "${INPUT_IMAGE}" "-io.out" "${OUTPUT_DIRECTORY}" "-io.temp" "${TEMP}" "-algorithm" "baatz" "-algorithm.baatz.numitfirstpartial" "5" "-algorithm.baatz.numitpartial" "5" "-algorithm.baatz.stopping" "40" "-algorithm.baatz.spectralweight" "0.5" "-algorithm.baatz.geomweight" "0.5" "-algorithm.baatz.aggregategraphs" "on" "-processing.writeimages" "on" "-processing.writegraphs" "on" "-processing.memory" "2000" "-processing.maxtilesizex" "1000" "-processing.maxtilesizey" "1000"
 ```
 
 This produces an image output containing labels of the Baatz Segmentation algorithm.
