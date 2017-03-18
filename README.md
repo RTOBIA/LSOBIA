@@ -1,25 +1,22 @@
-# LSOBIA
+LSOBIA
+======
 
 OTB Module providing Large Scale Object Based Image Analysis functionalities.
 
-Dependencies
-===========
+# Dependencies
 * [OTB](https://www.orfeo-toolbox.org/)
 * MPI (developped and validated with mpich-3.2)
 
-
-How to build it
-==============
+# How to build it
 LSOBIA can be built like any other [otb remote module](https://wiki.orfeo-toolbox.org/index.php/How_to_write_a_remote_module)
 You can build it either from within OTB's sources or outside it.
 
 
-How to use it
-============
+# How to use it
 
-# LSSegmentation
+## LSSegmentation
 
-## Parameters
+### Parameters
 LSOBIA provides an OTBApplication, LSSegmentation (Large Scale Segmentation).
 
 ```bash
@@ -49,14 +46,14 @@ Parameters:
         -inxml                             <string>         Load otb application from xml file  (optional, off by default)
 ```
 
-## Monoprocessor execution
+### Monoprocessor execution
 
 ```bash
   otbcli_LSSegmentation "-io.im" "${INPUT_IMAGE}" "-io.out" "${OUTPUT_DIRECTORY}" "-io.temp" "${TEMP}" "-algorithm" "baatz" "-algorithm.baatz.numitfirstpartial" "5" "-algorithm.baatz.numitpartial" "5" "-algorithm.baatz.stopping" "40" "-algorithm.baatz.spectralweight" "0.5" "-algorithm.baatz.geomweight" "0.5" "-algorithm.baatz.aggregategraphs" "on" "-processing.writeimages" "on" "-processing.writegraphs" "on" "-processing.memory" "2000" "-processing.maxtilesizex" "1000" "-processing.maxtilesizey" "1000"
 ```
 
-## Multiprocessor execution
-
+### Multiprocessor execution
+*
 Simply add *mpirun -np ${NUM_PROC}* 
 
 ```bash
@@ -65,20 +62,25 @@ Simply add *mpirun -np ${NUM_PROC}*
 
 This produces an image output containing labels of the Baatz Segmentation algorithm.
 
-# LSSmallRegionMerging
+## LSSmallRegionMerging
 
-# Other binaries
+## Other binaries
 You can find useful application and binaries execution examples in the unitary tests. To enable these tests, simply build the module with BUILD_TESTING=ON.
 
 
-Output Samples
-==============
+# Output Samples
+
+## Baatz segmentation
+
+The next image is obtained with the previous Monoprocessor command : 
+
+![baatz-segmentation](https://cloud.githubusercontent.com/assets/26165185/24074026/b7a80e6e-0c01-11e7-8d09-a98da0f14157.jpg)
 
 
-Todo
-====
+# TODO
+* Implement an application for small region merging algorithms
+* Implement an application for polygon simplification
 
 
-Licence
-=======
+# Licence
 Please see the license for legal issues on the use of the software.
