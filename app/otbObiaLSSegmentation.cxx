@@ -76,13 +76,18 @@ private:
 
 		AddParameter(ParameterType_Int,"algorithm.baatz.numitfirstpartial","Number of iterations for first partial segmentation");
 		SetDefaultParameterInt("algorithm.baatz.numitfirstpartial",  1);
+                MandatoryOff("algorithm.baatz.numitfirstpartial");
 		AddParameter(ParameterType_Int,"algorithm.baatz.numitpartial","Number of iterations for partial segmentation");
+                MandatoryOff("algorithm.baatz.numitpartial");
 		SetDefaultParameterInt("algorithm.baatz.numitpartial",  1);
 		AddParameter(ParameterType_Float,"algorithm.baatz.stopping","Value for stopping criterion");
+                MandatoryOff("algorithm.baatz.stopping");
 		SetDefaultParameterFloat("algorithm.baatz.stopping",  40.);
 		AddParameter(ParameterType_Float,"algorithm.baatz.spectralweight","Value for spectral weight");
 		SetDefaultParameterFloat("algorithm.baatz.spectralweight",  0.05);
+                MandatoryOff("algorithm.baatz.spectralweight");
 		AddParameter(ParameterType_Float,"algorithm.baatz.geomweight","Value for geometric (shape) weight");
+                MandatoryOff("algorithm.baatz.geomweight");
 		SetDefaultParameterFloat("algorithm.baatz.geomweight",  0.95);
 
 		//AddParameter(ParameterType_InputVectorData,"algorithm.baatz.bandweights", "optional band weights");
@@ -90,10 +95,15 @@ private:
 
 		AddParameter(ParameterType_Int,"algorithm.meanshift.maxiter","max number of iterations");
 		AddParameter(ParameterType_Float,"algorithm.meanshift.spatialr","Spatial bandwidth");
+                MandatoryOff("algorithm.meanshift.spatialr");
 		AddParameter(ParameterType_Float,"algorithm.meanshift.spectralr","Spectral bandwidth");
+                MandatoryOff("algorithm.meanshift.spectralr");
 		AddParameter(ParameterType_Float,"algorithm.meanshift.threshold","Threshold");
+                MandatoryOff("algorithm.meanshift.threshold");
 		AddParameter(ParameterType_Float,"algorithm.meanshift.ranger","Spectral range ramp");
+                MandatoryOff("algorithm.meanshift.ranger");
 		AddParameter(ParameterType_Choice,"algorithm.meanshift.modesearch","Activation of search mode");
+                MandatoryOff("algorithm.meanshift.modesearch");
 		AddChoice("algorithm.meanshift.modesearch.on","Activated");
 		AddChoice("algorithm.meanshift.modesearch.off","Deactivated");
 
@@ -109,6 +119,7 @@ private:
 		AddChoice("processing.writegraphs.on","Activated");
 		AddChoice("processing.writegraphs.off","Deactivated");
 		AddParameter(ParameterType_Choice,"algorithm.baatz.aggregategraphs","Aggregation of graph traces");
+                MandatoryOff("algorithm.baatz.aggregategraphs");
 		AddChoice("algorithm.baatz.aggregategraphs.on","Activated");
 		AddChoice("algorithm.baatz.aggregategraphs.off","Deactivated");
 
