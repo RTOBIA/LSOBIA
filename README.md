@@ -16,15 +16,46 @@ You can build it either from within OTB's sources or outside it.
 
 How to use it
 ============
+
+# LSSegmentation
+
+## Parameters
 LSOBIA provides an OTBApplication, LSSegmentation (Large Scale Segmentation).
 
-Monoprocessor execution :
+```bash
+Parameters: 
+        -progress                          <boolean>        Report progress 
+        -io.im                             <string>         Input image path  (mandatory)
+        -io.out                            <string>         Output directory  (mandatory)
+        -io.temp                           <string>         Directory used for temporary data  (mandatory)
+        -algorithm                         <string>         Segmentation algorithm name [baatz/meanshift] (mandatory, default value is baatz)
+        -algorithm.baatz.numitfirstpartial <int32>          Number of iterations for first partial segmentation  (optional, on by default, default value is 1)
+        -algorithm.baatz.numitpartial      <int32>          Number of iterations for partial segmentation  (optional, on by default, default value is 1)
+        -algorithm.baatz.stopping          <float>          Value for stopping criterion  (optional, on by default, default value is 40)
+        -algorithm.baatz.spectralweight    <float>          Value for spectral weight  (optional, on by default, default value is 0.05)
+        -algorithm.baatz.geomweight        <float>          Value for geometric (shape) weight  (optional, on by default, default value is 0.95)
+        -algorithm.baatz.aggregategraphs   <string>         Aggregation of graph traces [on/off] (optional, off by default, default value is on)
+        -algorithm.meanshift.maxiter       <int32>          max number of iterations  (mandatory)
+        -algorithm.meanshift.spatialr      <float>          Spatial bandwidth  (optional, off by default)
+        -algorithm.meanshift.spectralr     <float>          Spectral bandwidth  (optional, off by default)
+        -algorithm.meanshift.threshold     <float>          Threshold  (optional, off by default)
+        -algorithm.meanshift.ranger        <float>          Spectral range ramp  (optional, off by default)
+        -algorithm.meanshift.modesearch    <string>         Activation of search mode [on/off] (optional, off by default, default value is on)
+        -processing.memory                 <int32>          Maximum memory to be used on the main node  (mandatory)
+        -processing.maxtilesizex           <int32>          Maximum size of tiles along x axis  (mandatory)
+        -processing.maxtilesizey           <int32>          Maximum size of tiles along x axis  (mandatory)
+        -processing.writeimages            <string>         Activation of image traces [on/off] (mandatory, default value is on)
+        -processing.writegraphs            <string>         Activation of graph traces [on/off] (mandatory, default value is on)
+        -inxml                             <string>         Load otb application from xml file  (optional, off by default)
+```
+
+## Monoprocessor execution
 
 ```bash
   otbcli_LSSegmentation "-io.im" "${INPUT_IMAGE}" "-io.out" "${OUTPUT_DIRECTORY}" "-io.temp" "${TEMP}" "-algorithm" "baatz" "-algorithm.baatz.numitfirstpartial" "5" "-algorithm.baatz.numitpartial" "5" "-algorithm.baatz.stopping" "40" "-algorithm.baatz.spectralweight" "0.5" "-algorithm.baatz.geomweight" "0.5" "-algorithm.baatz.aggregategraphs" "on" "-processing.writeimages" "on" "-processing.writegraphs" "on" "-processing.memory" "2000" "-processing.maxtilesizex" "1000" "-processing.maxtilesizey" "1000"
 ```
 
-Multiprocessor execution :
+## Multiprocessor execution
 
 Simply add *mpirun -np ${NUM_PROC}* 
 
@@ -34,6 +65,9 @@ Simply add *mpirun -np ${NUM_PROC}*
 
 This produces an image output containing labels of the Baatz Segmentation algorithm.
 
+# LSSmallRegionMerging
+
+# Other binaries
 You can find useful application and binaries execution examples in the unitary tests. To enable these tests, simply build the module with BUILD_TESTING=ON.
 
 
