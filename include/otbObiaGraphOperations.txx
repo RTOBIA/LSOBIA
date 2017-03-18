@@ -499,7 +499,7 @@ GraphOperations<TGraph>::WriteGraphToDisk(const GraphPointerType graph,
 
 template< typename TGraph >
 typename GraphOperations<TGraph>::GraphPointerType
-GraphOperations<TGraph>::ReadGraphFromDisk(const std::string inputPath)
+GraphOperations<TGraph>::ReadGraphFromDisk(const std::string & inputPath)
 {
     // Open the file stream
     std::ifstream inFile(inputPath, std::ios::in | std::ios::binary);
@@ -933,23 +933,23 @@ GraphOperations<TGraph>
                                                return (graph->GetNodeAt(edgIn.m_TargetId))->GetFirstPixelCoords() == adjToDNode->GetFirstPixelCoords();
                     });
 
-                      // Determine according to the previous operation if edges has to be created.
-                      bool createEdge = (isAdjToRefNode == remainingNode->m_Edges.end() ) ? true : false;
+                    // Determine according to the previous operation if edges has to be created.
+                    bool createEdge = (isAdjToRefNode == remainingNode->m_Edges.end() ) ? true : false;
 
-                      // Can safely remove the edge between the duplicated node and its adjacent node.
-                      adjToDNode->m_Edges.erase(edgItAdjToDNode);
+                    // Can safely remove the edge between the duplicated node and its adjacent node.
+                    adjToDNode->m_Edges.erase(edgItAdjToDNode);
 
-                      if(createEdge)
+                    if(createEdge)
                     {
-                          // Create an edge: refNode -> adjToDNode
-                          auto refToAdj = remainingNode->AddEdge();
-                          refToAdj->m_TargetId = adjToDNode->m_Id;
-                          refToAdj->m_Boundary = boundary;
+                        // Create an edge: refNode -> adjToDNode
+                        auto refToAdj = remainingNode->AddEdge();
+                        refToAdj->m_TargetId = adjToDNode->m_Id;
+                        refToAdj->m_Boundary = boundary;
 
-                          // Create an edge: adjToDNode -> refNode
-                          auto adjToRef = adjToDNode->AddEdge();
-                          adjToRef->m_TargetId = remainingNode->m_Id;
-                          adjToRef->m_Boundary = boundary;
+                        // Create an edge: adjToDNode -> refNode
+                        auto adjToRef = adjToDNode->AddEdge();
+                        adjToRef->m_TargetId = remainingNode->m_Id;
+                        adjToRef->m_Boundary = boundary;
 
                     } // end if(isAdjToRefNode == adjToDNode->m_Edges.end())        
 
@@ -959,13 +959,13 @@ GraphOperations<TGraph>
 
             } // end for(; nodePtrIt != kv.second.end(); nodePtrIt++)
 
-              // Remove the pixels of those duplicated nodes (they must all have the same set of pixels)
-              std::unordered_set< CoordValueType > borderPixels;
-              remainingNode->m_Contour.GenerateBorderPixels(borderPixels, inputLSImageWidth);
-              for(const auto& pix : borderPixels)
+            // Remove the pixels of those duplicated nodes (they must all have the same set of pixels)
+            std::unordered_set< CoordValueType > borderPixels;
+            remainingNode->m_Contour.GenerateBorderPixels(borderPixels, inputLSImageWidth);
+            for(const auto& pix : borderPixels)
             {
 
-                  pixelsToRemove.insert(pix);
+                pixelsToRemove.insert(pix);
     
             } // end for(const auto& pix : borderPixels)
 
@@ -975,9 +975,10 @@ GraphOperations<TGraph>
 
     // Remove the pixels of the duplicated node from the
     // map.
-      for(const auto& pix : pixelsToRemove)
+    for(const auto& pix : pixelsToRemove)
     {
-          if(borderNodeMap.find(pix) != borderNodeMap.end())
+        // TODO : cppcheck tells us this check is useless, remove?
+        if(borderNodeMap.find(pix) != borderNodeMap.end())
         {
               borderNodeMap.erase(pix);
         }

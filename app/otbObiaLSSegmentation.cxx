@@ -108,9 +108,9 @@ private:
 		AddParameter(ParameterType_Choice,"processing.writegraphs","Activation of graph traces");
 		AddChoice("processing.writegraphs.on","Activated");
 		AddChoice("processing.writegraphs.off","Deactivated");
-		AddParameter(ParameterType_Choice,"processing.aggregategraphs","Aggregation of graph traces");
-		AddChoice("processing.aggregategraphs.on","Activated");
-		AddChoice("processing.aggregategraphs.off","Deactivated");
+		AddParameter(ParameterType_Choice,"algorithm.baatz.aggregategraphs","Aggregation of graph traces");
+		AddChoice("algorithm.baatz.aggregategraphs.on","Activated");
+		AddChoice("algorithm.baatz.aggregategraphs.off","Deactivated");
 
 
 		/* TODO : remove this when the default values and choices have been implemented
@@ -143,7 +143,6 @@ private:
 		unsigned long int memory = GetParameterInt("processing.memory");
 		bool writeImages = false;
 		bool writeGraphs = false;
-		bool aggregateGraphs = false;
 
 		switch (GetParameterInt("processing.writeimages")) {
 			case ON:
@@ -161,51 +160,37 @@ private:
 				writeGraphs = false;
 				break;
 		}
-		switch (GetParameterInt("processing.aggregategraphs")) {
-			case ON:
-				aggregateGraphs = true;
-				break;
-			case OFF:
-				aggregateGraphs = false;
-				break;
-		}
 		
-		// TODO : factorize parameter setup to avoid creating both filters
 		// BAATZ
 		using InputImageType = otb::VectorImage<float, 2>;
 		using LSBaatzSegmentationSchedulerType = otb::obia::LSBaatzSegmentationScheduler<InputImageType>;
-		auto lsBaatzFilter = LSBaatzSegmentationSchedulerType::New();
-		uint32_t nbStartingIterations;
-		uint32_t nbPartialIterations;
-		float threshold;
-		float spectralW;
-		float shapeW;
-		std::vector<float> bandWeights;
 
 		// MEANSHIFT
 		using LabelPixelType              = unsigned int;
 		using LSMeanShiftSchedulerType       = otb::obia::LSMeanShiftScheduler<InputImageType, LabelPixelType>;
-		auto lsMSFilter = LSMeanShiftSchedulerType::New();
-		unsigned int maxIter;
-		unsigned int spatialr;
-		float spectralr;
-		float ranger;
-		bool modeSearch = false;
-			
-
-
 
 		switch(GetParameterInt("algorithm"))
 		{
 			case ALG_BAATZ :
 			{
-				nbStartingIterations = GetParameterInt("algorithm.baatz.numitfirstpartial");
-				nbPartialIterations = GetParameterInt("algorithm.baatz.numitpartial");
-				threshold = GetParameterFloat("algorithm.baatz.stopping");
+		                bool aggregateGraphs = false;
+		                switch (GetParameterInt("algorithm.baatz.aggregategraphs"))
+                                {
+			            case ON:
+				        aggregateGraphs = true;
+				        break;
+				    case OFF:
+					aggregateGraphs = false;
+				        break;
+			        }
+                                uint32_t nbStartingIterations = GetParameterInt("algorithm.baatz.numitfirstpartial");
+				uint32_t nbPartialIterations = GetParameterInt("algorithm.baatz.numitpartial");
+				float threshold = GetParameterFloat("algorithm.baatz.stopping");
 				threshold = threshold * threshold;
-				spectralW = GetParameterFloat("algorithm.baatz.spectralweight");
-				shapeW = GetParameterFloat("algorithm.baatz.geomweight");
+				float spectralW = GetParameterFloat("algorithm.baatz.spectralweight");
+				float shapeW = GetParameterFloat("algorithm.baatz.geomweight");
 
+                                auto lsBaatzFilter = LSBaatzSegmentationSchedulerType::New();
 				lsBaatzFilter->SetFileName(filename);
 				lsBaatzFilter->SetMaxTileSizeX(maxTileWidth);
 				lsBaatzFilter->SetMaxTileSizeY(maxTileHeight);
@@ -218,6 +203,7 @@ private:
 				lsBaatzFilter->SetShapeWeight(shapeW);
 				lsBaatzFilter->SetWriteLabelImage(writeImages);
 				lsBaatzFilter->SetWriteGraph(writeGraphs);
+				lsBaatzFilter->SetAggregateGraphs(aggregateGraphs);
 				lsBaatzFilter->SetOutputDir(outDir);
 				lsBaatzFilter->Update();
 
@@ -225,20 +211,19 @@ private:
 			}
 			case ALG_MEANSHIFT : 
 			{
-				maxIter = GetParameterInt("algorithm.meanshift.maxiter");
-				spatialr = GetParameterFloat("algorithm.meanshift.spatialr");
-				spectralr = GetParameterFloat("algorithm.meanshift.spectralr");
-				threshold = GetParameterFloat("algorithm.meanshift.threshold");
-				ranger = GetParameterFloat("algorithm.meanshift.ranger");
+				unsigned int maxIter = GetParameterInt("algorithm.meanshift.maxiter");
+				unsigned int spatialr = GetParameterFloat("algorithm.meanshift.spatialr");
+				float spectralr = GetParameterFloat("algorithm.meanshift.spectralr");
+				float threshold = GetParameterFloat("algorithm.meanshift.threshold");
+				float ranger = GetParameterFloat("algorithm.meanshift.ranger");
+                                bool modeSearch = false;
 				switch (GetParameterInt("algorithm.meanshift.modesearch")) {
 					case ON:
 						modeSearch = true;
-						break;
-					case OFF:
-						modeSearch = false;
-						break;
+                                        default:
+                                                modeSearch = false;
 				}
-
+                                auto lsMSFilter = LSMeanShiftSchedulerType::New();
 				lsMSFilter->SetFileName(filename);
 				lsMSFilter->SetMaxTileSizeX(maxTileWidth);
 				lsMSFilter->SetMaxTileSizeY(maxTileHeight);

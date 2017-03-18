@@ -49,7 +49,7 @@ LSImageToGraphScheduler<TInputImage, TOutputGraph>
 template< typename TInputImage, typename TOutputGraph>
 void
 LSImageToGraphScheduler<TInputImage, TOutputGraph>
-::SetOutputDir(const std::string path)
+::SetOutputDir(const std::string & path)
 {
     m_OutputDir = path;
     if( !m_OutputDir.empty() && m_OutputDir[m_OutputDir.size() - 1] != '/')

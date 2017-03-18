@@ -47,7 +47,7 @@ public:
     void SetFileName(const std::string& filename);
     void SetWriteLabelImage(bool v){ m_WriteLabelImage = v;}
     void SetWriteGraph(bool v){ m_WriteGraph = v;}
-    void SetOutputDir(const std::string path);
+    void SetOutputDir(const std::string & path);
     void SetMaxTileSizeX(const uint32_t MaxTileSizeX);
     void SetMaxTileSizeY(const uint32_t MaxTileSizeY);
 

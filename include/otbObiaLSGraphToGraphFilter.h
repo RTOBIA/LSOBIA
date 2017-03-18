@@ -46,11 +46,11 @@ public:
    void SetNumberOfTilesY(const uint32_t NumberOfTilesY){m_NumberOfTilesY = NumberOfTilesY;};
    void SetMaxTileSizeX(const uint32_t MaxTileSizeX){m_MaxTileSizeX = MaxTileSizeX;};
    void SetMaxTileSizeY(const uint32_t MaxTileSizeY){m_MaxTileSizeY = MaxTileSizeY;};
-   void SetProjectionRef(const std::string ProjectionRef){m_ProjectionRef = ProjectionRef;};
+   void SetProjectionRef(const std::string & ProjectionRef){m_ProjectionRef = ProjectionRef;};
    void SetImageWidth(const uint32_t ImageWidth){m_ImageWidth = ImageWidth;};
    void SetImageHeight(const uint32_t ImageHeight){m_ImageHeight = ImageHeight;};
-   void SetTileMap(const std::map< uint32_t, ProcessingTile > tileMap){ m_TileMap = tileMap;};
-   void SetTilesPerProcessor(const std::map< int, std::set<uint32_t> > tilesPerProcessor){ m_TilesPerProcessor = tilesPerProcessor;};
+   void SetTileMap(const std::map< uint32_t, ProcessingTile > & tileMap){ m_TileMap = tileMap;};
+   void SetTilesPerProcessor(const std::map< int, std::set<uint32_t> > & tilesPerProcessor){ m_TilesPerProcessor = tilesPerProcessor;};
    void SetNumberOfSpectralBands(const uint32_t NumberOfSpectralBands){m_NumberOfSpectralBands = NumberOfSpectralBands;};
    void SetMaxNumberOfTilesPerProcessor(const uint32_t MaxNumberOfTilesPerProcessor){m_MaxNumberOfTilesPerProcessor = MaxNumberOfTilesPerProcessor;};
 

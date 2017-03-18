@@ -87,7 +87,7 @@ namespace obia
                    const std::string& outputPath);
 
       // This methods loads a graph from its storage file on the disk.
-      static GraphPointerType ReadGraphFromDisk(const std::string inputPath);
+      static GraphPointerType ReadGraphFromDisk(const std::string & inputPath);
 
       static std::vector<char> ReadSerializedMarginFromDisk(const std::string& inputPath);
 
@@ -183,7 +183,6 @@ namespace obia
     static GraphImageInfo ReadGraphHeader(const std::string & inputPath)
     {
         std::cout<<"Appel a ReadGraphHeader..."<<std::endl;
-        std::string headerPath(inputPath);
         std::string inputPathHeader = inputPath + ".hdr";
         GraphImageInfo info;
         std::string line;
@@ -208,10 +207,10 @@ namespace obia
             return info;
         }else
         {
-            return GraphImageInfo();
             std::cout<<"Probleme d'ouverture du fichier"<<std::endl;
+            return GraphImageInfo();
         }
-      }
+    }
 
 };
 

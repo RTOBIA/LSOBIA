@@ -44,12 +44,7 @@ BaatzMergingCost<TCost, TGraph>::ComputeMergingCost(NodeType* n1, NodeType* n2)
     const float aArea = n1->m_Attributes.m_Area;
     const float bArea = n2->m_Attributes.m_Area;
     const float areaSum = aArea + bArea;
-
-
-    float mean;
-    float stddev;
-    float stddevTmp;
-    float colorF;
+    
     float colorH = 0.0f;
 
     if(m_BandWeights.size() < 1)
@@ -59,6 +54,11 @@ BaatzMergingCost<TCost, TGraph>::ComputeMergingCost(NodeType* n1, NodeType* n2)
 
     for (uint32_t band = 0; band < n1->m_Attributes.m_AvgSpec.size(); band++)
     {
+        float mean;
+        float stddev;
+        float stddevTmp;
+        float colorF;
+
         mean = (n1->m_Attributes.m_AvgSpec[band] * aArea + n2->m_Attributes.m_AvgSpec[band] * bArea) / areaSum;
         stddevTmp = aArea * n1->m_Attributes.m_StdSpec[band] * n1->m_Attributes.m_StdSpec[band];
         stddevTmp += bArea * n2->m_Attributes.m_StdSpec[band] * n2->m_Attributes.m_StdSpec[band];
@@ -198,12 +198,12 @@ BaatzUpdateAttribute<TGraph>
     const float bArea = static_cast<float>(nodeOut->m_Attributes.m_Area);
     const float a_sum = aArea + bArea;
 
-    float mean;
-    float stddev;
-    float stddevTmp;
-
     for(unsigned int b = 0; b < nodeIn->m_Attributes.m_AvgSpec.size(); ++b)
     {
+        float mean;
+        float stddev;
+        float stddevTmp;
+
         mean = (nodeIn->m_Attributes.m_AvgSpec[b] * aArea + nodeOut->m_Attributes.m_AvgSpec[b] * bArea) / a_sum;
         stddevTmp = aArea * nodeIn->m_Attributes.m_StdSpec[b] * nodeIn->m_Attributes.m_StdSpec[b];
         stddevTmp += bArea * nodeOut->m_Attributes.m_StdSpec[b] * nodeOut->m_Attributes.m_StdSpec[b];
@@ -343,12 +343,11 @@ BaatzSegmentationFilter<TGraph>
     const float bArea = static_cast<float>(nodeOut->m_Attributes.m_Area);
     const float a_sum = aArea + bArea;
 
-    float mean;
-    float stddev;
-    float stddevTmp;
-
     for(unsigned int b = 0; b < nodeIn->m_Attributes.m_AvgSpec.size(); ++b)
     {
+        float mean;
+        float stddev;
+        float stddevTmp;
         mean = (nodeIn->m_Attributes.m_AvgSpec[b] * aArea + nodeOut->m_Attributes.m_AvgSpec[b] * bArea) / a_sum;
         stddevTmp = aArea * nodeIn->m_Attributes.m_StdSpec[b] * nodeIn->m_Attributes.m_StdSpec[b];
         stddevTmp += bArea * nodeOut->m_Attributes.m_StdSpec[b] * nodeOut->m_Attributes.m_StdSpec[b];
@@ -423,10 +422,6 @@ BaatzSegmentationFilter<TGraph>
 {
     auto outputGraph = this->GetOutput();
 
-    float min_cost;
-    uint64_t min_id  = 0;
-    std::size_t idx, min_idx;
-
     for(auto nodeIt =outputGraph->Begin(); nodeIt != outputGraph->End(); nodeIt++)
     {
         for(auto edgeIt = nodeIt->m_Edges.begin(); edgeIt != nodeIt->m_Edges.end(); edgeIt++)
@@ -437,10 +432,10 @@ BaatzSegmentationFilter<TGraph>
 
     for(auto nodeIt =outputGraph->Begin(); nodeIt != outputGraph->End(); nodeIt++)
     {
-
-        min_cost = std::numeric_limits<float>::max();
+        float min_cost = std::numeric_limits<float>::max();
+        std::size_t idx, min_idx;
         idx = 0;
-        min_idx = 0;
+        uint64_t min_id = 0;
         nodeIt->m_HasToBeRemoved = false;
         nodeIt->m_Valid = true;
 
@@ -460,7 +455,6 @@ BaatzSegmentationFilter<TGraph>
                 adjNodeToCurr->m_Attributes.m_CostUpdated = true;
             }
 
-
             if(edgeIt->m_Attributes.m_MergingCost < min_cost)
             {
                 min_cost = edgeIt->m_Attributes.m_MergingCost;
@@ -479,8 +473,7 @@ BaatzSegmentationFilter<TGraph>
             idx++;    
         }
 
-        std::swap(nodeIt->m_Edges[0], nodeIt->m_Edges[min_idx]);
-                
+        std::swap(nodeIt->m_Edges[0], nodeIt->m_Edges[min_idx]);       
     }
 
     // Reset the merge flag for all the regions.
@@ -500,15 +493,14 @@ BaatzSegmentationFilter<TGraph>
     const float bArea = n2->m_Attributes.m_Area;
     const float areaSum = aArea + bArea;
 
-
-    float mean;
-    float stddev;
-    float stddevTmp;
-    float colorF;
     float colorH = 0.0f;
 
     for (uint32_t band = 0; band < n1->m_Attributes.m_AvgSpec.size(); band++)
     {
+        float mean;
+        float stddev;
+        float stddevTmp;
+        float colorF;
         mean = (n1->m_Attributes.m_AvgSpec[band] * aArea + n2->m_Attributes.m_AvgSpec[band] * bArea) / areaSum;
         stddevTmp = aArea * n1->m_Attributes.m_StdSpec[band] * n1->m_Attributes.m_StdSpec[band];
         stddevTmp += bArea * n2->m_Attributes.m_StdSpec[band] * n2->m_Attributes.m_StdSpec[band];

@@ -206,13 +206,13 @@ template< typename TNode >
 void
 Graph<TNode>::MergeEdge(NodeType* nodeIn, NodeType* nodeOut)
 {
-    // Local variable to record the boundary length of nodeOut with its
-    // adjacent node.
-    uint32_t boundary;
-
     // Explore the edges of nodeOut
     for(auto edgeIt = nodeOut->m_Edges.begin(); edgeIt != nodeOut->m_Edges.end(); edgeIt++)
     {
+        // Local variable to record the boundary length of nodeOut with its
+        // adjacent node.
+        uint32_t boundary;
+        
         // Retrieve the adjacent node of nodeOut -> adjNodeOut
         auto adjNodeOut = GetNodeAt(edgeIt->m_TargetId);
 

@@ -31,9 +31,9 @@ otb_test_application(NAME apLSOBIA_BaatzOneProc
 	-algorithm.baatz.stopping 40
 	-algorithm.baatz.spectralweight 0.5
 	-algorithm.baatz.geomweight 0.5
+	-algorithm.baatz.aggregategraphs "on"
 	-processing.writeimages "on"
 	-processing.writegraphs "on"
-	-processing.aggregategraphs "on"
 	-processing.memory 2000
 	-processing.maxtilesizex 1000
 	-processing.maxtilesizey 1000
@@ -50,9 +50,9 @@ otb_test_application(NAME apLSOBIA_BaatzOneProcTiled
 	-algorithm.baatz.stopping 40
 	-algorithm.baatz.spectralweight 0.5
 	-algorithm.baatz.geomweight 0.5
+	-algorithm.baatz.aggregategraphs "on"
 	-processing.writeimages "on"
 	-processing.writegraphs "on"
-	-processing.aggregategraphs "on"
 	-processing.memory 2000
 	-processing.maxtilesizex 250
 	-processing.maxtilesizey 250

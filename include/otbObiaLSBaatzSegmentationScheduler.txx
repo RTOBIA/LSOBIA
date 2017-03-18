@@ -446,7 +446,6 @@ LSBaatzSegmentationScheduler<TInputImage>
     const uint32_t nbAdjacencyLayers = pow(2, m_PartialNumberOfIterations + 1) - 2;
 
     // the local serialized margin
-    std::vector< char > serializedMargin;
     m_MaxNumberOfBytes = 0;
 
     uint32_t tid = 0;

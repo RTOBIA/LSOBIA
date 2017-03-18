@@ -40,7 +40,7 @@ public:
     void SetBandWeights(std::vector<float> bandWeights){ m_BandWeights = bandWeights;};
     void SetThreshold(float threshold){m_Threshold = threshold;};
 
-    const ValueType GetMax(){return m_MaxCost;};
+    const ValueType GetMax() const {return m_MaxCost;};
     bool ComputeMergingCostsForThisNode(NodeType* curNode);
     bool ComputeMergingCostsForThisAdjNode(NodeType* curNode);
     ValueType ComputeMergingCost(NodeType* NodeIn, NodeType* NodeOut);

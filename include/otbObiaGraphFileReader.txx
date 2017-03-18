@@ -205,7 +205,6 @@ void GraphFileReader< TOutputGraph >
             << std::endl;
         e.SetDescription(msg.str().c_str());
         throw e;
-        return;
     }
 
     // Test if the file can be open for reading access.
@@ -223,7 +222,6 @@ void GraphFileReader< TOutputGraph >
                 << std::endl;
             otb::obia::GraphFileReaderException e(__FILE__, __LINE__, msg.str().c_str(), ITK_LOCATION);
             throw e;
-            return;
         }
         readTester.close();
     }
