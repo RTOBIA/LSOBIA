@@ -57,7 +57,7 @@ Parameters:
 Simply add *mpirun -np ${NUM_PROC}* 
 
 ```bash
-  mpirun -np 4 otbcli_LSSegmentation "-io.im" "${INPUT_IMAGE}" "-io.out" "${OUTPUT_DIRECTORY}" "-io.temp" "${TEMP}" "-algorithm" "baatz" "-algorithm.baatz.numitfirstpartial" "5" "-algorithm.baatz.numitpartial" "5" "-algorithm.baatz.stopping" "40" "-algorithm.baatz.spectralweight" "0.5" "-algorithm.baatz.geomweight" "0.5" "-algorithm.baatz.aggregategraphs" "on" "-processing.writeimages" "on" "-processing.writegraphs" "on" "-processing.memory" "2000" "-processing.maxtilesizex" "1000" "-processing.maxtilesizey" "1000"
+  mpirun -np 4 otbcli_LSSegmentation "-io.im" "${INPUT_IMAGE}" "-io.out" "${OUTPUT_DIRECTORY}" "-io.temp" "${TEMP}" "-algorithm" "baatz" "-algorithm.baatz.numitfirstpartial" "5" "-algorithm.baatz.numitpartial" "5" "-algorithm.baatz.stopping" "40" "-algorithm.baatz.spectralweight" "0.5" "-algorithm.baatz.geomweight" "0.5" "-algorithm.baatz.aggregategraphs" "on" "-processing.writeimages" "on" "-processing.writegraphs" "on" "-processing.memory" "2000" "-processing.maxtilesizex" "250" "-processing.maxtilesizey" "250"
 ```
 
 This produces an image output containing labels of the Baatz Segmentation algorithm.
