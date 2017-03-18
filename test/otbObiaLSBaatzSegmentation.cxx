@@ -62,7 +62,7 @@ int otbObiaLSBaatzSegmentation(int argc, char *argv[])
 
     if(argc >= 15)
     {
-        for(int i = 15; i < argc; i++)
+        for(int i = 15; i < argc; ++i)
         {
             bandWeights.push_back(atof(argv[i]));
         }

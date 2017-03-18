@@ -1,4 +1,3 @@
-
 if (BUILD_TESTING)
 	otb_module_test()
 	# Handle multiple build environments
@@ -12,10 +11,7 @@ endif()
 
 
 # ----------------------------------------------------------------------------------------------
-# TODO : ADD: memory check tests (valgrind)
-# TODO : ADD: otb_add_test_mpi (see OTBMPIConfig examples)
-# TODO : ADD: use all the available drivers to add tests
-# TODO : ADD: change app parameters to test both Baatz and MeanShift
+# TODO : ADD: memory check tests (valgrind)?
 
 # ----------------------------------------------------------------------------------------------
 # Segmentation Application Tests
@@ -97,7 +93,6 @@ otb_add_test(NAME otbLSOBIAConvert COMMAND otbLSOBIAConvertGraphToImageTestDrive
 
 # ----------------------------------------------------------------------------------------------
 # Large Scale Baatz Segmentation test driver
-# TODO : add mpi test
 set(${otb-module}LSBaatzSegmentationTests
     otbLSOBIALSBaatzSegmentationTestDriver.cxx
     otbObiaLSBaatzSegmentation.cxx
@@ -147,7 +142,6 @@ otb_add_test_mpi(NAME otbLSOBIALSBaatzSegmentationMPI COMMAND otbLSOBIALSBaatzSe
 
 # ----------------------------------------------------------------------------------------------
 # Large Scale Mean Shift test driver
-
 set(${otb-module}LSMeanShiftTests
     otbLSOBIALSMeanShiftTestDriver.cxx
     otbObiaLSMeanShift.cxx

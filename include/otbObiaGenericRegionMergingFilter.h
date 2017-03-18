@@ -1,6 +1,5 @@
 #ifndef __otbObiaGenericRegionMergingFilter_h
 #define __otbObiaGenericRegionMergingFilter_h
-#include "otbObiaGraph.h"
 #include "otbObiaGraphToGraphFilter.h"
 
 namespace otb

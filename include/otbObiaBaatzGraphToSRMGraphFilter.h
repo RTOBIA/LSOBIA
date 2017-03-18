@@ -19,14 +19,12 @@ class BaatzToSRMGraphFilter : public GraphToGraphFilter<InputGraphType, OutputGr
 public:
 
     /** Some convenient alias */
-
     using InputGraphPointer    = typename InputGraphType::Pointer;
     using InputGraphConstPointer = typename InputGraphType::ConstPointer;
     using InputNodeType         = typename InputGraphType::NodeType;
     using OutputNodeType       = typename OutputGraphType::NodeType;
 
     /** Standard class alias */
-
     using Self       = BaatzToSRMGraphFilter;
     using Superclass   = GraphToGraphFilter<InputGraphType, OutputGraphType>;
     using Pointer    = itk::SmartPointer<Self>;

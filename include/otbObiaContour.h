@@ -89,7 +89,7 @@ public:
         {
             if(m_CurOffset >= 6)
             {
-                m_RunningPacketIt++;
+                ++m_RunningPacketIt;
                 m_CurOffset = 0;
             }
             else

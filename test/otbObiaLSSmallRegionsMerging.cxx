@@ -46,7 +46,7 @@ int otbObiaLSSmallRegionsMerging(int argc, char * argv[])
 
 	if(argc >= 13)
 	  {
-		for(int i = 12; i < argc; i++)
+		for(int i = 12; i < argc; ++i)
 		  {
 		bandWeights.push_back(atof(argv[i]));
 		  }
