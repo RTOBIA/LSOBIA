@@ -172,7 +172,7 @@ namespace obia
             content << graph->GetImageWidth()<<"\n";
             content << graph->GetNumberOfSpectralBands()<<"\n";
             content << graph->GetProjectionRef()<<"\n";
-            std::cout<<"Writing graph : "<<content.str()<<std::endl;
+
             std::ofstream header;
             header.open(headerPath);
             header << content.str();
@@ -182,7 +182,6 @@ namespace obia
 
     static GraphImageInfo ReadGraphHeader(const std::string & inputPath)
     {
-        std::cout<<"Appel a ReadGraphHeader..."<<std::endl;
         std::string inputPathHeader = inputPath + ".hdr";
         GraphImageInfo info;
         std::string line;
@@ -207,7 +206,6 @@ namespace obia
             return info;
         }else
         {
-            std::cout<<"Probleme d'ouverture du fichier"<<std::endl;
             return GraphImageInfo();
         }
     }

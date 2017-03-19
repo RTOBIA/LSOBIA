@@ -49,21 +49,17 @@ void
 GraphFileReader< TOutputGraph >::
 UpdateOutputInformation()
 {
-    std::cout<<"GraphFileReader::"<<__func__<<std::endl;
     // Mise a jour du graphe en fonction de son header
     typename TOutputGraph::Pointer graph = this->GetOutput();
     GraphImageInfo info = GraphOperations<TOutputGraph>::ReadGraphHeader(m_FileName);
-    std::cout<<"Info : "<<info.m_width<<" "<<info.m_height<<" "<<info.m_nbBands<<" "<<std::endl;
     graph->SetImageWidth(info.m_width);
     graph->SetImageHeight(info.m_height);
     graph->SetNumberOfSpectralBands(info.m_nbBands);
     graph->SetProjectionRef(info.m_projectionRef);
 
-    itk::ModifiedTimeType               t1;
+    itk::ModifiedTimeType t1;
     t1 = this->GetMTime();
     graph->SetPipelineMTime(t1);
-    // Update time!!
-
 }
 
 
@@ -71,19 +67,16 @@ template< typename TOutputGraph >
 void GraphFileReader< TOutputGraph >
 ::GenerateData()
 {
-
-    std::cout<<"GraphFileReader"<<__func__<<std::endl;
     typename TOutputGraph::Pointer graph = this->GetOutput();
 
     // Open the file stream
     std::ifstream inFile(m_FileName, std::ios::in | std::ios::binary);
     if(inFile.good())
     {
-        std::cout<<"Infile presente"<<std::endl;
         // Retrieve the number of bytes to read.
         uint64_t numberOfBytes;
         inFile.read(reinterpret_cast<char*>(&numberOfBytes), UInt64Size);
-        std::cout<<"Number of bytes : "<<numberOfBytes<<std::endl;
+
         // Read the file
         std::vector<char> serializedGraph(numberOfBytes);
         inFile.read(&serializedGraph[0], numberOfBytes * CharSize);
@@ -103,11 +96,9 @@ void GraphFileReader< TOutputGraph >
         // Map: starting starting coords of each node -> its id
         std::unordered_map< CoordValueType, IdType > startPixIdMap;
 
-        std::cout<<"Num nodes "<<numNodes<<std::endl;
         // Loop over the nodes
         for(IdType id = 0; id < numNodes; id++)
         {
-
             // Add a new node at the end of the adjacency list
             // of the graph.
             auto newNode = graph->AddNode();

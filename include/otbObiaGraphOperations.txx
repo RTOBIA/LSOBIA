@@ -316,8 +316,6 @@ template< typename TGraph >
 std::vector<char>
 GraphOperations<TGraph>::SerializeGraph(const GraphPointerType graph)
 {
-
-    //std::cout << "Serialize " << graph->GetNumberOfNodes() <<  " nodes " << std::endl;
     std::vector< char > serializedGraph;
 
     // The first pass consists of determining the number of bytes to write.
@@ -504,7 +502,6 @@ GraphOperations<TGraph>::ReadGraphFromDisk(const std::string & inputPath)
     // Open the file stream
     std::ifstream inFile(inputPath, std::ios::in | std::ios::binary);
 
-    //std::cout << "Lecture de " << inputPath << std::endl;
     if(inFile.good())
     {
         // Retrieve the number of bytes to read.

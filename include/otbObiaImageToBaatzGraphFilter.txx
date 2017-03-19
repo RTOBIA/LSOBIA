@@ -117,7 +117,6 @@ void
 ImageToBaatzGraphFilter< TInputImage >
 ::GenerateData()
 {
-    std::cout << "Generate Baatz graphe" << std::endl;
     auto inputPtr = const_cast< InputImageType * >( this->GetInput() );
     auto outputGraph = this->GetOutput();
     
@@ -173,9 +172,6 @@ ImageToBaatzGraphFilter< TInputImage >
         id++;
 
     } // end for(it.GoToBegin(); !it.IsAtEnd(); ++it)
-
-    std::cout << "Nombre noeuds : " << outputGraph->GetNumberOfNodes() << std::endl;
-    std::cout << "Adresse : " << outputGraph << std::endl;
 }
 
 } // end of namespace obia
