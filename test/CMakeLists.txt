@@ -70,15 +70,9 @@ otb_test_application(NAME apLSOBIA_MeanShiftOneProc
 	-algorithm.meanshift.ranger 0
 	-algorithm.meanshift.modesearch "off"
 	-processing.memory 2000
-<<<<<<< HEAD
 	-processing.maxtilesizex 200
 	-processing.maxtilesizey 200
 	-processing.numproc 1)
-=======
-	-processing.maxtilesizex 1000
-	-processing.maxtilesizey 1000
-	)
->>>>>>> 9c412f368f0e60a0c5cdf0ea98db137cb44c294f
 
 # ----------------------------------------------------------------------------------------------
 # Graph to image conversion test driver
@@ -268,7 +262,6 @@ add_executable(otbLSOBIASplitGraphTestDriver ${${otb-module}SplitGraphTests})
 target_link_libraries(otbLSOBIASplitGraphTestDriver ${${otb-module}-Test_LIBRARIES})
 otb_module_target_label(otbLSOBIASplitGraphTestDriver)
 
-<<<<<<< HEAD
 
 # ----------------------------------------------------------------------------------------------
 # Small Regions Merging Test
@@ -289,16 +282,3 @@ otb_test_application(NAME apLSOBIA_SRMOneProc
 	-processing.maxtilesizey 500
 	-processing.minimalsurface 200
 	-processing.numproc 1)
-
-
-
-
-=======
-otb_add_test(NAME otbLSOBIASplitGraph COMMAND otbLSOBIASplitGraphTestDriver
-             otbObiaSplitGraph
-             ${LSOBIA_SOURCE_DIR}/data/Graph_0_0.dat
-             ${TEMP_DIR}
-	     250
-             250
-             )
->>>>>>> 9c412f368f0e60a0c5cdf0ea98db137cb44c294f
