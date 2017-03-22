@@ -71,8 +71,7 @@ otb_test_application(NAME apLSOBIA_MeanShiftOneProc
 	-algorithm.meanshift.modesearch "off"
 	-processing.memory 2000
 	-processing.maxtilesizex 200
-	-processing.maxtilesizey 200
-	-processing.numproc 1)
+	-processing.maxtilesizey 200)
 
 # ----------------------------------------------------------------------------------------------
 # Graph to image conversion test driver
@@ -281,4 +280,5 @@ otb_test_application(NAME apLSOBIA_SRMOneProc
 	-processing.maxtilesizex 500
 	-processing.maxtilesizey 500
 	-processing.minimalsurface 200
-	-processing.numproc 1)
+	)
+
