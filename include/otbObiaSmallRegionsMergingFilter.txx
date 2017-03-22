@@ -1,6 +1,8 @@
 #ifndef otbObiaSmallRegionsMergingFilter_txx
 #define otbObiaSmallRegionsMergingFilter_txx
+
 #include "otbObiaSmallRegionsMergingFilter.h"
+
 namespace otb
 {
 namespace obia
@@ -18,29 +20,32 @@ template< typename TCost, typename TGraph >
 SRMMergingCost<TCost, TGraph>
 ::~SRMMergingCost()
 {
-
 }
 
 template< typename TCost, typename TGraph >
 bool
 SRMMergingCost<TCost, TGraph>::ComputeMergingCostsForThisNode(NodeType* curNode)
 {
-	//return true;
-	return false;
+	return true;
 }
 
 template< typename TCost, typename TGraph >
 bool
 SRMMergingCost<TCost, TGraph>::ComputeMergingCostsForThisAdjNode(NodeType* curNode)
 {
-	//return true;
-	return false;
+	return true;
 }
 
 template< typename TCost, typename TGraph >
 typename SRMMergingCost< TCost, TGraph>::ValueType
 SRMMergingCost<TCost, TGraph>::ComputeMergingCost(NodeType* n1, NodeType* n2)
 {
+	if(n1->m_Attributes.m_Area > m_MinimalSurface &&
+	   n2->m_Attributes.m_Area > m_MinimalSurface)
+	{
+		return std::numeric_limits<TCost>::max();//Return max distance
+	}
+
 	//Number of bands
 	uint32_t nbBands = n1->m_Attributes.m_AvgSpec.size();
 
@@ -58,7 +63,6 @@ SRMMergingCost<TCost, TGraph>::ComputeMergingCost(NodeType* n1, NodeType* n2)
 	}
 
 	return spec_distance;
-	//return 0;
 }
 
 template< typename TGraph >
@@ -74,59 +78,215 @@ SRMHeuristic<TGraph>
 {
 
 }
-/*
 template< typename TGraph >
 typename SRMHeuristic<TGraph>::NodeType*
 SRMHeuristic<TGraph>
 ::GetBestAdjacentNode(NodeType* node)
 {
+
+	if(node->GetFirstPixelCoords() == 477336)
+	{
+		std::cout << "Aire : " << node->m_Attributes.m_Area  << std::endl;
+	}
+	if(node->GetFirstPixelCoords() == 478346)
+	{
+		std::cout << "Aire : " << node->m_Attributes.m_Area  << std::endl;
+	}
 	//If this node has an area too big, do not consider it
-	if(node->m_Attributes.m_Area > m_MinimalSurface){
+	if(node->m_Attributes.m_Area > m_MinimalSurface || !node->m_Valid){
+		//std::cout << "Noeud " << node->m_Id << " a une surface de " << node->m_Attributes.m_Area << std::endl;
 		return nullptr;
+	}
+	else
+	{
+		return node;
 	}
 
 	auto outputGraph = this->m_Graph;
 
 	if(node->m_Valid)
 	{
-		//Get the best adjcent node (the one with the lowest cost)
-		auto bestAdjNode = outputGraph->GetNodeAt(node->m_Edges.front().m_TargetId);
+		//Get the first edge (lowest cost)
+		//auto bestAdjNode = outputGraph->GetNodeAt(node->m_Edges.front().m_TargetId);
+		auto bestAdjNode = GetMostSimilarNode(node);
 
-		//Check if node is valid
-		if(bestAdjNode->m_Valid)
+		if(bestAdjNode != nullptr)
 		{
-			return bestAdjNode;
-			if(bestAdjNode->GetFirstPixelCoords() < node->GetFirstPixelCoords())
+			if(bestAdjNode->m_Valid)
 			{
-				return bestAdjNode;
-			}
-			else
-			{
-				return node;
+				if(CheckMutuality(node, bestAdjNode))
+				{
+					return bestAdjNode;
+
+				}
 			}
 		}
+
+		//Check mutuality
+
+		//auto cost = node->m_Edges.front().m_Attributes.m_MergingCost;
+/*
+		if(bestAdjNode->GetFirstPixelCoords() == 478346)
+		{
+			std::cout << "Best 478346 = " << bestAdjNode->m_Attributes.m_Area << std::endl;
+		}
+		if(node->GetFirstPixelCoords() == 478346)
+		{
+			std::cout << "Node 478346 = " << bestAdjNode->m_Attributes.m_Area << std::endl;
+		}
+		if(bestAdjNode->GetFirstPixelCoords() == 477336)
+		{
+			std::cout << "Node Best 477336 = " << bestAdjNode->m_Attributes.m_Area << std::endl;
+			std::cout << "Node " << node->GetFirstPixelCoords() << " = " << node->m_Attributes.m_Area << std::endl;
+		}*/
+
+
 	}
 
+
 	return nullptr;
-}*/
+
+}
 
 template< typename TGraph >
 typename SRMHeuristic<TGraph>::NodeType*
 SRMHeuristic<TGraph>
-::GetBestAdjacentNode(NodeType* node)
+::GetBestSmallAdjacentNode(NodeType* nodeIn)
 {
 
+	auto outputGraph = this->m_Graph;
+	NodeType* bestNode = nullptr;
+	float minDistance = std::numeric_limits<float>::max();
 
-	//If the node's surface is greater than minimal surface, then return null because we do not need to search for node in order
-	// to increase its surface.
-	if(node->m_Attributes.m_Area >= m_MinimalSurface || node->m_HasToBeRemoved)
+	/**Go through the edge*/
+	//Loop over edge
+	for(auto edgeIt = nodeIn->Begin(); edgeIt != nodeIn->End(); edgeIt++)
+	{
+		auto adjNode = outputGraph->GetNodeAt(edgeIt->m_TargetId);
+		if(adjNode->m_Attributes.m_Area <= m_MinimalSurface)
+		{
+			//std::cout << "Noeud adjacent a une surface " << adjNode->m_Attributes.m_Area << std::endl;
+			//Compute distance
+			float curDistance = ComputeSpectralDistance(nodeIn, adjNode);
+
+			//Update minDistance
+			if(curDistance < minDistance)
+			{
+				//std::cout << "Update distance" << std::endl;
+				//Update min distance
+				minDistance = curDistance;
+				bestNode = adjNode;
+			}else if(minDistance == curDistance)
+			{
+				//Get the node with the lowest ID
+				if(adjNode->GetFirstPixelCoords() < bestNode->GetFirstPixelCoords())
+				{
+					//Update bestNode
+					bestNode = adjNode;
+				}
+			}
+		}
+	}
+
+
+	if(!bestNode->m_Valid)
 	{
 		return nullptr;
 	}
 
-	//Else, return node as nodeIn
-	return node;
+	return bestNode;
+}
 
+
+template< typename TGraph >
+typename SRMHeuristic<TGraph>::NodeType*
+SRMHeuristic<TGraph>
+::GetMostSimilarNode(NodeType* node)
+ {
+	auto outputGraph = this->m_Graph;
+	NodeType* bestNode = nullptr;
+	float minDistance = std::numeric_limits<float>::max();
+
+	/**Go through the edge*/
+	//Loop over edge
+	for(auto edgeIt = node->Begin(); edgeIt != node->End(); edgeIt++)
+	{
+		auto adjNode = outputGraph->GetNodeAt(edgeIt->m_TargetId);
+		//std::cout << "Noeud adjacent a une surface " << adjNode->m_Attributes.m_Area << std::endl;
+		//Compute distance
+		float curDistance = ComputeSpectralDistance(node, adjNode);
+
+		//Update minDistance
+		if(curDistance < minDistance)
+		{
+			//std::cout << "Update distance" << std::endl;
+			//Update min distance
+			minDistance = curDistance;
+			bestNode = adjNode;
+		}else if(minDistance == curDistance)
+		{
+			//Get the node with the lowest ID
+			if(adjNode->GetFirstPixelCoords() < bestNode->GetFirstPixelCoords())
+			{
+				//Update bestNode
+				bestNode = adjNode;
+			}
+		}
+	}
+
+	return bestNode;
+ }
+
+template< typename TGraph >
+bool
+SRMHeuristic<TGraph>
+::CheckMutuality(NodeType* node_1, NodeType* node_2)
+{
+	auto outputGraph = this->m_Graph;
+	float minDistance = std::numeric_limits<float>::max();
+	NodeType* bestNode = nullptr;
+
+	//Check if node_2 got node_1 for best adjacent node
+	//We assume that node_1 got a surface < minimal_surface
+	bestNode = GetBestSmallAdjacentNode(node_2);
+	/*
+	for(auto edgeIt = node_2->Begin(); edgeIt != node_2->End(); edgeIt++)
+	{
+		//get node targeted by the edge
+		auto adjNode = outputGraph->GetNodeAt(edgeIt->m_TargetId);
+
+		if(adjNode->m_Attributes.m_Area <= m_MinimalSurface)
+		{
+			//Compute distance
+			float curDistance = ComputeSpectralDistance(node_2, adjNode);
+
+			//Update minDistance if required
+			if(curDistance < minDistance)
+			{
+				//std::cout << "Update distance" << std::endl;
+				//Update min distance
+				minDistance = curDistance;
+				bestNode = adjNode;
+			}else if(minDistance == curDistance)
+			{
+				//Get the node with the lowest ID
+				if(adjNode->GetFirstPixelCoords() < bestNode->GetFirstPixelCoords())
+				{
+					//Update bestNode
+					bestNode = adjNode;
+				}
+			}
+		}
+	}*/
+
+	if(bestNode->m_Id == node_1->m_Id)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 
 }
 
@@ -135,38 +295,38 @@ typename SRMHeuristic<TGraph>::NodeType*
 SRMHeuristic<TGraph>
 ::GetNodeOut(NodeType* nodeIn)
 {
-	auto outputGraph = this->m_Graph;
-	double min_spec_distance = std::numeric_limits<double>::max();
+	auto bestAdjNode = GetMostSimilarNode(nodeIn);
 
-	NodeType * similar_node = nullptr;
-
-	//Looping across adjacent node
-	//Get Edges
-	for(auto edgeIt = nodeIn->Begin(); edgeIt != nodeIn->End(); edgeIt++)
+	if(bestAdjNode != nullptr)
 	{
-		//Get Target Node
-		auto target_node = m_Graph->GetNodeAt(edgeIt->m_TargetId);
-
-		//Si le noeud ne doit pas être supprimé, on regarde sa distance
-		if(!target_node->m_HasToBeRemoved)
+		if(bestAdjNode->m_Valid)
 		{
-			//Compute Spectral Distance
-			double spec_distance(ComputeSpectralDistance(nodeIn, target_node));
-
-			//If this distance is the minimum, update value
-			if(spec_distance < min_spec_distance)
+			if(CheckMutuality(nodeIn, bestAdjNode))
 			{
-				//Update distance
-				min_spec_distance = spec_distance;
+				return bestAdjNode;
 
-				//Update node
-				similar_node = target_node;
 			}
 		}
 	}
 
-	return similar_node;
+	return nullptr;
+
+	//return GetBestSmallAdjacentNode(nodeIn);
+	/*auto outputGraph = this->m_Graph;
+	auto nodeOut = outputGraph->GetNodeAt(nodeIn->m_Edges.front().m_TargetId);
+
+	if(nodeOut->GetFirstPixelCoords() == 477336 ||
+			nodeOut->GetFirstPixelCoords() == 478346	)
+	{
+		std::cout << "Node In : " << nodeIn->GetFirstPixelCoords()  << " Surface = " <<  nodeIn->m_Attributes.m_Area << " \n"
+				  << "Node Out : " << nodeOut->GetFirstPixelCoords() << " Surface = " <<  nodeOut->m_Attributes.m_Area << std::endl;
+	}
+
+	return nodeOut;*/
+	//return GetMostSimilarNode(nodeIn);
+
 }
+
 template< typename TGraph >
 float
 SRMHeuristic<TGraph>
@@ -215,7 +375,7 @@ SRMHeuristic<TGraph>
 
 		//SortEdges(adjNode);
 	}*/
-	nodeIn->m_Valid = true;
+	//nodeIn->m_Valid = true;
 	//SortEdges(nodeIn);
 }
 
@@ -404,12 +564,6 @@ SmallRegionsMergingFilter<TGraph>
 		//std::cout << "Noeud " << k << std::endl;
 		//NodeType* nodeIt = outputGraph->GetNodeAt(k);
 
-		if((node->GetFirstPixelCoords() == 472498)){
-			std::cout << "Recherche noeud similaire" << std::endl;
-		}
-		if(node->GetFirstPixelCoords() == 451503){
-			std::cout << "Merging " << nodeIt->GetFirstPixelCoords() << std::endl;
-		}
 		if(!nodeIt->m_HasToBeRemoved)
 		{
 			//Check if node is too small
@@ -419,76 +573,35 @@ SmallRegionsMergingFilter<TGraph>
 				//Get most similar adjacent node
 				auto similar_node = GetMostSimilarNode(&(*node));//GetMostSimilarNode(&(*nodeIt));
 
-				/*if((node->GetFirstPixelCoords() == 472498)){
-					std::cout << "Fusion entre : " << node->GetFirstPixelCoords() << " et " << similar_node->GetFirstPixelCoords() << std::endl;
-					std::cout << "ID : " << nodeIt->m_Id << "/" << similar_node->m_Id << std::endl;
-				}
-
-				if(node->GetFirstPixelCoords() == 451503){
-					std::cout << "Fusion entre : " << node->GetFirstPixelCoords() << " et " << similar_node->GetFirstPixelCoords() << std::endl;
-					std::cout << "ID : " << node->m_Id << "/" << similar_node->m_Id << std::endl;
-					std::cout << "Aire : " << node->m_Attributes.m_Area << "/ " << similar_node->m_Attributes.m_Area << std::endl;
-				}*/
-				//std::cout << "Small Area (" << nodeIt->m_Attributes.m_Area << " < " << m_MinimalSurface << ") for node " << nodeIt->m_Id << std::endl;
-				//std::cout << "Target : " << similar_node->m_Id << std::endl;
-				if(similar_node != nullptr)
+				if(similar_node != nullptr && similar_node->m_Valid)
 				{
-					/*if(similar_node->GetFirstPixelCoords() == 472498){
-						std::cout << "Fusion entre : " << node->GetFirstPixelCoords() << " et " << similar_node->GetFirstPixelCoords() << std::endl;
-						std::cout << "ID : " << node->m_Id << "/" << similar_node->m_Id << std::endl;
-					}
-					if(similar_node->GetFirstPixelCoords() == 451503){
-											std::cout << "Fusion entre : " << node->GetFirstPixelCoords() << " et " << similar_node->GetFirstPixelCoords() << std::endl;
-											std::cout << "ID : " << node->m_Id << "/" << similar_node->m_Id << std::endl;
-											std::cout << "Aire : " << node->m_Attributes.m_Area << "/ " << similar_node->m_Attributes.m_Area << std::endl;
-					}*/
-					auto nodeIn = &(*node); //&(*nodeIt);
-					auto nodeOut = similar_node;
-
-					//Check ID, and eventually swap
-					if(nodeIn->GetFirstPixelCoords() > nodeOut->GetFirstPixelCoords())
+					//Check mutuality
+					if(CheckMutuality(&(*node), similar_node))
 					{
-						/*if((node->GetFirstPixelCoords() == 472498) || similar_node->GetFirstPixelCoords() == 472498){
-							std::cout << "SWAP" << std::endl;
+						auto nodeIn = &(*node); //&(*nodeIt);
+						auto nodeOut = similar_node;
+
+						//Check ID, and eventually swap
+						if(nodeIn->GetFirstPixelCoords() > nodeOut->GetFirstPixelCoords())
+						{
+							auto tmp = nodeOut;
+							nodeOut = nodeIn;
+							nodeIn = tmp;//&(*nodeIt);
 						}
-						if((node->GetFirstPixelCoords() == 451503) || similar_node->GetFirstPixelCoords() == 451503){
-							std::cout << "SWAP" << std::endl;
-						}*/
-						//std::cout << "SWAP " << nodeIn->m_Id << " and " << nodeOut->m_Id << std::endl;
-						auto tmp = nodeOut;
-						nodeOut = nodeIn;
-						nodeIn = tmp;//&(*nodeIt);
+
+						//std::cout << "Merge NODE " << nodeIn->m_Id  << " with " << nodeOut->m_Id << std::endl;
+						this->Merge(nodeIn, nodeOut);
+
+						//Flag to indicate small region has been found (merge not over)
+						merge_over = false;
 					}
-
-					//Merge node
-					//std::cout << "Merge NODE " << nodeIn->m_Id  << " with " << nodeOut->m_Id << std::endl;
-					this->Merge(nodeIn, nodeOut);
-
-					//Update attributes
-					//std::cout << "Update attributes " << std::endl;
-					//UpdateSpecificAttributes(nodeIn, nodeOut);
-					/*if((node->GetFirstPixelCoords() == 472498) || similar_node->GetFirstPixelCoords() == 472498){
-								std::cout << "nodeIn " << nodeIn->GetFirstPixelCoords() << std::endl;
-								std::cout << "New Area : " << nodeIn->m_Attributes.m_Area << std::endl;
-					}
-					if((node->GetFirstPixelCoords() == 451503) || similar_node->GetFirstPixelCoords() == 451503){
-													std::cout << "nodeIn " << nodeIn->GetFirstPixelCoords() << std::endl;
-													std::cout << "New Area : " << nodeIn->m_Attributes.m_Area << std::endl;
-					}*/
-
-					//Flag to indicate small region has been found (merge not over)
-					merge_over = false;
 				}
-
 			}
 		}
 	}
 
 	//Remove nodes who merged
-	std::cout << "Remove Nodes (" << outputGraph->GetNumberOfNodes() << ")" << std::endl;
 	outputGraph->RemoveNodes();
-
-	std::cout << "After removes node : " << outputGraph->GetNumberOfNodes() << std::endl;
 
 	//Reconditionning graph
 	auto lambdaValide = [](NodeType& node){ node.m_Valid = true;};
@@ -645,8 +758,58 @@ SmallRegionsMergingFilter<TGraph>
 		}
 	}
  }
+
+template< typename TGraph >
+bool
+SmallRegionsMergingFilter<TGraph>
+::CheckMutuality(NodeType* node_1, NodeType* node_2)
+{
+	/**Go through the edge*/
+	//Loop over edge
+	auto outputGraph = const_cast< GraphType * > (this->GetOutput() );
+	NodeType* bestNode = nullptr;
+	float minDistance = std::numeric_limits<float>::max();
+
+	for(auto edgeIt = node_2->Begin(); edgeIt != node_2->End(); edgeIt++)
+	{
+		auto adjNode = outputGraph->GetNodeAt(edgeIt->m_TargetId);
+		if(adjNode->m_Attributes.m_Area <= m_MinimalSurface)
+		{
+			//std::cout << "Noeud adjacent a une surface " << adjNode->m_Attributes.m_Area << std::endl;
+			//Compute distance
+			float curDistance = ComputeSpectralDistance(node_2, adjNode);
+
+			//Update minDistance
+			if(curDistance < minDistance)
+			{
+				//std::cout << "Update distance" << std::endl;
+				//Update min distance
+				minDistance = curDistance;
+				bestNode = adjNode;
+			}else if(minDistance == curDistance)
+			{
+				//Get the node with the lowest ID
+				if(adjNode->GetFirstPixelCoords() < bestNode->GetFirstPixelCoords())
+				{
+					//Update bestNode
+					bestNode = adjNode;
+				}
+			}
+		}
+	}
+
+	if(bestNode != nullptr)
+	{
+		if(bestNode->m_Id == node_1->m_Id)
+		{
+			return true;
+		}
+	}
+
+	return false;
+
+}
 }//End obia
 }//End otb
 
 #endif
-

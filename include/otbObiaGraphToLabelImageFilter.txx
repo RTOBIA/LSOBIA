@@ -18,7 +18,7 @@ GenerateData()
 	// Temporarily copy and label input graph
 	auto graph = const_cast< InputGraphType * >( this->GetInput() );
 
-	std::cout<<"	Copy graph"<<std::endl;
+	//std::cout<<"	Copy graph"<<std::endl;
 	InputGraphPointerType labeledCopy = InputGraphType::New();
 	labeledCopy->CopyGraph(graph);
 
@@ -29,12 +29,12 @@ GenerateData()
 	typename OutputImageType::InternalPixelType noDataLabel = 0;
 
 	auto image = this->GetOutput();
-	std::cout<<"	Allocate"<<std::endl;
+	//std::cout<<"	Allocate"<<std::endl;
 	image->Allocate();
-	std::cout<<"	Fill buffer"<<std::endl;
+	//std::cout<<"	Fill buffer"<<std::endl;
 	image->FillBuffer(noDataLabel);
 
-	std::cout<<"	Set 0"<<std::endl;
+	//std::cout<<"	Set 0"<<std::endl;
 	OutputImageIteratorType it(image, image->GetLargestPossibleRegion());
 	for(it.GoToBegin(); !it.IsAtEnd(); ++it)
 	{
@@ -56,7 +56,7 @@ GenerateData()
 		}
 	};
 	labeledCopy->ApplyForEachNode(lambdaLabelWriter);
-	std::cout<<"End apply for each node"<<std::endl;
+	//std::cout<<"End apply for each node"<<std::endl;
 	bool t = true;
 	// Re-order node labels(left->right to top->bottom) (Remi Cresson correction)
 	std::vector<typename OutputImageType::InternalPixelType> lut(labeledCopy->GetNumberOfNodes()+1, noDataLabel);

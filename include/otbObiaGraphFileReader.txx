@@ -53,7 +53,7 @@ UpdateOutputInformation()
 	// Mise a jour du graphe en fonction de son header
 	typename TOutputGraph::Pointer graph = this->GetOutput();
 	GraphImageInfo info = GraphOperations<TOutputGraph>::ReadGraphHeader(m_FileName);
-	std::cout<<"Info : "<<info.m_width<<" "<<info.m_height<<" "<<info.m_nbBands<<" "<<std::endl;
+	//std::cout<<"Info : "<<info.m_width<<" "<<info.m_height<<" "<<info.m_nbBands<<" "<<std::endl;
 	graph->SetImageWidth(info.m_width);
 	graph->SetImageHeight(info.m_height);
 	graph->SetNumberOfSpectralBands(info.m_nbBands);

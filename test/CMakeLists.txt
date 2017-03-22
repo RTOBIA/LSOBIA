@@ -31,8 +31,8 @@ otb_test_application(NAME apLSOBIA_BaatzOneProc
 	-algorithm.baatz.spectralweight 0.5
 	-algorithm.baatz.geomweight 0.5
 	-processing.memory 2000
-	-processing.maxtilesizex 1000
-	-processing.maxtilesizey 1000
+	-processing.maxtilesizex 200
+	-processing.maxtilesizey 200
 	-processing.numproc 1)
 
 # ----------------------------------------------------------------------------------------------
@@ -125,6 +125,28 @@ set(${otb-module}SplitGraphTests
 add_executable(otbLSOBIASplitGraphTestDriver ${${otb-module}SplitGraphTests})
 target_link_libraries(otbLSOBIASplitGraphTestDriver ${${otb-module}-Test_LIBRARIES})
 otb_module_target_label(otbLSOBIASplitGraphTestDriver)
+
+
+# ----------------------------------------------------------------------------------------------
+# Small Regions Merging Test
+
+otb_test_application(NAME apLSOBIA_SRMOneProc
+	APP LSSmallRegionsMerging
+	OPTIONS -io.im ${LSOBIA_SOURCE_DIR}/data/pleiades_1000_1000.tif
+	-io.out ${TEMP_DIR}
+	-io.temp ${TEMP_DIR}
+	-algorithm baatz
+	-algorithm.baatz.numitfirstpartial 5
+	-algorithm.baatz.numitpartial 5
+	-algorithm.baatz.stopping 40
+	-algorithm.baatz.spectralweight 0.5
+	-algorithm.baatz.geomweight 0.5
+	-processing.memory 2000
+	-processing.maxtilesizex 500
+	-processing.maxtilesizey 500
+	-processing.minimalsurface 200
+	-processing.numproc 1)
+
 
 
 

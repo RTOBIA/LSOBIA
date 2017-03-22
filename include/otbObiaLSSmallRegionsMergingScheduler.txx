@@ -47,8 +47,8 @@ itk::SmartPointer<typename LSSmallRegionsMergingScheduler<TGraph>::SRMFilterType
 	return srmFilter;
 
 
-}*/
-
+}
+*/
 
 template< class TGraph >
 itk::SmartPointer<typename LSSmallRegionsMergingScheduler<TGraph>::SRMFilterType> LSSmallRegionsMergingScheduler<TGraph>
@@ -59,7 +59,6 @@ itk::SmartPointer<typename LSSmallRegionsMergingScheduler<TGraph>::SRMFilterType
 
 	srmFilter->SetMinimalSurface(this->m_MinimalSurface);
 	srmFilter->SetNumberOfIterations(this->m_NumberOfIterations);
-	srmFilter->SetNumberOfIterations(-1);
 	srmFilter->SetInput(this->m_Graph);
 	return srmFilter;
 
@@ -70,53 +69,11 @@ template< typename TGraph >
 void LSSmallRegionsMergingScheduler<TGraph>
 ::AggregateGraph()
 {
+	std::cout << "AGGREGATE FINAL GRAPH" << std::endl;
 	//TODO
 	std::stringstream os;
 	int tx;
 	int ty;
-	if(MPIConfig::Instance()->GetMyRank() == 0)
-	{
-		ty = 0;
-		tx = 0;
-	}else{
-		ty = 1;
-		tx = 0;
-	}
-	os << this->m_TemporaryDirectory << "Graph_SRM_" << ty << "_" << tx << ".dat";
-	GraphOperationsType::WriteGraphToDisk(this->m_Graph, os.str());
-
-	MPIConfig::Instance()->barrier();
-	if(MPIConfig::Instance()->GetMyRank() == 0){
-		//Add other graph
-		std::stringstream osa;
-		osa << this->m_TemporaryDirectory << "Graph_SRM_" << 1 << "_" << 0 << ".dat";
-		auto tile_graph = GraphOperationsType::ReadGraphFromDisk(osa.str());
-
-		//Aggregate
-		GraphOperationsType::AggregateGraphs(this->m_Graph, tile_graph);
-
-
-		std::unordered_set< uint32_t > rowBounds;
-		std::unordered_set< uint32_t > colBounds;
-
-		rowBounds.insert(500);
-		rowBounds.insert(499);
-		colBounds.insert(1000);
-		colBounds.insert(999);
-
-		auto borderNodeMap = GraphOperationsType::BuildBorderNodesMapForFinalAggregation(this->m_Graph,
-																						 rowBounds,
-																						 colBounds,
-																						 this->m_ImageWidth);
-
-			// Remove the duplicated nodes
-			GraphOperationsType::RemoveDuplicatedNodes(borderNodeMap, this->m_Graph, this->m_ImageWidth);
-
-			// Update the edges
-			GraphOperationsType::DetectNewAdjacentNodes(borderNodeMap, this->m_Graph, this->m_ImageWidth, this->m_ImageHeight);
-
-			GraphOperationsType::WriteGraphToDisk(this->m_Graph, os.str());
-	}
 
 }
 
@@ -265,64 +222,58 @@ LSSmallRegionsMergingScheduler<TGraph>
 
 	bool merge_over = false;
 	uint32_t cur_it = 0;
+
+	int maxNumberOfIterations = 100;
+
 	while(!merge_over)
 	{
 
 		int globalFusion = 0;
 		std::cout << "Tiling Execution " << cur_it << " for " << MPIConfig::Instance()->GetMyRank() << std::endl;
-		if(this->m_Graph != nullptr){
-			std::cout << "Nombre Noeuds : " << this->m_Graph->GetNumberOfNodes() << std::endl;
-		}
+
 		/**Compute stability margins*/
 		std::cout << "------- EXTRACT -------------" << std::endl;
-		ExtractStabilityMargins();
+		//ExtractStabilityMargins();
 
 		/** Aggregate*/
 		std::cout << "------- AGGREGATE ------------- " << std::endl;
-		AggregateStabilityMargins();
+		//AggregateStabilityMargins();
 
 		unsigned long int accumulatedMemory = this->m_AvailableMemory + 1;
 
 		/** Run merging small regions*/
 		localFusion = PartialFusion(accumulatedMemory, globalFusion);
-
+		/*if(this->m_TileMap.size() == 1){
+			std::stringstream os;
+			os << this->m_TemporaryDirectory << "AFTER_" << mpiConfig->GetMyRank() << ".dat";
+			GraphOperationsType::WriteGraphToDisk(this->m_Graph, os.str());
+		}*/
 		//ReconditionGraph();
-
 		/*if(HasDuplicatedNodes()){
 			exit(1);
 		}*/
 		if(localFusion == 0)
 		{
-			std::cout << "Local fusion over for " << mpiConfig->GetMyRank() << std::endl;
+			std::cout <<"Local fusion = 0" << std::endl;
 			merge_over = true;
 		}
 
 		if(globalFusion != 0){
-			std::cout << "Global fusion not over, looping again for " << mpiConfig->GetMyRank() <<std::endl;
-			std::cout << "Nombre noeuds : " << this->m_Graph->GetNumberOfNodes() << " for " <<  mpiConfig->GetMyRank() << std::endl;
 			merge_over = false;
-		}else{
-			std::cout << "Global fusion? " << globalFusion << "/ Local Fusion " << localFusion << std::endl;
 		}
 
-		//If th emerge is over, we have to wait all processor to be here before ending
-		//In addition, we have to share the margin stability
-		//if(merge_over){
-			/**Compute stability margins*/
-			//std::cout << "------- EXTRACT -------------" << std::endl;
-			//ExtractStabilityMargins();
+//		if(cur_it > maxNumberOfIterations){
+//			merge_over = true;
+//		}
 
-			/** Aggregate*/
-			//std::cout << "------- AGGREGATE ------------- " << std::endl;
-			//AggregateStabilityMargins();
-
-			//WAIT ALL
-			//std::cout << "Merging over for " << mpiConfig->GetMyRank() << ". Waiting others..." << std::endl;
- 			//mpiConfig->barrier();
-		//}
 		cur_it++;
 
 	}
+
+	/*if(m_AggregateGraph)
+	{
+		AggregateGraph();
+	}*/
 }
 
 
@@ -347,7 +298,6 @@ LSSmallRegionsMergingScheduler<TGraph>
 		uint32_t tx = kv.first % this->m_NumberOfTilesX;
 		uint32_t ty = kv.first / this->m_NumberOfTilesX;
 
-
 		// Retrieve the tile by reference since it will be modified.
 		auto& tile = kv.second;
 
@@ -355,7 +305,6 @@ LSSmallRegionsMergingScheduler<TGraph>
 		this->ReadGraphIfNecessary(ty, tx);
 
 		//std::cout << "Graph "  << ty << "_" << tx  <<  " read : " << this->m_Graph->GetNumberOfNodes() << std::endl;
-
 		std::cout << "------ TUILE : " << ty << "_" << tx << " for processor : " << mpiConfig->GetMyRank()<< std::endl;
 
 		auto subGraphMap = GraphOperationsType::ExtractStabilityMargin(this->m_Graph,
@@ -547,7 +496,6 @@ LSSmallRegionsMergingScheduler<TGraph>
 			otherSerializedMargins[i].shrink_to_fit();
 
 			// Deserialize the graph
-			std::cout << "Deserialize graph " << i << std::endl;
 			auto subGraph = GraphOperationsType::DeSerializeGraph(otherSerializedMargin);
 
 			std::cout << "Sub Graph : " << subGraph->GetNumberOfNodes() << " for tile "   << ty << "_" << tx << std::endl;
@@ -559,20 +507,18 @@ LSSmallRegionsMergingScheduler<TGraph>
 		// Remove duplicated nodes
 		auto borderNodeMap = GraphOperationsType::BuildBorderNodesMap(this->m_Graph,
 																	  tile,
+																	  this->m_MaxTileSizeX,
+																	  this->m_MaxTileSizeY,
 																	  this->m_NumberOfTilesX,
 																	  this->m_NumberOfTilesY,
 																	  this->m_ImageWidth);
 
-		std::cout << "Before Remove Duplicated : " <<  this->m_Graph->GetNumberOfNodes() << " on proc : " << mpiConfig->GetMyRank() << std::endl;
 		uint32_t nb_nodes_before = this->m_Graph->GetNumberOfNodes();
 		GraphOperationsType::RemoveDuplicatedNodes(borderNodeMap, this->m_Graph, this->m_ImageWidth);
 
 		// Update edges
 		GraphOperationsType::DetectNewAdjacentNodes(borderNodeMap, this->m_Graph, this->m_ImageWidth, this->m_ImageHeight);
-		std::cout << "After Remove Duplicated : " <<  this->m_Graph->GetNumberOfNodes() << std::endl;
-		//std::cout << "Write Graph " << ty << "_" << tx << std::endl;
 		this->WriteGraphIfNecessary(ty, tx);
-
 		ntile++;
 	}
 
@@ -612,14 +558,10 @@ LSSmallRegionsMergingScheduler<TGraph>
 
 		//Get the graph associated to this tile
 		this->ReadGraphIfNecessary(ty, tx);
-		std::cout << "Graph : image Width = " << this->m_Graph->GetImageWidth() << "/ Nombre noeuds = " << this->m_Graph->GetNumberOfNodes() <<std::endl;
-
 
 		//Execute the small region filter
-		//auto SRMFilter = CreateFilter();
 		auto srmFilter  = CreateFilter();
 		srmFilter->Update();
-		//srmFilter->GetOutput()->CopyGraph(&(*this->m_Graph));
 		this->m_Graph = srmFilter->GetOutput();
 
 		//Remove unstable
@@ -875,18 +817,19 @@ LSSmallRegionsMergingScheduler<TGraph>
 
 		return;
 	}
-	for(auto& kv : this->m_TileMap)
+	/*for(auto& kv : this->m_TileMap)
 	{
 			uint32_t tx = kv.first % this->m_NumberOfTilesX;
 			uint32_t ty = kv.first / this->m_NumberOfTilesX;
 
+			this->ReadGraphIfNecessary(ty, tx);
 			std::stringstream os;
 			os << this->m_TemporaryDirectory << "Graph_SRM_" << ty << "_" << tx << ".dat";
 			GraphOperationsType::WriteGraphToDisk(this->m_Graph, os.str());
 
-			//this->ReadGraphIfNecessary(ty, tx);
+			//
 			//ConvertToImage(ty, tx);
-	}
+	}*/
 
 }
 
@@ -896,7 +839,7 @@ LSSmallRegionsMergingScheduler<TGraph>
 ::ConvertToImage(uint32_t ty, uint32_t tx)
 {
 	  std::stringstream os;
-	  os << this->m_OutputDir << "Graph_SRM_" << ty << "_" << tx << ".tif";
+	  os << this->m_OutputDir << "Graph_" << ty << "_" << tx << ".tif";
 
 	  using LabelPixelType = unsigned int;
 	  using LabelImageType = otb::Image< LabelPixelType, 2 >;
@@ -919,6 +862,8 @@ LSSmallRegionsMergingScheduler<TGraph>
 
 	  rgbWriter->Update();
 }
+
+
 
 
 }//End obia

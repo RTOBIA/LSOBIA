@@ -215,7 +215,7 @@ typename LSBaatzSegmentationScheduler<TInputImage>::SegState
 LSBaatzSegmentationScheduler<TInputImage>
 ::FirstPartialSegmentation()
 {
-	std::cout <<"----------- First Partial Segmentation" << std::endl;
+	std::cout <<"----------- First Partial Segmentation with " << m_StartingNumberOfIterations << std::endl;
 	auto mpiConfig = MPIConfig::Instance();
 	auto mpiTools = MPITools::Instance();
 
@@ -249,6 +249,7 @@ LSBaatzSegmentationScheduler<TInputImage>
 
 				// Segmentation filter
 				auto baatzFilter = CreateFilter();
+				baatzFilter->SetMaxNumberOfIterations(this->m_StartingNumberOfIterations);
 				// Baatz & Shäpe segmentation
 				/*auto baatzFilter = BaatzSegmentationFilterType::New();
 				baatzFilter->SetMaxNumberOfIterations(m_StartingNumberOfIterations);
