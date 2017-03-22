@@ -1,6 +1,9 @@
 #ifndef otbObiaGraphToLabelImageFilter_txx
 #define otbObiaGraphToLabelImageFilter_txx
 #include "otbObiaGraphToLabelImageFilter.h"
+#include "otbObiaConstExpr.h"
+
+#include <unordered_set>
 
 namespace otb
 {

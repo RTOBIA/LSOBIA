@@ -1,7 +1,6 @@
 if (BUILD_TESTING)
 	otb_module_test()
 	# Handle multiple build environments
-	MESSAGE("REP : ${LSOBIA_BINARY_DIR}/Testing/Temporary/")
 	if(NOT OTB_SOURCE_DIR)
 	    set(TEMP_DIR ${LSOBIA_BINARY_DIR}/Testing/Temporary/)
 	else()
@@ -77,19 +76,24 @@ otb_test_application(NAME apLSOBIA_MeanShiftOneProc
 
 # ----------------------------------------------------------------------------------------------
 # Graph to image conversion test driver
-set(${otb-module}ConvertGraphToImageTests
-    otbLSOBIAConvertGraphToImageTestDriver.cxx
-    otbObiaConvertGraphToImage.cxx
-    )
+if(OTB_USE_GDAL_20)
+	set(${otb-module}ConvertGraphToImageTests
+	    otbLSOBIAConvertGraphToImageTestDriver.cxx
+	    otbObiaConvertGraphToImage.cxx
+	    )
 
-add_executable(otbLSOBIAConvertGraphToImageTestDriver ${${otb-module}ConvertGraphToImageTests})
-target_link_libraries(otbLSOBIAConvertGraphToImageTestDriver ${${otb-module}-Test_LIBRARIES})
-otb_module_target_label(otbLSOBIAConvertGraphToImageTestDriver)
+	add_executable(otbLSOBIAConvertGraphToImageTestDriver ${${otb-module}ConvertGraphToImageTests})
+	target_link_libraries(otbLSOBIAConvertGraphToImageTestDriver ${${otb-module}-Test_LIBRARIES})
+	otb_module_target_label(otbLSOBIAConvertGraphToImageTestDriver)
 
-otb_add_test(NAME otbLSOBIAConvert COMMAND otbLSOBIAConvertGraphToImageTestDriver
-             otbObiaConvertGraphToImage
-             ${LSOBIA_SOURCE_DIR}/data/Graph_0_1.dat
-	     ${TEMP_DIR}/image_from_graph.tif)
+	otb_add_test(NAME otbLSOBIAConvert COMMAND otbLSOBIAConvertGraphToImageTestDriver
+		     otbObiaConvertGraphToImage
+		     ${LSOBIA_SOURCE_DIR}/data/Graph_0_1.dat
+		     ${TEMP_DIR}/image_from_graph.tif)
+else(OTB_USE_GDAL_20)
+  MESSAGE("OTB does not use a GDAL version > 2.0, not building GDAL tests")
+endif(OTB_USE_GDAL_20)
+
 
 # ----------------------------------------------------------------------------------------------
 # Large Scale Baatz Segmentation test driver

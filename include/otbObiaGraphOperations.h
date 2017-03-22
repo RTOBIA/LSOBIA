@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <string>
 #include "otbObiaGraph.h"
+#include <unordered_set>
 
 namespace otb
 {

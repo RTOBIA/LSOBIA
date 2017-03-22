@@ -52,8 +52,8 @@ protected:
 
 private:
 
-    BaatzToSRMGraphFilter(const Self &) ITK_DELETE_FUNCTION;
-    void operator=(const Self &) ITK_DELETE_FUNCTION;
+    BaatzToSRMGraphFilter(const Self &) =delete;
+    void operator=(const Self &) =delete;
 
 };
 }

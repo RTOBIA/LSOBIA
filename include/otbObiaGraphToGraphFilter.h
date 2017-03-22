@@ -55,8 +55,8 @@ protected:
 
 private:
 
-    GraphToGraphFilter(const Self &) ITK_DELETE_FUNCTION;
-    void operator=(const Self &) ITK_DELETE_FUNCTION;
+    GraphToGraphFilter(const Self &) =delete;
+    void operator=(const Self &) =delete;
 
 };
 

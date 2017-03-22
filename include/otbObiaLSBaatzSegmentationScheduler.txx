@@ -6,7 +6,7 @@
 #include "itkLabelToRGBImageFilter.h"
 #include "otbImage.h"
 #include "otbImageFileWriter.h"
-
+#include <unordered_set>
 
 
 namespace otb

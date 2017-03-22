@@ -9,6 +9,7 @@
 #include "gdal_priv.h"
 #include "gdal_utils.h"
 
+
 int otbObiaConvertGraphToImage(int argc, char * argv[])
 {
 

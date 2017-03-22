@@ -109,8 +109,8 @@ protected:
 
 private:
 
-    LabelImageToGraphFilter(const Self &) ITK_DELETE_FUNCTION;
-    void operator=(const Self &) ITK_DELETE_FUNCTION;
+    LabelImageToGraphFilter(const Self &) =delete;
+    void operator=(const Self &) =delete;
 
     /** Initialize the output graph from the input label image */
     void InitOutput();

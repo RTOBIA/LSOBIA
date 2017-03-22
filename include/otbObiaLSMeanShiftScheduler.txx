@@ -1,6 +1,7 @@
 #ifndef otbObiaLSMeanShiftScheduler_txx
 #define otbObiaLSMeanShiftScheduler_txx
 #include "otbObiaLSMeanShiftScheduler.h"
+#include <unordered_set>
 
 namespace otb
 {

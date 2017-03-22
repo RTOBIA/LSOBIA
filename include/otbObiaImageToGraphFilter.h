@@ -47,8 +47,8 @@ protected:
     virtual void PrintSelf(std::ostream & os, itk::Indent indent) const ITK_OVERRIDE;
 
 private:
-    ImageToGraphFilter(const Self &) ITK_DELETE_FUNCTION;
-    void operator=(const Self &) ITK_DELETE_FUNCTION;
+    ImageToGraphFilter(const Self &) =delete;
+    void operator=(const Self &) =delete;
 };
 
 }

@@ -303,7 +303,6 @@ public:
     void CopyGraph(ConstPointer other)
     {
         m_Nodes = other->m_Nodes;
-        std::cout<<"Copying "<<m_Nodes.size()<<" nodes"<<std::endl;
         CopyAttributes(other);
     }
 
@@ -317,8 +316,8 @@ protected:
 
     Graph(){}
     virtual ~Graph() {}
-    Graph(const Self &) ITK_DELETE_FUNCTION;
-    void operator=(const Self &) ITK_DELETE_FUNCTION;
+    Graph(const Self &) =delete;
+    void operator=(const Self &) =delete;
 
     virtual void PrintSelf(std::ostream& os, itk::Indent indent) const ITK_OVERRIDE;
 
