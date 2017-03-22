@@ -138,8 +138,7 @@ namespace obia
   std::array<uint32_t, 4>
   SpatialTools
   ::TransformBBoxCoordsFromTileRefToImgRef(const std::array<uint32_t, 4>& bbox,
-                                           const ProcessingTile& tile,
-                                           const uint32_t imageWidth)
+                                           const ProcessingTile& tile)
   {
     std::array<uint32_t, 4> newBbox;
     newBbox[0] = tile.m_Frame.GetIndex(0) + bbox[0];

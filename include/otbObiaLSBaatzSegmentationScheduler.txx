@@ -197,8 +197,7 @@ LSBaatzSegmentationScheduler<TInputImage>
                                                                                              tile,
                                                                                           this->m_ImageWidth));
         node.m_BoundingBox = SpatialTools::TransformBBoxCoordsFromTileRefToImgRef(node.m_BoundingBox,
-                                                                                  tile,
-                                                                                   this->m_ImageWidth);
+                                                                                  tile);
     };
 
     this->m_Graph->ApplyForEachNode(lambdaOp);

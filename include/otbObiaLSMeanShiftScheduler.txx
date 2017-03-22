@@ -100,8 +100,7 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
                                                                                              tile,
                                                                                           this->m_ImageWidth));
         node.m_BoundingBox = SpatialTools::TransformBBoxCoordsFromTileRefToImgRef(node.m_BoundingBox,
-                                                                                  tile,
-                                                                                   this->m_ImageWidth);
+                                                                                  tile);
 
         for(auto& pix : node.m_Attributes.m_ListOfPixels)
         {

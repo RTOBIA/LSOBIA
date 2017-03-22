@@ -100,15 +100,13 @@ enum Direction{
 
       @param bbox: bbox in the tile referential
       @param tile: data structure representing a tile in the image.
-      @param imageWidth: size of the image in the new referential
 
       @return: the new bbox in the image referential.
     */
     static
     std::array<uint32_t, 4>
     TransformBBoxCoordsFromTileRefToImgRef(const std::array<uint32_t, 4>& bbox,
-                                           const ProcessingTile& tile,
-                                           const uint32_t imageWidth);
+                                           const ProcessingTile& tile);
 
     /**
       IsBboxInsideBoundaries
