@@ -11,8 +11,8 @@ template< typename TInputGraph, typename TOutputImage >
 GraphToImageFilter<TInputGraph, TOutputImage>::
 GraphToImageFilter()
 {
-	// Modify superclass default values, can be overridden by subclasses
-  	this->SetNumberOfRequiredInputs(1);
+    // Modify superclass default values, can be overridden by subclasses
+    this->SetNumberOfRequiredInputs(1);
 }
 
 template< typename TInputGraph, typename TOutputImage >
@@ -26,8 +26,8 @@ void
 GraphToImageFilter<TInputGraph, TOutputImage>::
 SetInput(const InputGraphType *input)
 {
-	// Process object is not const-correct so the const_cast is required here
-  this->itk::ProcessObject::SetNthInput( 0,
+    // Process object is not const-correct so the const_cast is required here
+    this->itk::ProcessObject::SetNthInput( 0,
                                     const_cast< InputGraphType * >( input ) );
 }
 
@@ -36,24 +36,24 @@ void
 GraphToImageFilter<TInputGraph, TOutputImage>::
 UpdateOutputInformation()
 {
-	Superclass::UpdateOutputInformation();
-	auto graph = this->GetInput();
+    Superclass::UpdateOutputInformation();
+    auto graph = this->GetInput();
 
-	typename OutputImageType::IndexType index;
-	typename OutputImageType::SizeType size;
-	typename OutputImageType::RegionType region;
+    typename OutputImageType::IndexType index;
+    typename OutputImageType::SizeType size;
+    typename OutputImageType::RegionType region;
 
-	index[0] = 0; index[1] = 0;
-	size[0] = graph->GetImageWidth();
-	size[1] = graph->GetImageHeight();
+    index[0] = 0; index[1] = 0;
+    size[0] = graph->GetImageWidth();
+    size[1] = graph->GetImageHeight();
 
-	region.SetIndex(index);
-	region.SetSize(size);
+    region.SetIndex(index);
+    region.SetSize(size);
 
-	auto image = this->GetOutput();
-	image->SetRegions(region);
-	image->SetProjectionRef(graph->GetProjectionRef());
-	image->SetNumberOfComponentsPerPixel(graph->GetNumberOfSpectralBands());
+    auto image = this->GetOutput();
+    image->SetRegions(region);
+    image->SetProjectionRef(graph->GetProjectionRef());
+    image->SetNumberOfComponentsPerPixel(graph->GetNumberOfSpectralBands());
 }
 
 
@@ -68,8 +68,8 @@ void
 GraphToImageFilter<TInputGraph, TOutputImage>::
 SetInput(unsigned int index, const InputGraphType *input)
 {
-  // Process object is not const-correct so the const_cast is required here
-  this->itk::ProcessObject::SetNthInput( index,
+    // Process object is not const-correct so the const_cast is required here
+    this->itk::ProcessObject::SetNthInput( index,
                                     const_cast< InputGraphType * >( input ) );
 }
 
@@ -81,7 +81,7 @@ const typename GraphToImageFilter<TInputGraph, TOutputImage>::InputGraphType *
 GraphToImageFilter<TInputGraph, TOutputImage>
 ::GetInput() const
 {
-  return itkDynamicCastInDebugMode< const InputGraphType * >( this->GetPrimaryInput() );
+    return itkDynamicCastInDebugMode< const InputGraphType * >( this->GetPrimaryInput() );
 }
 
 /**
@@ -95,11 +95,11 @@ GraphToImageFilter<TInputGraph, TOutputImage>
   const InputGraphType *in = dynamic_cast< const InputGraphType * >
     ( this->itk::ProcessObject::GetInput(idx) );
 
-  if ( in == ITK_NULLPTR && this->itk::ProcessObject::GetInput(idx) != ITK_NULLPTR )
+    if ( in == ITK_NULLPTR && this->itk::ProcessObject::GetInput(idx) != ITK_NULLPTR )
     {
-    itkWarningMacro (<< "Unable to convert input number " << idx << " to type " <<  typeid( InputGraphType ).name () );
+        itkWarningMacro (<< "Unable to convert input number " << idx << " to type " <<  typeid( InputGraphType ).name () );
     }
-  return in;
+    return in;
 }
 
 template< typename TInputGraph, typename TOutputImage >
@@ -107,7 +107,7 @@ void
 GraphToImageFilter<TInputGraph, TOutputImage>
 ::PrintSelf(std::ostream & os, itk::Indent indent) const
 {
-  Superclass::PrintSelf(os, indent);
+    Superclass::PrintSelf(os, indent);
 }
 
 } // end of namespace obia

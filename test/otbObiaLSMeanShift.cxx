@@ -62,8 +62,5 @@ int otbObiaLSMeanShift(int argc, char * argv[])
   lsMSFilter->SetWriteGraph(true);
   lsMSFilter->Update();
   
-
-  /** Retrieve the image dimension without allocating it */
-  std::cout << "Optimal execution" << std::endl;
   return EXIT_SUCCESS;
 }

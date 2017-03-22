@@ -13,7 +13,7 @@ template< typename TCost, typename TGraph >
 SRMMergingCost<TCost, TGraph>
 ::SRMMergingCost()
 {
-	std::cout << "New SMR Cost" << std::endl;
+    std::cout << "New SMR Cost" << std::endl;
 }
 
 template< typename TCost, typename TGraph >
@@ -49,34 +49,32 @@ SRMMergingCost<TCost, TGraph>::ComputeMergingCost(NodeType* n1, NodeType* n2)
 	//Number of bands
 	uint32_t nbBands = n1->m_Attributes.m_AvgSpec.size();
 
-	//Distance
-	double spec_distance = 0;
+    //Distance
+    double spec_distance = 0;
 
-	for(uint32_t band = 0; band < nbBands; ++band)
-	{
-		//Average Spectral Value for each node
-		float avgSpec_1 = n1->m_Attributes.m_AvgSpec[band];
-		float avgSpec_2 = n2->m_Attributes.m_AvgSpec[band];
+    for(uint32_t band = 0; band < nbBands; ++band)
+    {
+        //Average Spectral Value for each node
+        float avgSpec_1 = n1->m_Attributes.m_AvgSpec[band];
+        float avgSpec_2 = n2->m_Attributes.m_AvgSpec[band];
 
-		//Compute distance
-		spec_distance += (avgSpec_1 - avgSpec_2)*(avgSpec_1 - avgSpec_2);
-	}
+        //Compute distance
+        spec_distance += (avgSpec_1 - avgSpec_2)*(avgSpec_1 - avgSpec_2);
+    }
 
-	return spec_distance;
+    return spec_distance;
 }
 
 template< typename TGraph >
 SRMHeuristic<TGraph>
 ::SRMHeuristic()
 {
-
 }
 
 template< typename TGraph >
 SRMHeuristic<TGraph>
 ::~SRMHeuristic()
 {
-
 }
 template< typename TGraph >
 typename SRMHeuristic<TGraph>::NodeType*
@@ -187,7 +185,6 @@ SRMHeuristic<TGraph>
 			}
 		}
 	}
-
 
 	if(!bestNode->m_Valid)
 	{
@@ -324,7 +321,6 @@ SRMHeuristic<TGraph>
 
 	return nodeOut;*/
 	//return GetMostSimilarNode(nodeIn);
-
 }
 
 template< typename TGraph >
@@ -332,23 +328,23 @@ float
 SRMHeuristic<TGraph>
 ::ComputeSpectralDistance(NodeType* node1, NodeType* node2)
 {
-	//Number of bands
-	uint32_t nbBands = node1->m_Attributes.m_AvgSpec.size();
+    //Number of bands
+    uint32_t nbBands = node1->m_Attributes.m_AvgSpec.size();
 
-	//Distance
-	double spec_distance = 0;
+    //Distance
+    double spec_distance = 0;
 
-	for(uint32_t band = 0; band < nbBands; ++band)
-	{
-		//Average Spectral Value for each node
-		float avgSpec_1 = node1->m_Attributes.m_AvgSpec[band];
-		float avgSpec_2 = node2->m_Attributes.m_AvgSpec[band];
+    for(uint32_t band = 0; band < nbBands; ++band)
+    {
+        //Average Spectral Value for each node
+        float avgSpec_1 = node1->m_Attributes.m_AvgSpec[band];
+        float avgSpec_2 = node2->m_Attributes.m_AvgSpec[band];
 
-		//Compute distance
-		spec_distance += (avgSpec_1 - avgSpec_2)*(avgSpec_1 - avgSpec_2);
-	}
+        //Compute distance
+        spec_distance += (avgSpec_1 - avgSpec_2)*(avgSpec_1 - avgSpec_2);
+    }
 
-	return spec_distance;
+    return spec_distance;
 }
 
 
@@ -358,20 +354,20 @@ SRMHeuristic<TGraph>
 ::ValidateNodeIn(NodeType* nodeIn)
 {
 
-	/*auto outputGraph = this->m_Graph;
+    /*auto outputGraph = this->m_Graph;
 
 
-	//nodeIn->m_Valid = true;
-	//Compute new cost
-	//Loop over edge
-	for(auto edgeIt = nodeIn->Begin(); edgeIt != nodeIn->End(); edgeIt++)
-	{
-		auto adjNode = outputGraph->GetNodeAt(edgeIt->m_TargetId);
+    //nodeIn->m_Valid = true;
+    //Compute new cost
+    //Loop over edge
+    for(auto edgeIt = nodeIn->Begin(); edgeIt != nodeIn->End(); edgeIt++)
+    {
+        auto adjNode = outputGraph->GetNodeAt(edgeIt->m_TargetId);
 
-		//Update merging cost for both node
-		auto cost =  ComputeSpectralDistance(nodeIn, adjNode);
-		edgeIt->m_Attributes.m_MergingCost = cost;
-		adjNode->FindEdge(nodeIn->m_Id)->m_Attributes.m_MergingCost = cost;
+        //Update merging cost for both node
+        auto cost =  ComputeSpectralDistance(nodeIn, adjNode);
+        edgeIt->m_Attributes.m_MergingCost = cost;
+        adjNode->FindEdge(nodeIn->m_Id)->m_Attributes.m_MergingCost = cost;
 
 		//SortEdges(adjNode);
 	}*/
@@ -384,43 +380,43 @@ void
 SRMHeuristic<TGraph>
 ::SortEdges(NodeType* node)
 {
-	auto outputGraph = this->m_Graph;
-	double maxCost = std::numeric_limits<double>::max();
-	//Loop edge
-	int idx =0 ;
-	int minIdx = 0;
-	int minCoord = 0;
-	for(auto edgeIt = node->Begin(); edgeIt != node->End(); edgeIt++)
-	{
-		auto cost = edgeIt->m_Attributes.m_MergingCost;
-		if(cost < maxCost)
-		{
-			//Update index
-			minIdx = idx;
+    auto outputGraph = this->m_Graph;
+    double maxCost = std::numeric_limits<double>::max();
+    //Loop edge
+    int idx =0 ;
+    int minIdx = 0;
+    int minCoord = 0;
+    for(auto edgeIt = node->Begin(); edgeIt != node->End(); edgeIt++)
+    {
+        auto cost = edgeIt->m_Attributes.m_MergingCost;
+        if(cost < maxCost)
+        {
+            //Update index
+            minIdx = idx;
 
-			//Update coord
-			minCoord = outputGraph->GetNodeAt(node->m_Edges[minIdx].m_TargetId)->GetFirstPixelCoords();
-			//Update max cost
-			maxCost = cost;
+            //Update coord
+            minCoord = outputGraph->GetNodeAt(node->m_Edges[minIdx].m_TargetId)->GetFirstPixelCoords();
+            //Update max cost
+            maxCost = cost;
 
 
-		}else if(cost == maxCost){
-			//Get Id of the current idx
-			auto adjNode_2 = outputGraph->GetNodeAt(edgeIt->m_TargetId);
-			if(adjNode_2->GetFirstPixelCoords() < minCoord){
+        }else if(cost == maxCost){
+            //Get Id of the current idx
+            auto adjNode_2 = outputGraph->GetNodeAt(edgeIt->m_TargetId);
+            if(adjNode_2->GetFirstPixelCoords() < minCoord){
 
-				//Update index
-				minIdx = idx;
+                //Update index
+                minIdx = idx;
 
-				//Update coord
-				minCoord = adjNode_2->GetFirstPixelCoords();
-			}
-		}
-		idx++;
-	}
+                //Update coord
+                minCoord = adjNode_2->GetFirstPixelCoords();
+            }
+        }
+        idx++;
+    }
 
-	//SWAP
-	std::swap(node->m_Edges[0], node->m_Edges[minIdx]);
+    //SWAP
+    std::swap(node->m_Edges[0], node->m_Edges[minIdx]);
 
 }
 template< typename TGraph >
@@ -442,33 +438,33 @@ SRMUpdateAttribute<TGraph>
 ::UpdateAttributes(NodeType * nodeIn, NodeType *  nodeOut)
  {
 
-	//nodeIn->m_Valid = true;
+    //nodeIn->m_Valid = true;
 
-	// Update statistical attributes
-		const float aArea = static_cast<float>(nodeIn->m_Attributes.m_Area);
-		const float bArea = static_cast<float>(nodeOut->m_Attributes.m_Area);
-		const float a_sum = aArea + bArea;
+    // Update statistical attributes
+        const float aArea = static_cast<float>(nodeIn->m_Attributes.m_Area);
+        const float bArea = static_cast<float>(nodeOut->m_Attributes.m_Area);
+        const float a_sum = aArea + bArea;
 
-		float mean;
-		float stddev;
-		float stddevTmp;
+        float mean;
+        float stddev;
+        float stddevTmp;
 
-		for(unsigned int b = 0; b < nodeIn->m_Attributes.m_AvgSpec.size(); ++b)
-		{
-			mean = (nodeIn->m_Attributes.m_AvgSpec[b] * aArea + nodeOut->m_Attributes.m_AvgSpec[b] * bArea) / a_sum;
-			stddevTmp = aArea * nodeIn->m_Attributes.m_StdSpec[b] * nodeIn->m_Attributes.m_StdSpec[b];
-			stddevTmp += bArea * nodeOut->m_Attributes.m_StdSpec[b] * nodeOut->m_Attributes.m_StdSpec[b];
-			stddevTmp += aArea * (nodeIn->m_Attributes.m_AvgSpec[b] - mean) * (nodeIn->m_Attributes.m_AvgSpec[b] - mean);
-			stddevTmp += bArea * (nodeOut->m_Attributes.m_AvgSpec[b] - mean) * (nodeOut->m_Attributes.m_AvgSpec[b] - mean);
-			stddev = std::sqrt(stddevTmp / a_sum);
-			nodeIn->m_Attributes.m_AvgSpec[b] = mean;
-			nodeIn->m_Attributes.m_StdSpec[b] = stddev;
-		}
+        for(unsigned int b = 0; b < nodeIn->m_Attributes.m_AvgSpec.size(); ++b)
+        {
+            mean = (nodeIn->m_Attributes.m_AvgSpec[b] * aArea + nodeOut->m_Attributes.m_AvgSpec[b] * bArea) / a_sum;
+            stddevTmp = aArea * nodeIn->m_Attributes.m_StdSpec[b] * nodeIn->m_Attributes.m_StdSpec[b];
+            stddevTmp += bArea * nodeOut->m_Attributes.m_StdSpec[b] * nodeOut->m_Attributes.m_StdSpec[b];
+            stddevTmp += aArea * (nodeIn->m_Attributes.m_AvgSpec[b] - mean) * (nodeIn->m_Attributes.m_AvgSpec[b] - mean);
+            stddevTmp += bArea * (nodeOut->m_Attributes.m_AvgSpec[b] - mean) * (nodeOut->m_Attributes.m_AvgSpec[b] - mean);
+            stddev = std::sqrt(stddevTmp / a_sum);
+            nodeIn->m_Attributes.m_AvgSpec[b] = mean;
+            nodeIn->m_Attributes.m_StdSpec[b] = stddev;
+        }
 
-		nodeIn->m_Attributes.m_Area = a_sum;
-		nodeIn->m_Attributes.m_Perimeter += (nodeOut->m_Attributes.m_Perimeter - 2*(nodeIn->FindEdge(nodeOut->m_Id)->m_Boundary));
+        nodeIn->m_Attributes.m_Area = a_sum;
+        nodeIn->m_Attributes.m_Perimeter += (nodeOut->m_Attributes.m_Perimeter - 2*(nodeIn->FindEdge(nodeOut->m_Id)->m_Boundary));
 
-		nodeIn->m_Attributes.m_HasPreviouslyMerged = true;
+        nodeIn->m_Attributes.m_HasPreviouslyMerged = true;
 }
 
 
@@ -491,7 +487,7 @@ void
 SmallRegionsMergingFilter<TGraph>
 ::PrintSelf(std::ostream & os, itk::Indent indent) const
 {
-	Superclass::PrintSelf(os, indent);
+    Superclass::PrintSelf(os, indent);
 }
 
 template< typename TGraph >
@@ -499,44 +495,44 @@ void
 SmallRegionsMergingFilter<TGraph>
 ::GenerateData()
 {
-	std::cout << "SmallRegionsMergingFilter: Generate Data" << std::endl;
-	std::cout << "Surface : " << m_MinimalSurface << std::endl;
-	// Graft the input to the output
-	// #TODO it may be good to create an abstract filter otbObiaInPlaceGraphFilter for this purpose
-	// by following the same scheme of itkInPlaceImageFilter.
-	GraphType * inputGraphPtr = dynamic_cast< GraphType * >( this->itk::ProcessObject::GetInput(0));
+    std::cout << "SmallRegionsMergingFilter: Generate Data" << std::endl;
+    std::cout << "Surface : " << m_MinimalSurface << std::endl;
+    // Graft the input to the output
+    // #TODO it may be good to create an abstract filter otbObiaInPlaceGraphFilter for this purpose
+    // by following the same scheme of itkInPlaceImageFilter.
+    GraphType * inputGraphPtr = dynamic_cast< GraphType * >( this->itk::ProcessObject::GetInput(0));
 
-	auto outputGraph = this->GetOutput();
-	outputGraph->GraftGraphByMove(inputGraphPtr);
-	// Release the input graph.
-	inputGraphPtr->Reset();
+    auto outputGraph = this->GetOutput();
+    outputGraph->GraftGraphByMove(inputGraphPtr);
+    // Release the input graph.
+    inputGraphPtr->Reset();
 
-	//Iterate until no small regions found (meaning : m_MergingOver = true)
-	m_MergingOver = false;
-	uint32_t currIt = 0;
-	if(m_NumberOfIterations < 0)
-	{
-		//Infinite loop
-		while(!m_MergingOver)
-		{
-			std::cout << "Merge iteration : " << currIt << " size graph : " << outputGraph->GetNumberOfNodes() << std::endl;
-			//IsGraphValid();
-			m_MergingOver = DoOneIteration();
-			currIt++;
-		}
-	}
-	else
-	{
-		uint32_t current_iteration = 0;
-		while(current_iteration < m_NumberOfIterations)
-		{
-			std::cout << "Iteration merge " << current_iteration << std::endl;
-			current_iteration++;
-			m_MergingOver = DoOneIteration();
-		}
-	}
+    //Iterate until no small regions found (meaning : m_MergingOver = true)
+    m_MergingOver = false;
+    uint32_t currIt = 0;
+    if(m_NumberOfIterations < 0)
+    {
+        //Infinite loop
+        while(!m_MergingOver)
+        {
+            std::cout << "Merge iteration : " << currIt << " size graph : " << outputGraph->GetNumberOfNodes() << std::endl;
+            //IsGraphValid();
+            m_MergingOver = DoOneIteration();
+            currIt++;
+        }
+    }
+    else
+    {
+        uint32_t current_iteration = 0;
+        while(current_iteration < m_NumberOfIterations)
+        {
+            std::cout << "Iteration merge " << current_iteration << std::endl;
+            current_iteration++;
+            m_MergingOver = DoOneIteration();
+        }
+    }
 
-	std::cout << "End Merging" << std::endl;
+    std::cout << "End Merging" << std::endl;
 }
 
 template< typename TGraph >
@@ -617,40 +613,40 @@ SmallRegionsMergingFilter<TGraph>
 ::GetMostSimilarNode(NodeType * node)
 {
 
-	auto outputGraph = const_cast< GraphType * > (this->GetOutput() );
-	double min_spec_distance = std::numeric_limits<double>::max();
+    auto outputGraph = const_cast< GraphType * > (this->GetOutput() );
+    double min_spec_distance = std::numeric_limits<double>::max();
 
-	NodeType * similar_node = nullptr;
+    NodeType * similar_node = nullptr;
 
-	//Looping across adjacent node
-	//Get Edges
-	for(auto edgeIt = node->Begin(); edgeIt != node->End(); edgeIt++)
-	{
-		//Get Target Node
-		auto target_node = outputGraph->GetNodeAt(edgeIt->m_TargetId);
+    //Looping across adjacent node
+    //Get Edges
+    for(auto edgeIt = node->Begin(); edgeIt != node->End(); edgeIt++)
+    {
+        //Get Target Node
+        auto target_node = outputGraph->GetNodeAt(edgeIt->m_TargetId);
 
-		if(target_node->m_Valid)
-		//if(!target_node->m_HasToBeRemoved)
-		{
-			//Compute Spectral Distance
-			double spec_distance(ComputeSpectralDistance(node, target_node));
+        if(target_node->m_Valid)
+        //if(!target_node->m_HasToBeRemoved)
+        {
+            //Compute Spectral Distance
+            double spec_distance(ComputeSpectralDistance(node, target_node));
 
-			//If this distance is the minimum, update value
-			if(spec_distance < min_spec_distance)
-			{
-				//Update distance
-				min_spec_distance = spec_distance;
+            //If this distance is the minimum, update value
+            if(spec_distance < min_spec_distance)
+            {
+                //Update distance
+                min_spec_distance = spec_distance;
 
-				//Update node
-				similar_node = target_node;
-			}
-		}
-	}
+                //Update node
+                similar_node = target_node;
+            }
+        }
+    }
 
-	//Look for the most similar node
-	//Eventually swap the node and found node according to their id
-	//Something like BaatzSegmentationFilter line 150
-	return similar_node;
+    //Look for the most similar node
+    //Eventually swap the node and found node according to their id
+    //Something like BaatzSegmentationFilter line 150
+    return similar_node;
 
 }
 
@@ -667,11 +663,11 @@ void
 SmallRegionsMergingFilter<TGraph>
 ::Merge(NodeType* nodeIn, NodeType * nodeOut)
 {
-	UpdateSpecificAttributes(nodeIn, nodeOut);
-	auto outputGraph = this->GetOutput();
-	outputGraph->Merge(nodeIn, nodeOut);
+    UpdateSpecificAttributes(nodeIn, nodeOut);
+    auto outputGraph = this->GetOutput();
+    outputGraph->Merge(nodeIn, nodeOut);
 
-	//nodeIn->m_Valid = true;
+    //nodeIn->m_Valid = true;
 
 }
 
@@ -680,25 +676,25 @@ void
 SmallRegionsMergingFilter<TGraph>
 ::UpdateSpecificAttributes(NodeType * nodeIn, NodeType * nodeOut)
 {
-	//Update surface
-	double area_1 = nodeIn->m_Attributes.m_Area;
-	double area_2 = nodeOut->m_Attributes.m_Area;
+    //Update surface
+    double area_1 = nodeIn->m_Attributes.m_Area;
+    double area_2 = nodeOut->m_Attributes.m_Area;
 
-	nodeIn->m_Attributes.m_Area = area_1 + area_2;
-	/*std::cout << "Old area " << area_1 << " New area : "
-			  << nodeIn->m_Attributes.m_Area << "(" << area_1 << " + " << area_2 << ")" << std::endl;*/
+    nodeIn->m_Attributes.m_Area = area_1 + area_2;
+    /*std::cout << "Old area " << area_1 << " New area : "
+              << nodeIn->m_Attributes.m_Area << "(" << area_1 << " + " << area_2 << ")" << std::endl;*/
 
-	//Update average spectral value
-	//Number of bands
-	uint32_t nbBands = nodeIn->m_Attributes.m_AvgSpec.size();
+    //Update average spectral value
+    //Number of bands
+    uint32_t nbBands = nodeIn->m_Attributes.m_AvgSpec.size();
 
-	for(uint32_t band = 0; band < nbBands; ++band)
-	{
-		float avgSpec_1 = nodeIn->m_Attributes.m_AvgSpec[band];
-		float avgSpec_2 = nodeOut->m_Attributes.m_AvgSpec[band];
+    for(uint32_t band = 0; band < nbBands; ++band)
+    {
+        float avgSpec_1 = nodeIn->m_Attributes.m_AvgSpec[band];
+        float avgSpec_2 = nodeOut->m_Attributes.m_AvgSpec[band];
 
-		nodeIn->m_Attributes.m_AvgSpec[band] = (area_1*avgSpec_1 + area_2*avgSpec_2)/(area_1 + area_2);
-	}
+        nodeIn->m_Attributes.m_AvgSpec[band] = (area_1*avgSpec_1 + area_2*avgSpec_2)/(area_1 + area_2);
+    }
 }
 
 
@@ -707,24 +703,24 @@ float
 SmallRegionsMergingFilter<TGraph>
 ::ComputeSpectralDistance(NodeType* node1, NodeType* node2)
 {
-	//Number of bands
-	uint32_t nbBands = node1->m_Attributes.m_AvgSpec.size();
+    //Number of bands
+    uint32_t nbBands = node1->m_Attributes.m_AvgSpec.size();
 
-	//Distance
-	double spec_distance = 0;
+    //Distance
+    double spec_distance = 0;
 
-	for(uint32_t band = 0; band < nbBands; ++band)
-	{
-		//Average Spectral Value for each node
-		float avgSpec_1 = node1->m_Attributes.m_AvgSpec[band];
-		float avgSpec_2 = node2->m_Attributes.m_AvgSpec[band];
+    for(uint32_t band = 0; band < nbBands; ++band)
+    {
+        //Average Spectral Value for each node
+        float avgSpec_1 = node1->m_Attributes.m_AvgSpec[band];
+        float avgSpec_2 = node2->m_Attributes.m_AvgSpec[band];
 
-		//Compute distance
-		spec_distance += (avgSpec_1 - avgSpec_2)*(avgSpec_1 - avgSpec_2);
-	}
+        //Compute distance
+        spec_distance += (avgSpec_1 - avgSpec_2)*(avgSpec_1 - avgSpec_2);
+    }
 
-	/**TODO Maybe not usefull to use sqrt. We do not need the rea lvalue, only the square value is necesary to sort cost*/
-	return sqrt(spec_distance);
+    /**TODO Maybe not usefull to use sqrt. We do not need the rea lvalue, only the square value is necesary to sort cost*/
+    return sqrt(spec_distance);
 }
 
 template< typename TGraph >
@@ -732,15 +728,15 @@ bool
 SmallRegionsMergingFilter<TGraph>
 ::HasNoSmallRegions()
 {
-	auto outputGraph = const_cast< GraphType * > (this->GetOutput() );
-	for(auto nodeIt = outputGraph->Begin(); nodeIt != outputGraph->End(); nodeIt++)
-	{
-		if(nodeIt->m_Attributes.m_Area < this->m_MinimalSurface)
-		{
-			std::cout << "Graphe non valide!" << std::endl;
-			exit(1);
-		}
-	}
+    auto outputGraph = const_cast< GraphType * > (this->GetOutput() );
+    for(auto nodeIt = outputGraph->Begin(); nodeIt != outputGraph->End(); nodeIt++)
+    {
+        if(nodeIt->m_Attributes.m_Area < this->m_MinimalSurface)
+        {
+            std::cout << "Graphe non valide!" << std::endl;
+            exit(1);
+        }
+    }
 }
 
 template< typename TGraph >
@@ -748,15 +744,15 @@ bool
 SmallRegionsMergingFilter<TGraph>
 ::IsGraphValid()
  {
-	auto outputGraph = const_cast< GraphType * > (this->GetOutput() );
-	for(auto nodeIt = outputGraph->Begin(); nodeIt != outputGraph->End(); nodeIt++)
-	{
-		if(!nodeIt->m_Valid)
-		{
-			std::cout << "Graphe non valide!" << std::endl;
-			exit(1);
-		}
-	}
+    auto outputGraph = const_cast< GraphType * > (this->GetOutput() );
+    for(auto nodeIt = outputGraph->Begin(); nodeIt != outputGraph->End(); nodeIt++)
+    {
+        if(!nodeIt->m_Valid)
+        {
+            std::cout << "Graphe non valide!" << std::endl;
+            exit(1);
+        }
+    }
  }
 
 template< typename TGraph >

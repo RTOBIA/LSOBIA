@@ -19,13 +19,13 @@ namespace otb
 namespace obia
 {
 
-  template< typename TInputImage, typename TOutputGraph>
-    class LSImageToGraphScheduler : public itk::LightObject
-  {
-  public:
+template< typename TInputImage, typename TOutputGraph>
+class LSImageToGraphScheduler : public itk::LightObject
+{
+public:
     
     /** Standard class alias */
-    using Self 	       = LSImageToGraphScheduler;
+    using Self         = LSImageToGraphScheduler;
     using SuperClass   = itk::Object;
     using Pointer      = itk::SmartPointer< Self >;
     using ConstPointer = itk::SmartPointer< const Self >; 
@@ -47,7 +47,7 @@ namespace obia
     void SetFileName(const std::string& filename);
     void SetWriteLabelImage(bool v){ m_WriteLabelImage = v;}
     void SetWriteGraph(bool v){ m_WriteGraph = v;}
-    void SetOutputDir(const std::string path);
+    void SetOutputDir(const std::string & path);
     void SetMaxTileSizeX(const uint32_t MaxTileSizeX);
     void SetMaxTileSizeY(const uint32_t MaxTileSizeY);
 
@@ -70,14 +70,14 @@ namespace obia
     uint32_t GetNumberOfSpectralBands(){return m_NumberOfSpectralBands;};
     uint32_t GetMaxNumberOfTilesPerProcessor(){return m_MaxNumberOfTilesPerProcessor;};
 
-  protected:
+protected:
 
     LSImageToGraphScheduler();
     virtual ~LSImageToGraphScheduler();
 
     /** 
-	Abstract method that computes the initial width of padding crown to consider around
-	the tiles to be processed.
+    Abstract method that computes the initial width of padding crown to consider around
+    the tiles to be processed.
      */
     virtual void ComputePaddingValue() = 0;
 
@@ -88,11 +88,11 @@ namespace obia
     void PreProcessing();
 
     /** 
-	   Simple method that writes a graph if the number of tiles to be processed per
-	   processor is greater than 1.
+       Simple method that writes a graph if the number of tiles to be processed per
+       processor is greater than 1.
      */
     void WriteGraphIfNecessary(const unsigned int ty, 
-			                   const unsigned int tx);
+                               const unsigned int tx);
 
     /**
         Simple method that loads a graph if the number of tiles per processor is
@@ -155,7 +155,7 @@ namespace obia
 
     OutputGraphPointerType m_Graph;
 
-  private:
+private:
     
     /** Compute the final tile size by optimizing load balancing */
     void ComputeFinalTileSize();
@@ -166,7 +166,7 @@ namespace obia
     /** Create all necessary files to the output directory */
     void CreateOutput();
     
-  };
+};
 
 } // end of namespace obia
 } // end of namespace otb

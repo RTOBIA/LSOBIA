@@ -8,7 +8,6 @@ otb_module(LSOBIA
     OTBConversion
     OTBMeanShift
     OTBMathParser
-  OPTIONAL_DEPENDS
     OTBMPI
   TEST_DEPENDS
     OTBImageBase

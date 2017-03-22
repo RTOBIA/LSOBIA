@@ -11,7 +11,6 @@ namespace otb
 {
 namespace obia
 {
-
 using InputGraphType  = Graph < Node < BaatzNodeAttribute, BaatzEdgeAttribute > >;
 using OutputGraphType = Graph < Node < SRMNodeAttribute  , SRMEdgeAttribute   > >;
 
@@ -19,44 +18,42 @@ class BaatzToSRMGraphFilter : public GraphToGraphFilter<InputGraphType, OutputGr
 {
 public:
 
-	/** Some convenient alias */
+    /** Some convenient alias */
+    using InputGraphPointer    = typename InputGraphType::Pointer;
+    using InputGraphConstPointer = typename InputGraphType::ConstPointer;
+    using InputNodeType         = typename InputGraphType::NodeType;
+    using OutputNodeType       = typename OutputGraphType::NodeType;
 
-  	using InputGraphPointer      = typename InputGraphType::Pointer;
-  	using InputGraphConstPointer = typename InputGraphType::ConstPointer;
-  	using InputNodeType			 = typename InputGraphType::NodeType;
-  	using OutputNodeType		 = typename OutputGraphType::NodeType;
+    /** Standard class alias */
+    using Self       = BaatzToSRMGraphFilter;
+    using Superclass   = GraphToGraphFilter<InputGraphType, OutputGraphType>;
+    using Pointer    = itk::SmartPointer<Self>;
+    using ConstPointer = itk::SmartPointer< const Self>;
 
-	/** Standard class alias */
+    /** Method for creation through the object factory. */
+    itkNewMacro(Self);
 
-	using Self         = BaatzToSRMGraphFilter;
-	using Superclass   = GraphToGraphFilter<InputGraphType, OutputGraphType>;
-	using Pointer      = itk::SmartPointer<Self>;
-	using ConstPointer = itk::SmartPointer< const Self>;
-
-	/** Method for creation through the object factory. */
-  	itkNewMacro(Self);
-
-  	/** Run-time type information (and related methods). */
-  	itkTypeMacro(BaatzToSRMGraphFilter, GraphToGraphFilter);
+    /** Run-time type information (and related methods). */
+    itkTypeMacro(BaatzToSRMGraphFilter, GraphToGraphFilter);
 
 
 protected:
 
-  	BaatzToSRMGraphFilter();
-	~BaatzToSRMGraphFilter();
+    BaatzToSRMGraphFilter();
+    ~BaatzToSRMGraphFilter();
 
-	virtual void PrintSelf(std::ostream & os, itk::Indent indent) const ITK_OVERRIDE;
+    virtual void PrintSelf(std::ostream & os, itk::Indent indent) const ITK_OVERRIDE;
 
-	/**Convert the input graph*/
-	void GenerateData();
+    /**Convert the input graph*/
+    void GenerateData();
 
-	/**Convert a Baatz Node to SRM Node*/
-	OutputNodeType* convertInputNode(InputNodeType* node);
+    /**Convert a Baatz Node to SRM Node*/
+    OutputNodeType* convertInputNode(InputNodeType* node);
 
 private:
 
-	BaatzToSRMGraphFilter(const Self &) ITK_DELETE_FUNCTION;
-  	void operator=(const Self &) ITK_DELETE_FUNCTION;
+    BaatzToSRMGraphFilter(const Self &) =delete;
+    void operator=(const Self &) =delete;
 
 };
 }

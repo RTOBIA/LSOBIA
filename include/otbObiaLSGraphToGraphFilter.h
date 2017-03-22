@@ -15,11 +15,10 @@ namespace obia
 template< typename TInputGraph, typename TOutputGraph>
 class LSGraphToGraphFilter : public itk::LightObject
 {
-
 public:
 
    /** Standard class alias */
-   using Self 	      = LSGraphToGraphFilter;
+   using Self         = LSGraphToGraphFilter;
    using SuperClass   = itk::Object;
    using Pointer      = itk::SmartPointer< Self >;
    using ConstPointer = itk::SmartPointer< const Self >;
@@ -47,11 +46,11 @@ public:
    void SetNumberOfTilesY(const uint32_t NumberOfTilesY){m_NumberOfTilesY = NumberOfTilesY;};
    void SetMaxTileSizeX(const uint32_t MaxTileSizeX){m_MaxTileSizeX = MaxTileSizeX;};
    void SetMaxTileSizeY(const uint32_t MaxTileSizeY){m_MaxTileSizeY = MaxTileSizeY;};
-   void SetProjectionRef(const std::string ProjectionRef){m_ProjectionRef = ProjectionRef;};
+   void SetProjectionRef(const std::string & ProjectionRef){m_ProjectionRef = ProjectionRef;};
    void SetImageWidth(const uint32_t ImageWidth){m_ImageWidth = ImageWidth;};
    void SetImageHeight(const uint32_t ImageHeight){m_ImageHeight = ImageHeight;};
-   void SetTileMap(const std::map< uint32_t, ProcessingTile > tileMap){ m_TileMap = tileMap;};
-   void SetTilesPerProcessor(const std::map< int, std::set<uint32_t> > tilesPerProcessor){ m_TilesPerProcessor = tilesPerProcessor;};
+   void SetTileMap(const std::map< uint32_t, ProcessingTile > & tileMap){ m_TileMap = tileMap;};
+   void SetTilesPerProcessor(const std::map< int, std::set<uint32_t> > & tilesPerProcessor){ m_TilesPerProcessor = tilesPerProcessor;};
    void SetNumberOfSpectralBands(const uint32_t NumberOfSpectralBands){m_NumberOfSpectralBands = NumberOfSpectralBands;};
    void SetMaxNumberOfTilesPerProcessor(const uint32_t MaxNumberOfTilesPerProcessor){m_MaxNumberOfTilesPerProcessor = MaxNumberOfTilesPerProcessor;};
 
@@ -65,8 +64,8 @@ public:
    virtual ~LSGraphToGraphFilter();
 
    /**
-	Abstract method that computes the initial width of padding crown to consider around
-	the tiles to be processed.
+    Abstract method that computes the initial width of padding crown to consider around
+    the tiles to be processed.
     */
    virtual void ComputePaddingValue() = 0;
 
@@ -80,11 +79,11 @@ public:
    virtual void PreProcessing();
 
    /**
-	   Simple method that writes a graph if the number of tiles to be processed per
-	   processor is greater than 1.
+       Simple method that writes a graph if the number of tiles to be processed per
+       processor is greater than 1.
     */
    void WriteGraphIfNecessary(const unsigned int ty,
-			                   const unsigned int tx);
+                               const unsigned int tx);
 
    /**
        Simple method that loads a graph if the number of tiles per processor is
