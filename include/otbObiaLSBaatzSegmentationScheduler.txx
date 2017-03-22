@@ -214,124 +214,123 @@ typename LSBaatzSegmentationScheduler<TInputImage>::SegState
 LSBaatzSegmentationScheduler<TInputImage>
 ::FirstPartialSegmentation()
 {
-    std::cout <<"----------- First Partial Segmentation" << std::endl;
-    auto mpiConfig = MPIConfig::Instance();
-    auto mpiTools = MPITools::Instance();
+	std::cout <<"----------- First Partial Segmentation with " << m_StartingNumberOfIterations << std::endl;
+	auto mpiConfig = MPIConfig::Instance();
+	auto mpiTools = MPITools::Instance();
 
-    // Read the input image
-    auto imgReader = InputImageReaderType::New();
-    imgReader->SetFileName(this->m_FileName);
+	// Read the input image
+	auto imgReader = InputImageReaderType::New();
+	imgReader->SetFileName(this->m_FileName);
 
-    uint32_t tid = 0;
-    int localFusion = 0;
-    unsigned long int accumulatedMemory = 0;
+	uint32_t tid = 0;
+	int localFusion = 0;
+	unsigned long int accumulatedMemory = 0;
 
-    for(uint32_t ty = 0; ty < this->m_NumberOfTilesY; ty++)
-    {
-        for(uint32_t tx = 0; tx < this->m_NumberOfTilesX; tx++)
-        {
-            if(mpiTools->IsMyTurn(tid))
-            {
-                std::cout << "Ty = " << ty  << " Tx = " << tx << std::endl;
-                // Retrieve the tile by reference since it will be modified.
-                auto& tile = this->m_TileMap[tid];
+	for(uint32_t ty = 0; ty < this->m_NumberOfTilesY; ty++)
+	{
+		for(uint32_t tx = 0; tx < this->m_NumberOfTilesX; tx++)
+		{
+			if(mpiTools->IsMyTurn(tid))
+			{
+				std::cout << "Ty = " << ty  << " Tx = " << tx << std::endl;
+				// Retrieve the tile by reference since it will be modified.
+				auto& tile = this->m_TileMap[tid];
 
-                // Extraction of the tile
-                auto tileExtractor = MultiChannelExtractROIFilterType::New();
-                tileExtractor->SetStartX(tile.m_Frame.GetIndex(0));
-                tileExtractor->SetStartY(tile.m_Frame.GetIndex(1));
-                tileExtractor->SetSizeX(tile.m_Frame.GetSize(0));
-                tileExtractor->SetSizeY(tile.m_Frame.GetSize(1));
+				// Extraction of the tile
+				auto tileExtractor = MultiChannelExtractROIFilterType::New();
+				tileExtractor->SetStartX(tile.m_Frame.GetIndex(0));
+				tileExtractor->SetStartY(tile.m_Frame.GetIndex(1));
+				tileExtractor->SetSizeX(tile.m_Frame.GetSize(0));
+				tileExtractor->SetSizeY(tile.m_Frame.GetSize(1));
 
-                // Creation of the initial baatz graph
-                auto imgToBaatzFilter = ImageToBaatzGraphFilterType::New();
+				// Creation of the initial baatz graph
+				auto imgToBaatzFilter = ImageToBaatzGraphFilterType::New();
 
-                // Segmentation filter
-                auto baatzFilter = CreateFilter();
-                
-                baatzFilter->SetMaxNumberOfIterations(m_StartingNumberOfIterations);
-                // Baatz & Shäpe segmentation
-                /*auto baatzFilter = BaatzSegmentationFilterType::New();
-                baatzFilter->SetMaxNumberOfIterations(m_StartingNumberOfIterations);
-                baatzFilter->SetThreshold(m_Threshold);
-                baatzFilter->SetSpectralWeight(m_SpectralWeight);
-                baatzFilter->SetShapeWeight(m_ShapeWeight);
-                baatzFilter->SetBandWeights(m_BandWeights);*/
+				// Segmentation filter
+				auto baatzFilter = CreateFilter();
+				baatzFilter->SetMaxNumberOfIterations(this->m_StartingNumberOfIterations);
+				// Baatz & Shäpe segmentation
+				/*auto baatzFilter = BaatzSegmentationFilterType::New();
+				baatzFilter->SetMaxNumberOfIterations(m_StartingNumberOfIterations);
+				baatzFilter->SetThreshold(m_Threshold);
+				baatzFilter->SetSpectralWeight(m_SpectralWeight);
+				baatzFilter->SetShapeWeight(m_ShapeWeight);
+				baatzFilter->SetBandWeights(m_BandWeights);*/
 
-                // Pipeline branching
-                tileExtractor->SetInput(imgReader->GetOutput());
-                imgToBaatzFilter->SetInput(tileExtractor->GetOutput());
-                baatzFilter->SetInput(imgToBaatzFilter->GetOutput());
+				// Pipeline branching
+				tileExtractor->SetInput(imgReader->GetOutput());
+				imgToBaatzFilter->SetInput(tileExtractor->GetOutput());
+				baatzFilter->SetInput(imgToBaatzFilter->GetOutput());
 
-                baatzFilter->Update();
-                this->m_Graph = baatzFilter->GetOutput();
+				baatzFilter->Update();
+				this->m_Graph = baatzFilter->GetOutput();
 
-                // Determine if the segmentation is over
-                localFusion += (baatzFilter->GetMergingOver()) ? 0 : 1;
-
-
-                // tile referential -> image referential
-                RescaleGraph(tile);
+				// Determine if the segmentation is over
+				localFusion += (baatzFilter->GetMergingOver()) ? 0 : 1;
 
 
-                // Now we are in the image referential
-                this->m_Graph->SetImageWidth(this->m_ImageWidth);
-                this->m_Graph->SetImageHeight(this->m_ImageHeight);
-                this->m_Graph->SetNumberOfSpectralBands(this->m_NumberOfSpectralBands);
+				// tile referential -> image referential
+				RescaleGraph(tile);
 
-                // Remove the unstable segments
-                GraphOperationsType::RemoveUnstableNodes(this->m_Graph,
-                                                         tile,
-                                                         this->m_ImageWidth);
 
-                // Get the memory size of the graph.
-                accumulatedMemory += this->m_Graph->GetMemorySize();
+				// Now we are in the image referential
+				this->m_Graph->SetImageWidth(this->m_ImageWidth);
+				this->m_Graph->SetImageHeight(this->m_ImageHeight);
+				this->m_Graph->SetNumberOfSpectralBands(this->m_NumberOfSpectralBands);
 
-                // Write the graph if necessary
-                this->WriteGraphIfNecessary(ty, tx);
+				// Remove the unstable segments
+				GraphOperationsType::RemoveUnstableNodes(this->m_Graph,
+												         tile,
+												         this->m_ImageWidth);
 
-            } // end if(mpiTools->IsMyTurn(tid))
+				// Get the memory size of the graph.
+				accumulatedMemory += this->m_Graph->GetMemorySize();
 
-            tid++;
+				// Write the graph if necessary
+				this->WriteGraphIfNecessary(ty, tx);
 
-        } // end for(uint32_t tx = 0; tx < nbTilesX; tx++)
+			} // end if(mpiTools->IsMyTurn(tid))
 
-    } // end for(uint32_t ty = 0; ty < nbTilesY; ty++)
+			tid++;
 
-    /* Synchronization point */
-    mpiConfig->barrier();
+		} // end for(uint32_t tx = 0; tx < nbTilesX; tx++)
 
-    /* Compute the accumulated memory */
-    mpiTools->Accumulate(accumulatedMemory,  MPI_UNSIGNED_LONG);
+	} // end for(uint32_t ty = 0; ty < nbTilesY; ty++)
 
-    /* Determine if segmentation is globally over */
-    mpiTools->Accumulate(localFusion,  MPI_INT);
+	/* Synchronization point */
+	mpiConfig->barrier();
 
-    if(accumulatedMemory > this->m_AvailableMemory && localFusion > 0)
-    {
-        return PARTIAL_SEG;
-    }
-    else if(accumulatedMemory > this->m_AvailableMemory && localFusion < 1)
-    {
-        return SEG_OVER_NO_AGGR;
-    }
-    else if(accumulatedMemory < this->m_AvailableMemory && localFusion > 0)
-    {
-        if(m_AggregateGraphs)
-            return AGGR_AND_SEG;
-        else
-            return NO_AGGR_AND_SEG;
-    }
-    else if(accumulatedMemory < this->m_AvailableMemory && localFusion < 1)
-    {
-        if(m_AggregateGraphs)
-            return AGGR_NO_SEG;
-        else
-            return SEG_OVER_NO_AGGR;
-    }else
-    {
-        return SEG_STATE_UNDEF;
-    }
+	/* Compute the accumulated memory */
+	mpiTools->Accumulate(accumulatedMemory,  MPI_UNSIGNED_LONG);
+
+	/* Determine if segmentation is globally over */
+	mpiTools->Accumulate(localFusion,  MPI_INT);
+
+	if(accumulatedMemory > this->m_AvailableMemory && localFusion > 0)
+	{
+		return PARTIAL_SEG;
+	}
+	else if(accumulatedMemory > this->m_AvailableMemory && localFusion < 1)
+	{
+		return SEG_OVER_NO_AGGR;
+	}
+	else if(accumulatedMemory < this->m_AvailableMemory && localFusion > 0)
+	{
+		if(m_AggregateGraphs)
+			return AGGR_AND_SEG;
+		else
+			return NO_AGGR_AND_SEG;
+	}
+	else if(accumulatedMemory < this->m_AvailableMemory && localFusion < 1)
+	{
+		if(m_AggregateGraphs)
+			return AGGR_NO_SEG;
+		else
+			return SEG_OVER_NO_AGGR;
+	}else
+	{
+		return SEG_STATE_UNDEF;
+	}
 
 }
 

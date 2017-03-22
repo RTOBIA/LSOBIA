@@ -103,8 +103,14 @@ protected:
     /**Compute spectral distance*/
     float ComputeSpectralDistance(NodeType* node1, NodeType* node2);
 
-    /**Pointer to the graph*/
-    GraphPointerType m_Graph;
+	NodeType* GetBestSmallAdjacentNode(NodeType* nodeIn);
+
+	NodeType* GetMostSimilarNode(NodeType* node);
+
+	bool CheckMutuality(NodeType* node_1, NodeType* node_2);
+
+	/**Pointer to the graph*/
+	GraphPointerType m_Graph;
 
     /** Threshold for Baatz decision*/
     float m_Threshold;
@@ -221,8 +227,11 @@ private:
     /**Method to check if graph valid*/
     bool IsGraphValid();
 
-    /**Surface value to consider a small region*/
-    uint32_t m_MinimalSurface;
+	/** Method to check mutuality*/
+	bool CheckMutuality(NodeType* node_1, NodeType* node_2);
+
+	/**Surface value to consider a small region*/
+	uint32_t m_MinimalSurface;
 
     /**Boolean which flag if all small regions merged*/
     bool m_MergingOver;
@@ -235,4 +244,3 @@ private:
 } // end of namespace otb
 #include "otbObiaSmallRegionsMergingFilter.txx"
 #endif
-

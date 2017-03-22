@@ -36,85 +36,44 @@ template< class TGraph >
 itk::SmartPointer<typename LSSmallRegionsMergingScheduler<TGraph>::SRMFilterType> LSSmallRegionsMergingScheduler<TGraph>
 ::CreateFilter()
 {
-    // Merging filter
-    auto srmFilter = SRMFilterType::New();
+	// Merging filter
+	auto srmFilter = SRMFilterType::New();
 
-    //Create the 3 classes
-    auto mergingFunc = srmFilter->GetMergingCostFunc();//new SRMMergingCost<float, GraphType>(); //::New();
-    mergingFunc->SetMinimalSurface(this->m_MinimalSurface);
-    srmFilter->GetHeuristicFunc()->SetMinimalSurface(this->m_MinimalSurface);
-    srmFilter->SetMaxNumberOfIterations(this->m_NumberOfIterations);
-    srmFilter->SetInput(this->m_Graph);
-    return srmFilter;
-}*/
+	//Create the 3 classes
+	auto mergingFunc = srmFilter->GetMergingCostFunc();//new SRMMergingCost<float, GraphType>(); //::New();
+	mergingFunc->SetMinimalSurface(this->m_MinimalSurface);
+	srmFilter->GetHeuristicFunc()->SetMinimalSurface(this->m_MinimalSurface);
+	srmFilter->SetMaxNumberOfIterations(this->m_NumberOfIterations);
+	srmFilter->SetInput(this->m_Graph);
+	return srmFilter;
 
+
+}
+*/
 
 template< class TGraph >
 itk::SmartPointer<typename LSSmallRegionsMergingScheduler<TGraph>::SRMFilterType> LSSmallRegionsMergingScheduler<TGraph>
 ::CreateFilter()
 {
-    // Merging filter
-    auto srmFilter = SRMFilterType::New();
+	// Merging filter
+	auto srmFilter = SRMFilterType::New();
 
-    srmFilter->SetMinimalSurface(this->m_MinimalSurface);
-    srmFilter->SetNumberOfIterations(this->m_NumberOfIterations);
-    srmFilter->SetNumberOfIterations(-1);
-    srmFilter->SetInput(this->m_Graph);
-    return srmFilter;
+	srmFilter->SetMinimalSurface(this->m_MinimalSurface);
+	srmFilter->SetNumberOfIterations(this->m_NumberOfIterations);
+	srmFilter->SetInput(this->m_Graph);
+	return srmFilter;
+
 }
 
 template< typename TGraph >
 void LSSmallRegionsMergingScheduler<TGraph>
 ::AggregateGraph()
 {
-    //TODO
-    std::stringstream os;
-    int tx;
-    int ty;
-    if(MPIConfig::Instance()->GetMyRank() == 0)
-    {
-        ty = 0;
-        tx = 0;
-    }else{
-        ty = 1;
-        tx = 0;
-    }
-    os << this->m_TemporaryDirectory << "Graph_SRM_" << ty << "_" << tx << ".dat";
-    GraphOperationsType::WriteGraphToDisk(this->m_Graph, os.str());
-
-    MPIConfig::Instance()->barrier();
-    if(MPIConfig::Instance()->GetMyRank() == 0)
-    {
-        //Add other graph
-        std::stringstream osa;
-        osa << this->m_TemporaryDirectory << "Graph_SRM_" << 1 << "_" << 0 << ".dat";
-        auto tile_graph = GraphOperationsType::ReadGraphFromDisk(osa.str());
-
-        //Aggregate
-        GraphOperationsType::AggregateGraphs(this->m_Graph, tile_graph);
-
-
-        std::unordered_set< uint32_t > rowBounds;
-        std::unordered_set< uint32_t > colBounds;
-
-        rowBounds.insert(500);
-        rowBounds.insert(499);
-        colBounds.insert(1000);
-        colBounds.insert(999);
-
-        auto borderNodeMap = GraphOperationsType::BuildBorderNodesMapForFinalAggregation(this->m_Graph,
-                                                                                         rowBounds,
-                                                                                         colBounds,
-                                                                                         this->m_ImageWidth);
-
-            // Remove the duplicated nodes
-            GraphOperationsType::RemoveDuplicatedNodes(borderNodeMap, this->m_Graph, this->m_ImageWidth);
-
-            // Update the edges
-            GraphOperationsType::DetectNewAdjacentNodes(borderNodeMap, this->m_Graph, this->m_ImageWidth, this->m_ImageHeight);
-
-            GraphOperationsType::WriteGraphToDisk(this->m_Graph, os.str());
-    }
+	std::cout << "AGGREGATE FINAL GRAPH" << std::endl;
+	//TODO
+	std::stringstream os;
+	int tx;
+	int ty;
 
 }
 
@@ -256,71 +215,65 @@ void
 LSSmallRegionsMergingScheduler<TGraph>
 ::TilingExecution()
 {
-    /**If we have one tile per processor, then the graph is already initialized (this->m_Graph) from the previous filter
-     * We have to keep this graph and work with it (update, merging, etc ...)*/
-    auto mpiConfig = MPIConfig::Instance();
-    int localFusion = 0;
+	/**If we have one tile per processor, then the graph is already initialized (this->m_Graph) from the previous filter
+	 * We have to keep this graph and work with it (update, merging, etc ...)*/
+	auto mpiConfig = MPIConfig::Instance();
+	int localFusion = 0;
 
-    bool merge_over = false;
-    uint32_t cur_it = 0;
-    while(!merge_over)
-    {
+	bool merge_over = false;
+	uint32_t cur_it = 0;
 
-        int globalFusion = 0;
-        std::cout << "Tiling Execution " << cur_it << " for " << MPIConfig::Instance()->GetMyRank() << std::endl;
-        if(this->m_Graph != nullptr){
-            std::cout << "Nombre Noeuds : " << this->m_Graph->GetNumberOfNodes() << std::endl;
-        }
-        /**Compute stability margins*/
-        std::cout << "------- EXTRACT -------------" << std::endl;
-        ExtractStabilityMargins();
+	int maxNumberOfIterations = 100;
 
-        /** Aggregate*/
-        std::cout << "------- AGGREGATE ------------- " << std::endl;
-        AggregateStabilityMargins();
+	while(!merge_over)
+	{
 
-        unsigned long int accumulatedMemory = this->m_AvailableMemory + 1;
+		int globalFusion = 0;
+		std::cout << "Tiling Execution " << cur_it << " for " << MPIConfig::Instance()->GetMyRank() << std::endl;
 
-        /** Run merging small regions*/
-        localFusion = PartialFusion(accumulatedMemory, globalFusion);
+		/**Compute stability margins*/
+		std::cout << "------- EXTRACT -------------" << std::endl;
+		//ExtractStabilityMargins();
 
-        //ReconditionGraph();
+		/** Aggregate*/
+		std::cout << "------- AGGREGATE ------------- " << std::endl;
+		//AggregateStabilityMargins();
 
-        /*if(HasDuplicatedNodes()){
-            exit(1);
-        }*/
-        if(localFusion == 0)
-        {
-            std::cout << "Local fusion over for " << mpiConfig->GetMyRank() << std::endl;
-            merge_over = true;
-        }
+		unsigned long int accumulatedMemory = this->m_AvailableMemory + 1;
 
-        if(globalFusion != 0){
-            std::cout << "Global fusion not over, looping again for " << mpiConfig->GetMyRank() <<std::endl;
-            std::cout << "Nombre noeuds : " << this->m_Graph->GetNumberOfNodes() << " for " <<  mpiConfig->GetMyRank() << std::endl;
-            merge_over = false;
-        }else{
-            std::cout << "Global fusion? " << globalFusion << "/ Local Fusion " << localFusion << std::endl;
-        }
+		/** Run merging small regions*/
+		localFusion = PartialFusion(accumulatedMemory, globalFusion);
+		/*if(this->m_TileMap.size() == 1){
+			std::stringstream os;
+			os << this->m_TemporaryDirectory << "AFTER_" << mpiConfig->GetMyRank() << ".dat";
+			GraphOperationsType::WriteGraphToDisk(this->m_Graph, os.str());
+		}*/
+		//ReconditionGraph();
+		/*if(HasDuplicatedNodes()){
+			exit(1);
+		}*/
+		if(localFusion == 0)
+		{
+			std::cout <<"Local fusion = 0" << std::endl;
+			merge_over = true;
+		}
 
-        //If th emerge is over, we have to wait all processor to be here before ending
-        //In addition, we have to share the margin stability
-        //if(merge_over){
-            /**Compute stability margins*/
-            //std::cout << "------- EXTRACT -------------" << std::endl;
-            //ExtractStabilityMargins();
+		if(globalFusion != 0){
+			merge_over = false;
+		}
 
-            /** Aggregate*/
-            //std::cout << "------- AGGREGATE ------------- " << std::endl;
-            //AggregateStabilityMargins();
+//		if(cur_it > maxNumberOfIterations){
+//			merge_over = true;
+//		}
 
-            //WAIT ALL
-            //std::cout << "Merging over for " << mpiConfig->GetMyRank() << ". Waiting others..." << std::endl;
-             //mpiConfig->barrier();
-        //}
-        cur_it++;
+		cur_it++;
 
-    }
+	}
+
+	/*if(m_AggregateGraph)
+	{
+		AggregateGraph();
+	}*/
 }
 
 
@@ -345,7 +298,6 @@ LSSmallRegionsMergingScheduler<TGraph>
         uint32_t tx = kv.first % this->m_NumberOfTilesX;
         uint32_t ty = kv.first / this->m_NumberOfTilesX;
 
-
         // Retrieve the tile by reference since it will be modified.
         auto& tile = kv.second;
 
@@ -353,8 +305,7 @@ LSSmallRegionsMergingScheduler<TGraph>
         this->ReadGraphIfNecessary(ty, tx);
 
         //std::cout << "Graph "  << ty << "_" << tx  <<  " read : " << this->m_Graph->GetNumberOfNodes() << std::endl;
-
-        std::cout << "------ TUILE : " << ty << "_" << tx << " for processor : " << mpiConfig->GetMyRank()<< std::endl;
+		std::cout << "------ TUILE : " << ty << "_" << tx << " for processor : " << mpiConfig->GetMyRank()<< std::endl;
 
         auto subGraphMap = GraphOperationsType::ExtractStabilityMargin(this->m_Graph,
                                                                        nbAdjacencyLayers,
@@ -452,135 +403,132 @@ void
 LSSmallRegionsMergingScheduler<TGraph>
 ::AggregateStabilityMargins()
 {
-    auto mpiConfig = MPIConfig::Instance();
-    auto mpiTools = MPITools::Instance();
+	auto mpiConfig = MPIConfig::Instance();
+	auto mpiTools = MPITools::Instance();
 
-    // Create the shared buffer which will be accessible by other processes.
-    std::vector< char > sharedBuffer = ShareStabilityMargins();
+	// Create the shared buffer which will be accessible by other processes.
+	std::vector< char > sharedBuffer = ShareStabilityMargins();
 
-    MPI_Win win;
-    MPI_Win_create(&sharedBuffer[0], sharedBuffer.size(), CharSize, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+	MPI_Win win;
+	MPI_Win_create(&sharedBuffer[0], sharedBuffer.size(), CharSize, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
 
 
-    uint64_t ntile = 0;
-    for(auto& kv : this->m_TileMap)
-    {
-        uint32_t tx = kv.first % this->m_NumberOfTilesX;
-        uint32_t ty = kv.first / this->m_NumberOfTilesX;
+	uint64_t ntile = 0;
+	for(auto& kv : this->m_TileMap)
+	{
+		uint32_t tx = kv.first % this->m_NumberOfTilesX;
+		uint32_t ty = kv.first / this->m_NumberOfTilesX;
 
-        std::cout << "------ AGGREGATE TUILE : " << ty << "_" << tx << " for processor : " << mpiConfig->GetMyRank()<< std::endl;
+		std::cout << "------ AGGREGATE TUILE : " << ty << "_" << tx << " for processor : " << mpiConfig->GetMyRank()<< std::endl;
 
-        // Retrieve the tile by reference since it will be modified.
-        auto& tile = kv.second;
-        // Creation of the list of serialized stability margins per processor
-        std::vector< std::vector<char> > otherSerializedMargins;
+		// Retrieve the tile by reference since it will be modified.
+		auto& tile = kv.second;
+		// Creation of the list of serialized stability margins per processor
+		std::vector< std::vector<char> > otherSerializedMargins;
 
-        // Retrieve the neighbor tiles
-        uint32_t tile_id = ty*this->m_NumberOfTilesX + tx;
-        std::cout << "TILE ID = " << tile_id << std::endl;;
-        auto neighborTiles = SpatialTools::EightConnectivity(tile_id, this->m_NumberOfTilesX, this->m_NumberOfTilesY);
-        for(unsigned short n = 0; n < 8; n++)
-        {
+		// Retrieve the neighbor tiles
+		uint32_t tile_id = ty*this->m_NumberOfTilesX + tx;
+		std::cout << "TILE ID = " << tile_id << std::endl;;
+		auto neighborTiles = SpatialTools::EightConnectivity(tile_id, this->m_NumberOfTilesX, this->m_NumberOfTilesY);
+		for(unsigned short n = 0; n < 8; n++)
+		{
 
-            if(neighborTiles[n] > -1)
-            {
-                int neighRank = mpiTools->GetProcessorRankFromTileId(neighborTiles[n]);
+			if(neighborTiles[n] > -1)
+			{
+				int neighRank = mpiTools->GetProcessorRankFromTileId(neighborTiles[n]);
 
-                // Retrieve the position of the neigh tile in the shared buffer of the
-                // processor neighRank in order to compute the offset of displacement.
-                uint32_t pos = 0;
-                for(auto& t : this->m_TilesPerProcessor[neighRank])
-                {
-                    if(t == neighborTiles[n])
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        pos++;
-                    }
-                }
+				// Retrieve the position of the neigh tile in the shared buffer of the
+				// processor neighRank in order to compute the offset of displacement.
+				uint32_t pos = 0;
+				for(auto& t : this->m_TilesPerProcessor[neighRank])
+				{
+					if(t == neighborTiles[n])
+					{
+						break;
+					}
+					else
+					{
+						pos++;
+					}
+				}
 
-                // Compute the offset of displacement.
-                uint64_t offset = pos * (IntSize + m_MaxNumberOfBytes);
+				// Compute the offset of displacement.
+				uint64_t offset = pos * (IntSize + m_MaxNumberOfBytes);
 
-                // Allocate a new serialized stability margin.
-                otherSerializedMargins.push_back( std::vector<char>(IntSize + m_MaxNumberOfBytes) );
+				// Allocate a new serialized stability margin.
+				otherSerializedMargins.push_back( std::vector<char>(IntSize + m_MaxNumberOfBytes) );
 
-                // Read rma operation
+				// Read rma operation
 
-                //MPI_Win_fence(0, win);
-                MPI_Win_lock(MPI_LOCK_SHARED, neighRank, 0, win);
+				//MPI_Win_fence(0, win);
+				MPI_Win_lock(MPI_LOCK_SHARED, neighRank, 0, win);
 
-                MPI_Get(&(otherSerializedMargins[otherSerializedMargins.size()-1][0]),
-                        IntSize + m_MaxNumberOfBytes,
-                        MPI_CHAR,
-                        neighRank,
-                        offset,
-                        IntSize + m_MaxNumberOfBytes,
-                        MPI_CHAR,
-                        win);
+				MPI_Get(&(otherSerializedMargins[otherSerializedMargins.size()-1][0]),
+						IntSize + m_MaxNumberOfBytes,
+						MPI_CHAR,
+						neighRank,
+						offset,
+						IntSize + m_MaxNumberOfBytes,
+						MPI_CHAR,
+						win);
 
-                MPI_Win_unlock(neighRank, win);
-                //MPI_Win_fence(0, win);
+				MPI_Win_unlock(neighRank, win);
+				//MPI_Win_fence(0, win);
 
-            } // end if(neighborTiles[n] > -1)
+			} // end if(neighborTiles[n] > -1)
 
-        } // end for(unsigned short n = 0; n < 8; n++)
+		} // end for(unsigned short n = 0; n < 8; n++)
 
-        //Read the current graph
-        this->ReadGraphIfNecessary(ty, tx);
+		//Read the current graph
+		this->ReadGraphIfNecessary(ty, tx);
 
-        // Agregate the stability margins to the graph
-        for(uint32_t i = 0; i < otherSerializedMargins.size(); i++)
-        {
-            // Retrieve the real number of bytes
-            int numBytes;
-            std::memcpy(&numBytes, &otherSerializedMargins[i][0], IntSize);
+		// Agregate the stability margins to the graph
+		for(uint32_t i = 0; i < otherSerializedMargins.size(); i++)
+		{
+			// Retrieve the real number of bytes
+			int numBytes;
+			std::memcpy(&numBytes, &otherSerializedMargins[i][0], IntSize);
 
-            // Retrieve the serialized margin
-            std::vector< char > otherSerializedMargin(numBytes);
-            std::memcpy(&otherSerializedMargin[0], &otherSerializedMargins[i][IntSize], numBytes);
-            otherSerializedMargins[i].clear();
-            otherSerializedMargins[i].shrink_to_fit();
+			// Retrieve the serialized margin
+			std::vector< char > otherSerializedMargin(numBytes);
+			std::memcpy(&otherSerializedMargin[0], &otherSerializedMargins[i][IntSize], numBytes);
+			otherSerializedMargins[i].clear();
+			otherSerializedMargins[i].shrink_to_fit();
 
-            // Deserialize the graph
-            std::cout << "Deserialize graph " << i << std::endl;
-            auto subGraph = GraphOperationsType::DeSerializeGraph(otherSerializedMargin);
+			// Deserialize the graph
+			auto subGraph = GraphOperationsType::DeSerializeGraph(otherSerializedMargin);
 
-            std::cout << "Sub Graph : " << subGraph->GetNumberOfNodes() << " for tile "   << ty << "_" << tx << std::endl;
+			std::cout << "Sub Graph : " << subGraph->GetNumberOfNodes() << " for tile "   << ty << "_" << tx << std::endl;
 
-            //Add the sub graph to the graph
-            GraphOperationsType::AggregateGraphs(this->m_Graph, subGraph);
-        }
+			//Add the sub graph to the graph
+			GraphOperationsType::AggregateGraphs(this->m_Graph, subGraph);
+		}
 
-        // Remove duplicated nodes
-        auto borderNodeMap = GraphOperationsType::BuildBorderNodesMap(this->m_Graph,
-                                                                      tile,
-                                                                      this->m_NumberOfTilesX,
-                                                                      this->m_NumberOfTilesY,
-                                                                      this->m_ImageWidth);
+		// Remove duplicated nodes
+		auto borderNodeMap = GraphOperationsType::BuildBorderNodesMap(this->m_Graph,
+																	  tile,
+																	  this->m_MaxTileSizeX,
+																	  this->m_MaxTileSizeY,
+																	  this->m_NumberOfTilesX,
+																	  this->m_NumberOfTilesY,
+																	  this->m_ImageWidth);
 
-        std::cout << "Before Remove Duplicated : " <<  this->m_Graph->GetNumberOfNodes() << " on proc : " << mpiConfig->GetMyRank() << std::endl;
-        uint32_t nb_nodes_before = this->m_Graph->GetNumberOfNodes();
-        GraphOperationsType::RemoveDuplicatedNodes(borderNodeMap, this->m_Graph, this->m_ImageWidth);
+		uint32_t nb_nodes_before = this->m_Graph->GetNumberOfNodes();
+		GraphOperationsType::RemoveDuplicatedNodes(borderNodeMap, this->m_Graph, this->m_ImageWidth);
 
-        // Update edges
-        GraphOperationsType::DetectNewAdjacentNodes(borderNodeMap, this->m_Graph, this->m_ImageWidth, this->m_ImageHeight);
-        std::cout << "After Remove Duplicated : " <<  this->m_Graph->GetNumberOfNodes() << std::endl;
-        //std::cout << "Write Graph " << ty << "_" << tx << std::endl;
-        this->WriteGraphIfNecessary(ty, tx);
+		// Update edges
+		GraphOperationsType::DetectNewAdjacentNodes(borderNodeMap, this->m_Graph, this->m_ImageWidth, this->m_ImageHeight);
+		this->WriteGraphIfNecessary(ty, tx);
+		ntile++;
+	}
 
-        ntile++;
-    }
+	std::cout << "WAIT ALL AGGREGATE, current proc is " << mpiConfig->GetMyRank() << std::endl;
 
-    std::cout << "WAIT ALL AGGREGATE, current proc is " << mpiConfig->GetMyRank() << std::endl;
+	//Wait All
+	mpiConfig->barrier();
 
-    //Wait All
-    mpiConfig->barrier();
-
-    // Can release the rma window
-    MPI_Win_free(&win);
+	// Can release the rma window
+	MPI_Win_free(&win);
 }
 
 
@@ -917,6 +865,8 @@ LSSmallRegionsMergingScheduler<TGraph>
 
       rgbWriter->Update();
 }
+
+
 
 
 }//End obia
