@@ -65,8 +65,12 @@ private:
 		AddParameter(ParameterType_Group,"io","Set of parameters related to input/output");
 		AddParameter(ParameterType_String,  "io.im",   "Input image path");
 		SetParameterDescription("io.im", "Image");
-		AddParameter(ParameterType_Directory, "io.out",  "Output directory");
-		SetParameterDescription("io.out", "Output Directory");
+		AddParameter(ParameterType_Group, "io.out",  "Output directory");
+		AddParameter(ParameterType_Directory, "io.out.dir",  "Output directory");
+		SetParameterDescription("io.out.dir", "Output Directory");
+		AddParameter(ParameterType_String, "io.out.labelimage",  "Label Image Name");
+		SetParameterDescription("io.out.labelimage", "Label Image Name");
+                MandatoryOff("io.out.labelimage");
 		AddParameter(ParameterType_Directory, "io.temp",  "Directory used for temporary data");
 		SetParameterDescription("io.temp", "Temporary directory");
 
@@ -97,25 +101,7 @@ private:
 		AddParameter(ParameterType_Int,"processing.memory","Maximum memory to be used on the main node");
 		AddParameter(ParameterType_Int,"processing.maxtilesizex","Maximum size of tiles along x axis");
 		AddParameter(ParameterType_Int,"processing.maxtilesizey","Maximum size of tiles along x axis");
-
 		AddParameter(ParameterType_Int,"processing.minimalsurface","Minimal surface");
-
-		// TODO : remove this? seems wrong
-		AddParameter(ParameterType_Int,"processing.numproc","Number of processors");
-
-
-
-
-		/* TODO : remove this when the default values and choices have been implemented
-		MandatoryOff("fusion.sylvester.linearcombination.image");
-		AddParameter(ParameterType_Float,"fusion.glp.ratio","Resolutions ratio between the Panchromatic and the multispectral inputs");
-		SetDefaultParameterFloat("",  4.);
-		SetMinimumParameterFloatValue("", 0);
-		SetDocExampleParameterValue("boolean", "true");
-		SetDocExampleParameterValue("in", "QB_Suburb.png");
-		SetDocExampleParameterValue("out", "Application_Example.png");
-		*/
-
 
 	}
 
@@ -127,21 +113,11 @@ private:
 	// Execute App
 	void DoExecute()
 	{
-		// TODO : remove this? seems wrong
-		auto mpiConfig = otb::MPIConfig::Instance();
-		int argc=3;
-		int numproc = GetParameterInt("processing.numproc");
-		stringstream ss;
-		ss << numproc;
-		std::string numprocStr = ss.str();
-		char* argvf[] = { "prog", "-np", &numprocStr[0]};
-		char** argv = argvf;
-		mpiConfig->Init(argc, argv);
-
 		/* Global parameters */
 
 		std::string filename = GetParameterString("io.im");
-		std::string outDir = GetParameterString("io.out");
+		std::string outDir = GetParameterString("io.out.dir");
+		std::string labelImage = GetParameterString("io.out.labelimage");
 		std::string tmpDir = GetParameterString("io.temp");
 
 		uint32_t maxTileWidth = GetParameterInt("processing.maxtilesizex");
@@ -199,6 +175,7 @@ private:
 				lsBaatzFilter->SetShapeWeight(shapeW);
 				lsBaatzFilter->SetWriteLabelImage(true);
 				lsBaatzFilter->SetWriteGraph(true);
+                                lsBaatzFilter->SetLabelImageName(labelImage);
 				lsBaatzFilter->SetOutputDir(outDir);
 				lsBaatzFilter->Update();
 
@@ -257,6 +234,7 @@ private:
 				lsMSFilter->SetSpectralRangeRamp(ranger);
 				lsMSFilter->SetModeSearch(modeSearch);
 				lsMSFilter->SetOutputDir(outDir);
+                                lsMSFilter->SetLabelImageName(labelImage);
 				lsMSFilter->SetWriteLabelImage(true);
 				lsMSFilter->SetWriteGraph(true);
 				lsMSFilter->Update();

@@ -18,7 +18,8 @@ endif()
 otb_test_application(NAME apLSOBIA_BaatzOneProc
 	APP LSSegmentation
 	OPTIONS -io.im ${LSOBIA_SOURCE_DIR}/data/pleiades_1000_1000.tif
-	-io.out ${TEMP_DIR}
+	-io.out.dir ${TEMP_DIR}
+	-io.out.labelimage "BaatzOneProcLabel"
 	-io.temp ${TEMP_DIR}
 	-algorithm baatz
 	-algorithm.baatz.numitfirstpartial 5
@@ -37,7 +38,8 @@ otb_test_application(NAME apLSOBIA_BaatzOneProc
 otb_test_application(NAME apLSOBIA_BaatzOneProcTiled
 	APP LSSegmentation
 	OPTIONS -io.im ${LSOBIA_SOURCE_DIR}/data/pleiades_1000_1000.tif
-	-io.out ${TEMP_DIR}
+	-io.out.dir ${TEMP_DIR}
+	-io.out.labelimage "BaatzOneProcTiled"
 	-io.temp ${TEMP_DIR}
 	-algorithm baatz
 	-algorithm.baatz.numitfirstpartial 5
@@ -60,7 +62,8 @@ otb_test_application(NAME apLSOBIA_BaatzOneProcTiled
 otb_test_application(NAME apLSOBIA_MeanShiftOneProc
 	APP LSSegmentation
 	OPTIONS -io.im ${LSOBIA_SOURCE_DIR}/data/pleiades_1000_1000.tif
-	-io.out ${TEMP_DIR}
+	-io.out.dir ${TEMP_DIR}
+	-io.out.labelimage "MeanShiftOneProcLabel"
 	-io.temp ${TEMP_DIR}
 	-algorithm meanshift
 	-algorithm.meanshift.maxiter 100
@@ -70,8 +73,8 @@ otb_test_application(NAME apLSOBIA_MeanShiftOneProc
 	-algorithm.meanshift.ranger 0
 	-algorithm.meanshift.modesearch "off"
 	-processing.memory 2000
-	-processing.maxtilesizex 200
-	-processing.maxtilesizey 200)
+	-processing.maxtilesizex 1000
+	-processing.maxtilesizey 1000)
 
 # ----------------------------------------------------------------------------------------------
 # Graph to image conversion test driver
@@ -121,6 +124,7 @@ otb_add_test(NAME otbLSOBIALSBaatzSegmentation COMMAND otbLSOBIALSBaatzSegmentat
 	     "on"
              "on"
              "on"
+             "LSBaatzSegmentationTestLabelImage"
 	     )
 
 otb_add_test_mpi(NAME otbLSOBIALSBaatzSegmentationMPI COMMAND otbLSOBIALSBaatzSegmentationTestDriver
@@ -140,6 +144,7 @@ otb_add_test_mpi(NAME otbLSOBIALSBaatzSegmentationMPI COMMAND otbLSOBIALSBaatzSe
 	     "on"
              "on"
              "on"
+             "LSBaatzSegmentationMPITestLabelImage"
 	     )
 
 
@@ -168,6 +173,7 @@ otb_add_test(NAME otbLSOBIALSMeanShift COMMAND otbLSOBIALSMeanShiftTestDriver
              0
              0
              ${TEMP_DIR}
+             "LSMeanShiftLabelImage"
 	     )
 
 otb_add_test_mpi(NAME otbLSOBIALSMeanShiftMPI COMMAND otbLSOBIALSMeanShiftTestDriver
@@ -185,6 +191,7 @@ otb_add_test_mpi(NAME otbLSOBIALSMeanShiftMPI COMMAND otbLSOBIALSMeanShiftTestDr
              0
              0
              ${TEMP_DIR}
+             "LSMeanShiftMPILabelImage"
 	     )
 
 
@@ -256,11 +263,17 @@ set(${otb-module}SplitGraphTests
     otbObiaSplitGraph.cxx
     )
 
-
 add_executable(otbLSOBIASplitGraphTestDriver ${${otb-module}SplitGraphTests})
 target_link_libraries(otbLSOBIASplitGraphTestDriver ${${otb-module}-Test_LIBRARIES})
 otb_module_target_label(otbLSOBIASplitGraphTestDriver)
 
+otb_add_test(NAME otbLSOBIASplitGraph COMMAND otbLSOBIASplitGraphTestDriver
+             otbObiaSplitGraph
+             ${LSOBIA_SOURCE_DIR}/data/Graph_0_0.dat
+             ${TEMP_DIR}
+            250
+             250
+             )
 
 # ----------------------------------------------------------------------------------------------
 # Small Regions Merging Test
@@ -268,7 +281,8 @@ otb_module_target_label(otbLSOBIASplitGraphTestDriver)
 otb_test_application(NAME apLSOBIA_SRMOneProc
 	APP LSSmallRegionsMerging
 	OPTIONS -io.im ${LSOBIA_SOURCE_DIR}/data/pleiades_1000_1000.tif
-	-io.out ${TEMP_DIR}
+	-io.out.dir ${TEMP_DIR}
+	-io.out.labelimage "SRMOneProcLabelImage"
 	-io.temp ${TEMP_DIR}
 	-algorithm baatz
 	-algorithm.baatz.numitfirstpartial 5
