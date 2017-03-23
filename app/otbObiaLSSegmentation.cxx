@@ -64,8 +64,13 @@ private:
 		AddParameter(ParameterType_Group,"io","Set of parameters related to input/output");
 		AddParameter(ParameterType_String,  "io.im",   "Input image path");
 		SetParameterDescription("io.im", "Image");
-		AddParameter(ParameterType_Directory, "io.out",  "Output directory");
-		SetParameterDescription("io.out", "Output Directory");
+		AddParameter(ParameterType_Group, "io.out",  "Output directory");
+		AddParameter(ParameterType_Directory, "io.out.dir",  "Output directory");
+		SetParameterDescription("io.out.dir", "Output Directory");
+		AddParameter(ParameterType_String, "io.out.labelimage",  "Label Image Name");
+		SetParameterDescription("io.out.labelimage", "Label Image Name");
+                MandatoryOff("io.out.labelimage");
+
 		AddParameter(ParameterType_Directory, "io.temp",  "Directory used for temporary data");
 		SetParameterDescription("io.temp", "Temporary directory");
 
@@ -146,7 +151,8 @@ private:
 		
 		/* Global parameters */
 		std::string filename = GetParameterString("io.im");
-		std::string outDir = GetParameterString("io.out");
+		std::string outDir = GetParameterString("io.out.dir");
+		std::string labelImage = GetParameterString("io.out.labelimage");
 		std::string tmpDir = GetParameterString("io.temp");
 		
 		uint32_t maxTileWidth = GetParameterInt("processing.maxtilesizex");
@@ -216,6 +222,7 @@ private:
 				lsBaatzFilter->SetWriteGraph(writeGraphs);
 				lsBaatzFilter->SetAggregateGraphs(aggregateGraphs);
 				lsBaatzFilter->SetOutputDir(outDir);
+				lsBaatzFilter->SetLabelImageName(labelImage);
 				lsBaatzFilter->Update();
 
 				break;
@@ -247,6 +254,7 @@ private:
 				lsMSFilter->SetSpectralRangeRamp(ranger);
 				lsMSFilter->SetModeSearch(modeSearch);
 				lsMSFilter->SetOutputDir(outDir);
+				lsMSFilter->SetLabelImageName(labelImage);
 				lsMSFilter->SetWriteLabelImage(writeImages);
 				lsMSFilter->SetWriteGraph(writeGraphs);
 				lsMSFilter->Update();

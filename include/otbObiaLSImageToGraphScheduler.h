@@ -50,6 +50,7 @@ public:
     void SetOutputDir(const std::string & path);
     void SetMaxTileSizeX(const uint32_t MaxTileSizeX);
     void SetMaxTileSizeY(const uint32_t MaxTileSizeY);
+    void SetLabelImageName(const std::string& labelImage);
 
 
     // The memory is given in megabytes.
@@ -107,6 +108,7 @@ protected:
 
     /** Output directory where the final(s) graphs and the output label image (if necessary) are stored. */
     std::string m_OutputDir;
+    std::string m_LabelImageName;
     bool m_WriteLabelImage;
     bool m_SplittedGraph;
     bool m_WriteGraph;

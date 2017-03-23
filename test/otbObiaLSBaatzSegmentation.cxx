@@ -31,7 +31,8 @@ int otbObiaLSBaatzSegmentation(int argc, char *argv[])
             << "Argument 12: " << "[write label image on/off]\n"
             << "Argument 13: " << "[write graphs on/off]\n"
             << "Argument 14: " << "[aggregate graphs on/off]\n"
-            << "Argument 15: " << "[weights for each spectral band (optional)...]\n";
+            << "Argument 15: " << "[output label image name]\n"
+            << "Argument 16: " << "[weights for each spectral band (optional)...]\n";
         return 1;
     }
 
@@ -58,11 +59,12 @@ int otbObiaLSBaatzSegmentation(int argc, char *argv[])
     const std::string writeLabelImages = argv[12];
     const std::string writeGraphs = argv[13];
     const std::string aggregateGraphs = argv[14];
+    const std::string labelImage = argv[15];
     std::vector<float> bandWeights;
 
-    if(argc >= 15)
+    if(argc >= 16)
     {
-        for(int i = 15; i < argc; ++i)
+        for(int i = 16; i < argc; ++i)
         {
             bandWeights.push_back(atof(argv[i]));
         }
@@ -83,6 +85,7 @@ int otbObiaLSBaatzSegmentation(int argc, char *argv[])
     lsBaatzFilter->SetWriteGraph(isOn(writeGraphs));
     lsBaatzFilter->SetOutputDir(outDir);
     lsBaatzFilter->SetAggregateGraphs(isOn(aggregateGraphs));
+    lsBaatzFilter->SetLabelImageName(labelImage);
     lsBaatzFilter->Update();
 
     std::cout << "SUCCESS" << std::endl;

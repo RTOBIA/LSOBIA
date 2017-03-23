@@ -13,6 +13,7 @@ template< typename TInputImage, typename TOutputGraph>
 LSImageToGraphScheduler<TInputImage, TOutputGraph>
 ::LSImageToGraphScheduler() :
  m_OutputDir(""),
+m_LabelImageName("labelOutput"),
  m_WriteLabelImage(false),
  m_SplittedGraph(false),
  m_WriteGraph(false),
@@ -44,6 +45,14 @@ LSImageToGraphScheduler<TInputImage, TOutputGraph>
 ::SetFileName(const std::string& filename)
 {
     m_FileName = filename;
+}
+
+template< typename TInputImage, typename TOutputGraph>
+void
+LSImageToGraphScheduler<TInputImage, TOutputGraph>
+::SetLabelImageName(const std::string& labelImage)
+{
+    m_LabelImageName = labelImage;
 }
 
 template< typename TInputImage, typename TOutputGraph>
@@ -380,7 +389,7 @@ LSImageToGraphScheduler<TInputImage, TOutputGraph>
             auto rgbWriter = RGBWriterType::New();
             os.str("");
             os.clear();
-            os << this->m_OutputDir << "labelOutput_" << ty << "_" << tx << ".tif";
+            os << this->m_OutputDir << m_LabelImageName << ty << "_" << tx << ".tif";
             rgbWriter->SetFileName(os.str());
             graphToLabelFilter->SetInput(m_Graph);
             auto fillHoleFilter = FillholeFilterType::New();
