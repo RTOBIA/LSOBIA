@@ -23,7 +23,8 @@ LSOBIA provides an OTBApplication, LSSegmentation (Large Scale Segmentation).
 Parameters: 
         -progress                          <boolean>        Report progress 
         -io.im                             <string>         Input image path  (mandatory)
-        -io.out                            <string>         Output directory  (mandatory)
+        -io.out.dir                        <string>         Output directory  (mandatory)
+        -io.out.labelimage                 <string>         Label Image Name  (optional, off by default)
         -io.temp                           <string>         Directory used for temporary data  (mandatory)
         -algorithm                         <string>         Segmentation algorithm name [baatz/meanshift] (mandatory, default value is baatz)
         -algorithm.baatz.numitfirstpartial <int32>          Number of iterations for first partial segmentation  (optional, on by default, default value is 1)
@@ -44,12 +45,14 @@ Parameters:
         -processing.writeimages            <string>         Activation of image traces [on/off] (mandatory, default value is on)
         -processing.writegraphs            <string>         Activation of graph traces [on/off] (mandatory, default value is on)
         -inxml                             <string>         Load otb application from xml file  (optional, off by default)
+
+
 ```
 
 ### Monoprocessor execution
 
 ```bash
-  otbcli_LSSegmentation "-io.im" "${INPUT_IMAGE}" "-io.out" "${OUTPUT_DIRECTORY}" "-io.temp" "${TEMP}" "-algorithm" "baatz" "-algorithm.baatz.numitfirstpartial" "5" "-algorithm.baatz.numitpartial" "5" "-algorithm.baatz.stopping" "40" "-algorithm.baatz.spectralweight" "0.5" "-algorithm.baatz.geomweight" "0.5" "-algorithm.baatz.aggregategraphs" "on" "-processing.writeimages" "on" "-processing.writegraphs" "on" "-processing.memory" "2000" "-processing.maxtilesizex" "1000" "-processing.maxtilesizey" "1000"
+  otbcli_LSSegmentation "-io.im" "${INPUT_IMAGE}" "-io.out.dir" "${OUTPUT_DIRECTORY}" -io.out.labelimage "LabelImage" "-io.temp" "${TEMP}" "-algorithm" "baatz" "-algorithm.baatz.numitfirstpartial" "5" "-algorithm.baatz.numitpartial" "5" "-algorithm.baatz.stopping" "40" "-algorithm.baatz.spectralweight" "0.5" "-algorithm.baatz.geomweight" "0.5" "-algorithm.baatz.aggregategraphs" "on" "-processing.writeimages" "on" "-processing.writegraphs" "on" "-processing.memory" "2000" "-processing.maxtilesizex" "1000" "-processing.maxtilesizey" "1000"
 ```
 
 ### Multiprocessor execution
@@ -57,7 +60,7 @@ Parameters:
 Simply add *mpirun -np ${NUM_PROC}* 
 
 ```bash
-  mpirun -np 4 otbcli_LSSegmentation "-io.im" "${INPUT_IMAGE}" "-io.out" "${OUTPUT_DIRECTORY}" "-io.temp" "${TEMP}" "-algorithm" "baatz" "-algorithm.baatz.numitfirstpartial" "5" "-algorithm.baatz.numitpartial" "5" "-algorithm.baatz.stopping" "40" "-algorithm.baatz.spectralweight" "0.5" "-algorithm.baatz.geomweight" "0.5" "-algorithm.baatz.aggregategraphs" "on" "-processing.writeimages" "on" "-processing.writegraphs" "on" "-processing.memory" "2000" "-processing.maxtilesizex" "250" "-processing.maxtilesizey" "250"
+  mpirun -np 4 otbcli_LSSegmentation "-io.im" "${INPUT_IMAGE}" "-io.out" "${OUTPUT_DIRECTORY}" -io.out.labelimage "LabelImage" "-io.temp" "${TEMP}" "-algorithm" "baatz" "-algorithm.baatz.numitfirstpartial" "5" "-algorithm.baatz.numitpartial" "5" "-algorithm.baatz.stopping" "40" "-algorithm.baatz.spectralweight" "0.5" "-algorithm.baatz.geomweight" "0.5" "-algorithm.baatz.aggregategraphs" "on" "-processing.writeimages" "on" "-processing.writegraphs" "on" "-processing.memory" "2000" "-processing.maxtilesizex" "250" "-processing.maxtilesizey" "250"
 ```
 
 This produces an image output containing labels of the Baatz Segmentation algorithm.
