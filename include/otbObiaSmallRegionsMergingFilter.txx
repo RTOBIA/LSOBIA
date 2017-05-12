@@ -246,6 +246,10 @@ SRMHeuristic<TGraph>
 	//Check if node_2 got node_1 for best adjacent node
 	//We assume that node_1 got a surface < minimal_surface
 	bestNode = GetBestSmallAdjacentNode(node_2);
+	if(bestNode == nullptr)
+	{
+		return false;
+	}
 	/*
 	for(auto edgeIt = node_2->Begin(); edgeIt != node_2->End(); edgeIt++)
 	{

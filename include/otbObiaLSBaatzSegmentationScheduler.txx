@@ -46,6 +46,7 @@ void
 LSBaatzSegmentationScheduler<TInputImage>
 ::NoTilingExecution()
 {
+	std::cout << "NO TILING EXECUTION WITH " << m_MaxNumberOfIterations << std::endl;
     auto mpiConfig = MPIConfig::Instance();
 
     // Only the master node segments the whole input image.
@@ -60,6 +61,7 @@ LSBaatzSegmentationScheduler<TInputImage>
 
         // Segmentation filter
         auto baatzFilter = CreateFilter();
+        baatzFilter->SetMaxNumberOfIterations(m_MaxNumberOfIterations);
         /*auto baatzFilter = BaatzSegmentationFilterType::New();
         baatzFilter->SetMaxNumberOfIterations(m_MaxNumberOfIterations);
         baatzFilter->SetThreshold(m_Threshold);
@@ -82,6 +84,8 @@ void
 LSBaatzSegmentationScheduler<TInputImage>
 ::TilingExecution()
 {
+	std::cout << "TILING EXECUTION WITH " << m_StartingNumberOfIterations << std::endl;
+
     // First partial segmentation
     auto segState = FirstPartialSegmentation();
 

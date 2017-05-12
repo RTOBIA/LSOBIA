@@ -1,7 +1,6 @@
 #include <iostream>
 
 #include "otbObiaBaatzSegmentationFilter.txx"
-#include "otbObiaBaatzGraphToSRMGraphFilter.txx"
 #include "otbObiaImageToBaatzGraphFilter.txx"
 #include "otbObiaLSMeanShiftScheduler.txx"
 #include "otbObiaSmallRegionsMergingFilter.txx"

@@ -55,7 +55,53 @@ otb_test_application(NAME apLSOBIA_BaatzOneProcTiled
 	-processing.maxtilesizey 250
 	)
 
-
+otb_test_application(NAME apLSOBIA_BaatzOneProcLittleTiled
+	APP LSSegmentation
+	OPTIONS -io.im ${LSOBIA_SOURCE_DIR}/data/pleiades_100_100.tif
+	-io.out.dir ${TEMP_DIR}
+	-io.out.labelimage "BaatzOneProcLabel"
+	-io.temp ${TEMP_DIR}
+	-algorithm baatz
+	-algorithm.baatz.numitfirstpartial 3
+	-algorithm.baatz.numitpartial 5
+	-algorithm.baatz.stopping 40
+	-algorithm.baatz.spectralweight 0.5
+	-algorithm.baatz.geomweight 0.5
+	-algorithm.baatz.aggregategraphs "on"
+	-processing.writeimages "on"
+	-processing.writegraphs "on"
+	-processing.memory 200
+	-processing.maxtilesizex 25
+	-processing.maxtilesizey 25
+	)
+	
+otb_test_application(NAME apLSOBIA_BaatzOneProcLittle
+	APP LSSegmentation
+	OPTIONS -io.im ${LSOBIA_SOURCE_DIR}/data/pleiades_100_100.tif
+	-io.out.dir ${TEMP_DIR}
+	-io.out.labelimage "BaatzOneProcLabel"
+	-io.temp ${TEMP_DIR}
+	-algorithm baatz
+	-algorithm.baatz.numitfirstpartial 1
+	-algorithm.baatz.numitpartial 1
+	-algorithm.baatz.stopping 40
+	-algorithm.baatz.spectralweight 0.5
+	-algorithm.baatz.geomweight 0.5
+	-algorithm.baatz.aggregategraphs "on"
+	-processing.writeimages "on"
+	-processing.writegraphs "on"
+	-processing.memory 2000
+	-processing.maxtilesizex 100
+	-processing.maxtilesizey 100
+	)
+	
+otb_test_application(NAME apLSOBIA_PolygonizeOneProc
+	APP LSPolygonize
+	OPTIONS -io.gr ${LSOBIA_SOURCE_DIR}/data/Graph_little.dat
+	-io.out.dir ${TEMP_DIR}
+	-io.out.gmlfile "PolygonsFile.gml"
+	-io.temp ${TEMP_DIR}
+	)	
 # ----------------------------------------------------------------------------------------------
 # Segmentation Application Tests
 # - Mean Shift Tests

@@ -59,7 +59,7 @@ private:
 		SetDocLimitations("None");
 		SetDocAuthors("OBIA-Team");
 		SetDocSeeAlso(" ");
-		
+
 		// IO Parameters
 		AddParameter(ParameterType_Group,"io","Set of parameters related to input/output");
 		AddParameter(ParameterType_String,  "io.im",   "Input image path");
