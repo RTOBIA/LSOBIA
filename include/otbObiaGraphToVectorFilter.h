@@ -34,26 +34,23 @@ public:
   	using InputGraphPointer      = typename InputGraphType::Pointer;
   	using InputGraphConstPointer = typename InputGraphType::ConstPointer;
 
+  	using OTBFeature			 = otb::ogr::Feature;
+  	using OTBLayer			     = otb::ogr::Layer;
+
   	/** Return the name of the class. */
 	itkTypeMacro(GraphToVectorFilter, ProcessObject);
 
 	  /** Definition of the input image */
 	using OGRDataSourceType = otb::ogr::DataSource;
 	using OGRDataSourcePointerType = OGRDataSourceType::Pointer;
-	using OGRLayerType = otb::ogr::Layer;
+	using OGRLayerType = OTBLayer;
 	using DataObjectPointerArraySizeType =  itk::ProcessObject::DataObjectPointerArraySizeType;
+
 
 	/** Set/Get the input graph of this process object.  */
 	using Superclass::SetInput;
 	virtual void SetInput(const TInputGraph *input);
 	virtual const TInputGraph * GetInput(void);
-
-	/** Set the input mask image.
-	* All pixels in the mask with a value of 0 will not be considered
-	* suitable for vectorization.
-	*/
-	virtual void SetInputMask(const TInputGraph *input);
-	virtual const TInputGraph * GetInputMask(void);
 
 	/** Set the Field Name in which labels will be written. (default is "DN")
 	* A field "FieldName" of type integer is created in the output memory layer.
@@ -79,6 +76,7 @@ public:
 	const OGRDataSourceType * GetOutput();
 
 	protected:
+
 	GraphToVectorFilter();
 	~GraphToVectorFilter() ITK_OVERRIDE {}
 
@@ -96,11 +94,14 @@ public:
 	/**GDAL Method*/
 	GDALDriver* initializeGDALDriver(std::string driverName);
 
+	//Create a field
+	void CreateNewField(OTBLayer poLayer, std::string fieldName, OGRFieldType fieldType);
+
 	//Self intersecting points
 	std::vector<OGRPoint> GetSelfIntersectingPoints(OGRPolygon* ogrPolygon);
 
 	//Clean Layer
-	void CleanOGRLayer(OGRLayer* poLayer, OGRLayer* poLayer_cleaned);
+	void CleanOGRLayer(OTBLayer poLayer, OTBLayer& poLayer_cleaned);
 
 	//Clean Geometry
 	OGRPolygon* CleanSelfIntersectingPolygon(OGRPolygon* ogrPolygon);
@@ -110,6 +111,15 @@ public:
 
 	//Self intetrsecting
 	bool IsSelfIntersecting(OGRPoint p, std::vector<OGRPoint> listSelf);
+
+	//Create feature for all polygons
+	void CreateAllFeatures(OTBLayer& poLayer);
+
+	//Update the feature like adjacent polygons, etc ...
+	void UpdateFeatureFields(OGRFeature* curFeature);
+
+	//Add Feature for a given geometry
+	void SetNewFields(OGRFeature* curFeature);
 
 	//Write into a file
 	void WriteFile(std::string filepath);
@@ -121,6 +131,7 @@ public:
 
 	std::string m_FieldName;
 	bool m_Use8Connected;
+	InputGraphPointer m_graph;
 
 
 };

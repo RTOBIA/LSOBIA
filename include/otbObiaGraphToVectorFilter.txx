@@ -76,28 +76,6 @@ GraphToVectorFilter<TInputGraph>
 template <class TInputGraph>
 void
 GraphToVectorFilter<TInputGraph>
-::SetInputMask(const InputGraphType *input)
-{
-  this->Superclass::SetNthInput(1, const_cast<InputGraphType *>(input));
-}
-
-template <class TInputGraph>
-const typename GraphToVectorFilter<TInputGraph>
-::InputGraphType *
-GraphToVectorFilter<TInputGraph>
-::GetInputMask(void)
-{
-  if (this->GetNumberOfInputs() < 2)
-    {
-    return ITK_NULLPTR;
-    }
-
-  return static_cast<const InputGraphType *>(this->Superclass::GetInput(1));
-}
-
-template <class TInputGraph>
-void
-GraphToVectorFilter<TInputGraph>
 ::GenerateInputRequestedRegion(void)
 {
   // call the superclass' implementation of this method
@@ -114,14 +92,6 @@ GraphToVectorFilter<TInputGraph>
   // The input is necessarily the largest possible region.
   input->SetRequestedRegionToLargestPossibleRegion();
 
-  typename InputGraphType::Pointer mask  =
-    const_cast<InputGraphType *> (this->GetInputMask());
-  if(!mask)
-  {
-   return;
-  }
-  // The input is necessarily the largest possible region.
-  mask->SetRequestedRegionToLargestPossibleRegion();
 }
 
 
@@ -133,6 +103,9 @@ GraphToVectorFilter<TInputGraph>
 
 	//Create the output layer for GDALPolygonize().
 	ogr::DataSource::Pointer ogrDS = ogr::DataSource::New();
+
+	//Initialize graph pointer
+	m_graph = const_cast< InputGraphType * >( this->GetInput() );
 
 	//Chain filter:
 	/**First  : Convert Graph to Label
@@ -191,19 +164,31 @@ GraphToVectorFilter<TInputGraph>
 	std::vector<std::string> pzOptions;
 	otb::ogr::Layer layer = ogrDS->CreateLayer(layer_name, ITK_NULLPTR, wkbPolygon, pzOptions );
 
-	OGRLayer* ogrLayer = nullptr;
-	ogrLayer = &(layer.ogr());
+	OGRLayer* ogrLayer = &(layer.ogr());
+	CreateNewField(layer, "Label", OFTInteger);
+	CreateNewField(layer, "StartingCoords", OFTInteger64);
+	CreateNewField(layer, "AdjStartingCoords", OFTInteger64List);
 
 	char* papszArgv[] {NULL};
-	GDALPolygonize(rasterBand, nullptr, &(layer.ogr()), 1, papszArgv, nullptr, nullptr);
+	GDALPolygonize(rasterBand, nullptr, ogrLayer, 0, papszArgv, nullptr, nullptr);
 	std::cout << "Nombre polygones = " << layer.ogr().GetFeatureCount() << std::endl;
 
 	//Clean the OGR Layer
 	otb::ogr::Layer cleanedLayer = ogrDS->CreateLayer("cleaned_layer", ITK_NULLPTR, wkbPolygon, pzOptions );
-	CleanOGRLayer(&(layer.ogr()), &(cleanedLayer.ogr()));
+
+	CreateNewField(cleanedLayer, "Label", OFTInteger);
+	CreateNewField(cleanedLayer, "StartingCoords", OFTInteger64);
+	CreateNewField(cleanedLayer, "AdjStartingCoords", OFTInteger64List);
+
+	//Clean geometry
+	CleanOGRLayer(layer, cleanedLayer);
+
 
 	//Remove old layer
 	ogrDS->DeleteLayer(0);
+
+	//Add all features
+	CreateAllFeatures(cleanedLayer);
 
 	//Get output of the filter to create the ogrDs
 	this->SetNthOutput(0, ogrDS);
@@ -238,6 +223,17 @@ GraphToVectorFilter<TInputGraph>
 
 }
 
+//Create a field
+template <class TInputGraph>
+void
+GraphToVectorFilter<TInputGraph>
+::CreateNewField(otb::ogr::Layer poLayer, std::string fieldName, OGRFieldType fieldType)
+{
+	std::cout << "Create New Field " << fieldName << std::endl;
+	OGRFieldDefn fieldDef(fieldName.c_str(), fieldType);
+	poLayer.CreateField(fieldDef, true);
+
+}
 template <class TInputGraph>
 std::vector<OGRPoint>
 GraphToVectorFilter<TInputGraph>
@@ -284,6 +280,9 @@ template <class TInputGraph>
 OGRPolygon* GraphToVectorFilter<TInputGraph>
 ::CleanSelfIntersectingPolygon(OGRPolygon* ogrPolygon)
 {
+
+
+
 	//Nouveau polygon
 	OGRPolygon* cleanPoly = new OGRPolygon();
 	std::vector<OGRPolygon*> subGeoms;
@@ -364,11 +363,14 @@ OGRPolygon* GraphToVectorFilter<TInputGraph>
 
 template <class TInputGraph>
 void GraphToVectorFilter<TInputGraph>
-::CleanOGRLayer(OGRLayer* poLayer, OGRLayer* poLayer_cleaned)
+::CleanOGRLayer(otb::ogr::Layer poLayer, otb::ogr::Layer& poLayer_cleaned)
 {
-	for(unsigned int i = 0; i < poLayer->GetFeatureCount(); ++i)
+	OGRLayer* cleanedLayer  = &(poLayer_cleaned.ogr());
+	OGRLayer* originalLayer = &(poLayer.ogr());
+
+	for(unsigned int i = 0; i < originalLayer->GetFeatureCount(); ++i)
 	{
-		OGRGeometry* curGeom = poLayer->GetFeature(i)->GetGeometryRef();
+		OGRGeometry* curGeom = originalLayer->GetFeature(i)->GetGeometryRef();
 
 		if(!curGeom->IsValid())
 		{
@@ -377,17 +379,17 @@ void GraphToVectorFilter<TInputGraph>
 
 				OGRPolygon* curPoly = (OGRPolygon*) curGeom;
 				OGRPolygon* cleanedPoly = CleanSelfIntersectingPolygon(curPoly);
-				OGRFeature* cleanFeature = new OGRFeature(poLayer->GetFeature(i)->GetDefnRef());
-				cleanFeature->SetField("Label", poLayer->GetFeature(i)->GetFieldAsInteger("Label"));
+				OGRFeature* cleanFeature = new OGRFeature(originalLayer->GetFeature(i)->GetDefnRef());
+				cleanFeature->SetField("Label", originalLayer->GetFeature(i)->GetFieldAsInteger("Label"));
 				cleanFeature->SetGeometryDirectly(cleanedPoly);
-				poLayer_cleaned->CreateFeature(cleanFeature);
+				cleanedLayer->CreateFeature(cleanFeature);
 
 			}
 		}
 		else
 		{
 			//Clone the feature
-			poLayer_cleaned->CreateFeature(poLayer->GetFeature(i)->Clone());
+			cleanedLayer->CreateFeature(originalLayer->GetFeature(i)->Clone());
 		}
 
 	}
@@ -410,6 +412,71 @@ bool GraphToVectorFilter<TInputGraph>
 	return false;
 }
 
+template <class TInputGraph>
+void GraphToVectorFilter<TInputGraph>
+::CreateAllFeatures(OTBLayer& poLayer)
+{
+	std::cout << "Create all features" << std::endl;
+
+	//Loop all polygons
+	unsigned int nbGeoms = poLayer.GetFeatureCount(true);
+	for(unsigned int geomId = 0; geomId < nbGeoms; ++geomId)
+	{
+		//Get geometry
+		OGRLayer* ogrLayer = &(poLayer.ogr());
+		OGRFeature* curFeature = ogrLayer->GetFeature(geomId);
+
+		UpdateFeatureFields(curFeature);
+
+		//Update the feature
+		poLayer.SetFeature(curFeature);
+	}
+
+}
+
+template <class TInputGraph>
+void GraphToVectorFilter<TInputGraph>
+::UpdateFeatureFields(OGRFeature* curFeature)
+ {
+	std::cout << "Geom ID" << std::endl;
+	//Get geometry
+	OGRGeometry* curGeom  = curFeature->GetGeometryRef();
+	int label = curFeature->GetFieldAsInteger("Label");
+
+	std::cout << "Label " << label << std::endl;
+
+	std::cout << "Number of fields = " << curFeature->GetFieldCount() << std::endl;
+	//Get associated node
+	//The label image has been created using label = nodeId + 1
+	//So the reverse operation is nodeId = label - 1
+	auto node = m_graph->GetNodeAt(label - 1);
+
+	//Add starting coord as field
+	long long int startingCoords = node->GetFirstPixelCoords();
+	std::cout << "startingCoords = " << startingCoords << std::endl;
+	curFeature->SetField("StartingCoords", startingCoords);
+
+	double* adjacentCoords = new double[node->m_Edges.size()];
+	unsigned int nbAdjacents = node->m_Edges.size();
+	unsigned int cpt = 0;
+	//Loop accross each adjacent
+	for(auto edgeIt = node->m_Edges.begin(); edgeIt != node->m_Edges.end(); edgeIt++)
+	{
+		//Adjacent node
+		auto adjNode = m_graph->GetNodeAt(edgeIt->m_TargetId);
+
+		std::cout << "Adj node " << std::endl;
+		//Add to field
+		double adjStartingCoords = adjNode->GetFirstPixelCoords();
+		adjacentCoords[cpt] =  adjStartingCoords;
+		cpt++;
+		std::cout << "Adjacent = " << adjStartingCoords<< std::endl;
+	}
+
+	//Add starting coord of each adjacent node
+	curFeature->SetField("AdjStartingCoords",  nbAdjacents, adjacentCoords);
+
+ }
 
 template <class TInputGraph>
 void GraphToVectorFilter<TInputGraph>
@@ -417,12 +484,15 @@ void GraphToVectorFilter<TInputGraph>
 {
 	//Get output
 	auto ogrDS = this->GetOutput();
+
+	std::cout << "Number of layers = " << ogrDS->GetLayersCount() << std::endl;
 	otb::ogr::Layer layer = ogrDS->GetLayer(0);
+	std::cout << "Layer name = " << layer.GetName() << std::endl;
 	//TODO : Temporaire
 	GDALDriver*  poDriverGml = initializeGDALDriver("GML");
 	std::string  output_gml = "/space/USERS/isnard/tmp/mypolygons.gml";
 	GDALDataset* polyGDs = poDriverGml->Create(filepath.c_str(), 0, 0, 0, GDT_Unknown, NULL );
-	polyGDs->CopyLayer(&(layer.ogr()), "test_2", nullptr);
+	polyGDs->CopyLayer(&(layer.ogr()), layer.ogr().GetName(), nullptr);
 
 	//Clean memory
 	//Maybe see if we need to delete driver...

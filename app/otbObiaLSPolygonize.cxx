@@ -2,8 +2,9 @@
 #include "otbWrapperApplicationFactory.h"
 #include "otbObiaGraphOperations.h"
 #include "otbObiaGraphToVectorFilter.h"
+#include "otbObiaSimplifyVectorFilter.h"
 #include "otbObiaImageToBaatzGraphFilter.h"
-
+#include "otbObiaDouglasPeukerSimplify.h"
 
 #include <string>
 #include <sstream>
@@ -97,11 +98,21 @@ private:
 
 		//Read graph from disk
 		auto graph = otb::obia::GraphOperations<InputGraphType>::ReadGraphFromDisk(filename);
+
+		//Create filter to vectorize
 		auto graphToVectorFilter = GraphToVectorFilterType::New();
 		graphToVectorFilter->SetInput(graph);
-		graphToVectorFilter->Update();
-		graphToVectorFilter->GetOutput();
 
+
+		//Create filter to simplify
+		using SimplifyVectorFilterType = otb::obia::SimplifyVectorFilter<otb::obia::DouglasPeukerFunc>;
+		auto simplifyVectorFilter = SimplifyVectorFilterType::New();
+		auto simplifyFunc = new otb::obia::DouglasPeukerFunc();
+		simplifyVectorFilter->SetSimplifyFunc(simplifyFunc);
+		simplifyVectorFilter->SetInput(graphToVectorFilter->GetOutput());
+		simplifyVectorFilter->Update();
+
+		//graphToVectorFilter->Update();
 		std::cout << "End application" << std::endl;
 
 		//Get outut in order to write OGRDS into a file
