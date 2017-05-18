@@ -5,7 +5,7 @@
 #include "otbObiaSimplifyVectorFilter.h"
 #include "otbObiaImageToBaatzGraphFilter.h"
 #include "otbObiaDouglasPeukerSimplify.h"
-
+#include "otbObiaConstExpr.h"
 #include <string>
 #include <sstream>
 #define NUM_ELEMENT 4
@@ -102,16 +102,26 @@ private:
 		//Create filter to vectorize
 		auto graphToVectorFilter = GraphToVectorFilterType::New();
 		graphToVectorFilter->SetInput(graph);
+		graphToVectorFilter->SetXshift(0);
+		graphToVectorFilter->SetYshift(0);
+		graphToVectorFilter->Update();
 
-
+		//std::cout << "Nombre layer = " << graphToVectorFilter->GetOutput()->GetLayersCount() << std::endl;
 		//Create filter to simplify
 		using SimplifyVectorFilterType = otb::obia::SimplifyVectorFilter<otb::obia::DouglasPeukerFunc>;
 		auto simplifyVectorFilter = SimplifyVectorFilterType::New();
 		auto simplifyFunc = new otb::obia::DouglasPeukerFunc();
+		simplifyFunc->SetTolerance(1.0);
 		simplifyVectorFilter->SetSimplifyFunc(simplifyFunc);
 		simplifyVectorFilter->SetInput(graphToVectorFilter->GetOutput());
+		simplifyVectorFilter->SetLayerName(otb::obia::cleanedLayerName);
+
+		//Check why we have to update for each filter?
 		simplifyVectorFilter->Update();
 
+//		std::cout << "Nombre layer = " << graphToVectorFilter->GetOutput()->GetLayersCount() << std::endl;
+//		otb::ogr::Layer layer = graphToVectorFilter->GetOutput()->GetLayer(otb::obia::cleanedLayerName);
+//		std::cout << "Get layer  cleaned = " << layer.GetFeatureCount(true) << std::endl;
 		//graphToVectorFilter->Update();
 		std::cout << "End application" << std::endl;
 

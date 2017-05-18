@@ -12,5 +12,5 @@ OTB_CREATE_APPLICATION(NAME LSSmallRegionsMerging
 
 OTB_CREATE_APPLICATION(NAME LSPolygonize
 	SOURCES otbObiaLSPolygonize.cxx
-	LINK_LIBRARIES ${${otb-module}_LIBRARIES} ${OTBMathParser_LIBRARIES}
+	LINK_LIBRARIES ${${otb-module}_LIBRARIES} ${OTBMathParser_LIBRARIES}  ${OTBGdalAdapters_LIBRARIES}
 )

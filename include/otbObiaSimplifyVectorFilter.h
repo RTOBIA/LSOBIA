@@ -39,6 +39,7 @@ public:
 	using OGRDataSourceType = otb::ogr::DataSource;
 	using OGRDataSourcePointerType = OGRDataSourceType::Pointer;
 	using OGRLayerType = otb::ogr::Layer;
+	using OGRFeatureType = otb::ogr::Feature;
 	using DataObjectPointerArraySizeType =  itk::ProcessObject::DataObjectPointerArraySizeType;
 
 	/** Set/Get the input graph of this process object.  */
@@ -56,6 +57,11 @@ public:
 	itkGetMacro(FieldName, std::string);
 
 	/**
+	* Get the layer name in which features have been written.
+	*/
+	itkSetMacro(LayerName, std::string);
+
+	/**
 	* Get the output \c ogr::DataSource which is a "memory" datasource.
 	*/
 	const OGRDataSourceType * GetOutput();
@@ -65,6 +71,7 @@ public:
 	void SetSimplifyFunc(SimplifyFunc* simplifyFunc){m_simplifyFunc = simplifyFunc;};
 
 	protected:
+
 	SimplifyVectorFilter();
 	~SimplifyVectorFilter() ITK_OVERRIDE {}
 
@@ -76,23 +83,66 @@ public:
 	/** DataObject pointer */
 	typedef itk::DataObject::Pointer DataObjectPointer;
 
+	/**Create output*/
 	DataObjectPointer MakeOutput(DataObjectPointerArraySizeType idx) ITK_OVERRIDE;
+
 	using Superclass::MakeOutput;
 
 	/**GDAL Method*/
 	GDALDriver* initializeGDALDriver(std::string driverName);
 
+	/**Create bounding feature to manage border*/
+	OGRFeatureType* CreateBoundingBoxFeature();
+
+	/**Intersect with bounding box*/
+	std::vector<OGRGeometry*> IntersectWithBB(OGRFeatureType feature);
+
+	/**Convert feature to edge*/
+	std::vector<OGRFeatureType*> ConvertToEdges(OGRFeatureType feature, std::vector<OGRFeatureType> adjFeatures);
+
+	/**Create an edge*/
+	OGRFeatureType* CreateEdge(OGRGeometry* intersectedGeometry,
+						   	   OGRFeatureType refFeature, OGRFeatureType adjFeature,
+							   bool isSimplify = true);
+
+	/**Compute interected features*/
+	void IntersectFeatures(std::vector<OGRFeatureType*>& edges,
+						   OGRFeatureType refFeature, OGRFeatureType adjFeature, bool isSimplify = true);
+
+	/**Compute Edge*/
+	void ConvertGeometryCollectionToEdge(OGRGeometry* intersectedLine, std::vector<OGRFeatureType*>& edges,
+										 OGRFeatureType refFeature, OGRFeatureType adjFeature, bool isSimplify = true);
+
+	/**Reconstruct all polygons from lines geometry*/
+	void ReconstructAllPolygons();
+
+	/** Reconstruct polygon*/
+	OGRFeatureType* ReconstructPolygon(double startCoords);
+
+	/** Sort linestring*/
+	std::vector<OGRGeometry*> SortLinesString(std::vector<OGRGeometry*> unsortedGeoms);
 
 	//Write into a file
-	void WriteFile(std::string filepath);
+	void WriteFile(std::string filepath, int layerId);
 
 	private:
 
 	SimplifyVectorFilter(const Self &);  //purposely not implemented
+
 	void operator =(const Self&);      //purposely not implemented
 
 	std::string m_FieldName;
 	SimplifyFunc* m_simplifyFunc;
+	std::string m_LayerName;
+
+	OGRFeatureType* m_BBFeature;
+
+	//Edges map
+	std::map<double, std::vector<OGRFeatureType*>> m_PolygonEdges;
+
+	//BB Edges
+	std::map<double, std::vector<OGRGeometry*>> m_bbEdges;
+
 
 };
 

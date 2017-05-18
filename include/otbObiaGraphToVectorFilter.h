@@ -71,6 +71,17 @@ public:
 	itkGetMacro(Use8Connected, bool);
 
 	/**
+	* Set the value of Xshift used for geo transform
+	*/
+	itkSetMacro(Xshift, unsigned int);
+
+	/**
+	* Set the value of Xshift used for geo transform
+	*/
+	itkSetMacro(Yshift, unsigned int);
+
+
+	/**
 	* Get the output \c ogr::DataSource which is a "memory" datasource.
 	*/
 	const OGRDataSourceType * GetOutput();
@@ -93,6 +104,9 @@ public:
 
 	/**GDAL Method*/
 	GDALDriver* initializeGDALDriver(std::string driverName);
+
+	/**Initialize all fields*/
+	void InitializeAllFields(OTBLayer& poLayer);
 
 	//Create a field
 	void CreateNewField(OTBLayer poLayer, std::string fieldName, OGRFieldType fieldType);
@@ -129,11 +143,21 @@ public:
 	GraphToVectorFilter(const Self &);  //purposely not implemented
 	void operator =(const Self&);      //purposely not implemented
 
+	//Default field name
+	//Not used
 	std::string m_FieldName;
+
+	//Connexity
 	bool m_Use8Connected;
+
+	//Input graph
 	InputGraphPointer m_graph;
 
+	//X shift
+	unsigned int m_Xshift;
 
+	//Y shift
+	unsigned int m_Yshift;
 };
 
 } // end of namespace obia

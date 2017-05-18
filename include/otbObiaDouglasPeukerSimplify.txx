@@ -11,7 +11,7 @@ namespace obia
 DouglasPeukerFunc
 ::DouglasPeukerFunc() : GenericSimplifyFunc()
 {
-	m_tolerance = 0.0;
+	m_tolerance = 1.0;
 }
 
 DouglasPeukerFunc
@@ -32,12 +32,31 @@ DouglasPeukerFunc
 	//Check GDAL version, because the simplify preserve topology is undefined...
 	if(m_inputGeom->getGeometryType() == wkbMultiLineString)
 	{
-		//Force to linestring
-		m_outputGeom = OGRGeometryFactory::forceToLineString(m_inputGeom, false);
-		m_outputGeom = this->m_inputGeom->SimplifyPreserveTopology(this->m_tolerance);
+		//Force to linestring (clone the input. The memory is managed outside this class)
+		//forceToLineString consumes the passed geometry, so by cloning we nesure to keep inputgeom
+		m_outputGeom = OGRGeometryFactory::forceToLineString(m_inputGeom->clone(), false);
+
+		//Care: forcetolinestring can still produce a multilinestring which cannot be simplified
+		//TODO: maybe add so robustness to that
+
+		//std::cout << "Line string : " << m_outputGeom->exportToKML() << std::endl;
+		m_outputGeom = m_outputGeom->SimplifyPreserveTopology(this->m_tolerance);
+
 		//exit(1);
-	}else{
+	}
+	else if(m_inputGeom->getGeometryType() == wkbLineString || m_inputGeom->getGeometryType() == wkbPoint)
+	{
 		m_outputGeom = m_inputGeom->clone();
+	}
+	else
+	{
+		//TODO : theorically, we are not supposed to be there...We should have only multiline string and linestring
+		//because of the intersection between geometries before going here
+		std::cout << "Geometry not valid :: " << m_inputGeom->getGeometryName() << std::endl;
+		std::cout << m_inputGeom->exportToKML() << std::endl;
+		m_outputGeom = nullptr;
+
+		exit(EXIT_FAILURE);
 	}
 
 }

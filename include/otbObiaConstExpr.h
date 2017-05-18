@@ -22,6 +22,19 @@ constexpr uint64_t FloatSize      = sizeof(float);
 constexpr uint64_t IdSize         = sizeof(IdType);
 constexpr uint64_t CoordValueSize = sizeof(CoordValueType);
 
+//Layer name
+const std::string originalLayerName		= "original";
+const std::string cleanedLayerName		= "cleaned";
+
+//Field for vector
+const std::string labelFieldName		  	 	= "Label";
+const std::string startingCoordsFieldName 		= "StartingCoords";
+const std::string adjStartingCoordsFieldName 	= "AdjStartingCoords";
+const std::string validPolygonFieldName		  	= "isValid";
+
+//Field for edge
+const std::string polygonEdgeFieldName			= "PolygonCoords";
+
 } // end of namespace obia
 
 } // end of namespace otb
