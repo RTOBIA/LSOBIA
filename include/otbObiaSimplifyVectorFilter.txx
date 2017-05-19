@@ -92,6 +92,9 @@ SimplifyVectorFilter<TSimplifyFunc>
 	//Get the input
 	OGRDataSourceType::Pointer ogrDS = const_cast< OGRDataSourceType * >( this->GetInput() );
 
+	//Initialize output
+	InitializeOutputDS();
+
 	//Vector containing all single lines used to reconstruct polygons
 
 	//Loop accross all geometry
@@ -108,9 +111,15 @@ SimplifyVectorFilter<TSimplifyFunc>
 	m_BBFeature = CreateBoundingBoxFeature();
 
 	//add all features to a layer, and write it
-	OGRLayerType edgesLayer = ogrDS->CreateLayer("Edges", ITK_NULLPTR, wkbUnknown);
+	OGRLayerType edgesLayer			 	  = ogrDS->CreateLayer("Edges"  , ITK_NULLPTR, wkbUnknown);
 	OGRFieldDefn fieldDef(polygonEdgeFieldName.c_str(), OFTInteger64List);
 	edgesLayer.CreateField(fieldDef, true);
+
+	OGRLayerType insidePolygons			  = ogrDS->CreateLayer("Inside"  , ITK_NULLPTR, wkbUnknown);
+	OGRFieldDefn fieldDefIn("Inside", OFTInteger64);
+	OGRFieldDefn fieldDefEn("Englobing", OFTInteger64);
+	insidePolygons.CreateField(fieldDefIn, true);
+	insidePolygons.CreateField(fieldDefEn, true);
 
 	for(unsigned int fId = 0; fId < nbFeatures; ++fId)
 	{
@@ -119,20 +128,20 @@ SimplifyVectorFilter<TSimplifyFunc>
 		OGRFeatureType curFeature = layer.GetFeature(fId);
 
 		//Compute intersection with BB
-		double startingCoords = curFeature.ogr().GetFieldAsInteger64(startingCoordsFieldName.c_str());
-		m_bbEdges[startingCoords] = IntersectWithBB(curFeature);
+		m_CurrentCoords = curFeature.ogr().GetFieldAsInteger64(startingCoordsFieldName.c_str());
+		m_bbEdges[m_CurrentCoords] = IntersectWithBB(curFeature);
 
 		//Get all adjacent feature to the current one
 		std::vector<OGRFeatureType> adjFeatures = VectorOperations::GetAdjacentFeatures(ogrDS,
 																						m_LayerName, curFeature);
 
 		//Once we got all adjacent features, we have to do the intersection between each adj and feature
-		std::vector<OGRFeatureType*> edges = ConvertToEdges(curFeature, adjFeatures);
+		std::vector<OGRFeatureType*> edges = ConvertToEdges(curFeature, adjFeatures, insidePolygons);
 
 		//Set false to is Valid field to not use it again
 		curFeature.ogr().SetField(validPolygonFieldName.c_str(), "false");
 
-		//Update feature
+		//Update feature to modify field value
 		layer.SetFeature(curFeature);
 		for(unsigned int fId = 0; fId < edges.size(); ++fId)
 		{
@@ -146,7 +155,7 @@ SimplifyVectorFilter<TSimplifyFunc>
 
 	std::cout << "Write output" << std::endl;
 	std::string  output_gml = "/space/USERS/isnard/tmp/mypolygonsSimplified.gml";
-	WriteFile(output_gml, 0);
+	WriteFile(output_gml, 1);
 	std::cout << "End write" << std::endl;
 
 }
@@ -169,6 +178,19 @@ SimplifyVectorFilter<TSimplifyFunc>
 
 }
 
+template <class TSimplifyFunc>
+void
+SimplifyVectorFilter<TSimplifyFunc>
+::InitializeOutputDS()
+{
+	//We create 3 layers: one for valid polygon, one for unvalid polygon in order to repear these polygons
+	OGRDataSourceType::Pointer ogrDS = OGRDataSourceType::New();
+	OGRLayerType polyLayer 			  = ogrDS->CreateLayer("Reconstructed", nullptr, wkbPolygon);
+	OGRLayerType unvalidPolygonsLayer = ogrDS->CreateLayer("Unvalid", ITK_NULLPTR, wkbUnknown);
+
+	//Set output
+	this->SetNthOutput(0, ogrDS);
+}
 template <class TSimplifyFunc>
 typename SimplifyVectorFilter<TSimplifyFunc>::OGRFeatureType*
 SimplifyVectorFilter<TSimplifyFunc>
@@ -249,7 +271,7 @@ SimplifyVectorFilter<TSimplifyFunc>
 template <class TSimplifyFunc>
 std::vector<typename SimplifyVectorFilter<TSimplifyFunc>::OGRFeatureType*>
 SimplifyVectorFilter<TSimplifyFunc>
-::ConvertToEdges(OGRFeatureType feature, std::vector<OGRFeatureType> adjFeatures)
+::ConvertToEdges(OGRFeatureType feature, std::vector<OGRFeatureType> adjFeatures, OGRLayerType& insidePolygons)
 {
 	/**TODO: S'assurer que l'on obtient que des lines strings
 	 * Si ce n'est pas le cas, on sépare de nouveau*/
@@ -274,15 +296,37 @@ SimplifyVectorFilter<TSimplifyFunc>
 		//If feature is not valid, it means we already used it
 		if(VectorOperations::isFeatureValid(adjFeature))
 		{
-			//If feature is inside or ref is inside
-			//TODO Later
-			if(geomAdj->Within(geomRef) ||
-			   geomRef->Within(geomAdj))
+
+
+			//If geom is inside, add these polygon to a specific layer and indicate id of both polygon:
+			//the one inside, and the one englobing
+			//During simplification process, simplify all inside polygons,
+			//and at the end, just substract them from the englobing one
+			//We should do it with cascade style because a polygon can be inside another which can be inside ...and so on
+			//Create new feature with right fields
+			//Maybe factorize
+			//TODO A modifier
+			if(geomAdj->Within(geomRef))
 			{
-				std::cout << "A 'inérieur! " << std::endl;
-				std::cout << "Geom ref " << geomRef->exportToKML() << std::endl;
-				std::cout << "Geom ref " << geomAdj->exportToKML() << std::endl;
-				//exit(EXIT_FAILURE);
+				OGRFeatureDefn* featureDef = new OGRFeatureDefn();
+				OGRFieldDefn fieldDefIn("Inside", OFTInteger64);
+				OGRFieldDefn fieldDefEn("Englobing", OFTInteger64);
+				featureDef->AddFieldDefn(&fieldDefIn);
+				featureDef->AddFieldDefn(&fieldDefEn);
+				OGRFeature* englobedFeature = new OGRFeature(featureDef);
+				englobedFeature->SetGeometry(geomAdj);
+				insidePolygons.SetFeature(englobedFeature);
+			}
+			else if(geomRef->Within(geomAdj))
+			{
+				OGRFeatureDefn* featureDef = new OGRFeatureDefn();
+				OGRFieldDefn fieldDefIn("Inside", OFTInteger64);
+				OGRFieldDefn fieldDefEn("Englobing", OFTInteger64);
+				featureDef->AddFieldDefn(&fieldDefIn);
+				featureDef->AddFieldDefn(&fieldDefEn);
+				OGRFeature* englobedFeature = new OGRFeature(featureDef);
+				englobedFeature->SetGeometry(geomRef);
+				insidePolygons.SetFeature(englobedFeature);
 			}
 			else
 			{
@@ -358,6 +402,10 @@ SimplifyVectorFilter<TSimplifyFunc>
 		//Maybe free memory?
 		free(polygonsId);
 
+		//Remove simplified
+		delete simplified;
+
+
 		return simplifiedFeature;
 
 	}//End if simplified !nullptr
@@ -412,9 +460,9 @@ void
 SimplifyVectorFilter<TSimplifyFunc>
 ::ReconstructAllPolygons()
 {
-	OGRDataSourceType::Pointer ogrDS = OGRDataSourceType::New();
-	OGRLayerType polyLayer = ogrDS->CreateLayer("Reconstructed", nullptr, wkbPolygon);
-
+	OGRDataSourceType::Pointer ogrDS = const_cast< OGRDataSourceType * >( this->GetOutput() );
+	OGRLayerType polyLayer 			  = ogrDS->GetLayer("Reconstructed");
+	OGRLayerType unvalidPolygonsLayer = ogrDS->GetLayer("Unvalid");
 	//Loop accross all features
 	for (auto& edgeIt : m_PolygonEdges)
 	{
@@ -424,17 +472,16 @@ SimplifyVectorFilter<TSimplifyFunc>
 
 		if(feature->GetGeometry()->IsValid())
 		{
+			std::cout << "Add feature" << std::endl;
 			//Add feature
 			polyLayer.SetFeature(*feature);
 		}
 		else
 		{
 			std::cout << "Polygon not valid" << std::endl;
+			unvalidPolygonsLayer.SetFeature(*feature);
 		}
 	}
-
-	//Set output
-	this->SetNthOutput(0, ogrDS);
 }
 
 
@@ -442,63 +489,27 @@ template <class TSimplifyFunc>
 typename SimplifyVectorFilter<TSimplifyFunc>::OGRFeatureType*
 SimplifyVectorFilter<TSimplifyFunc>
 ::ReconstructPolygon(double startCoords)
-{
-	//Get original feature
-
-	//Add obtained intersection to the geometrie
-	//Get vector of line string
-	std::vector<OGRFeatureType*> unsortedFeatures = m_PolygonEdges[startCoords];
-
+ {
 	//Create vector of geometries
-	std::vector<OGRGeometry*> unsortedGeoms = m_bbEdges[startCoords];
-	for(unsigned int k = 0; k < unsortedFeatures.size(); ++k)
-	{
-		OGRFeatureType* curFeature = unsortedFeatures[k];
-		OGRGeometry* curGeom = curFeature->ogr().GetGeometryRef();
-		OGRwkbGeometryType geomType = curGeom->getGeometryType();
+	//And a vector of adjCoords to update
+	std::vector<double> adjCoords;
+	std::vector<OGRLineString*> unsortedGeoms = ConvertToGeometries(startCoords, adjCoords);
 
-		if(startCoords == 1621)
-		{
-			std::cout << "Nombre geoms = " << unsortedGeoms.size() << std::endl;
-			std::cout << curGeom->exportToGML() << std::endl;
-		}
-		switch(geomType)
-		{
-			case wkbMultiLineString:
-			{
-				OGRMultiLineString* multilines = (OGRMultiLineString*)curGeom;
-				for(unsigned int geomId = 0; geomId < multilines->getNumGeometries(); ++geomId)
-				{
-					unsortedGeoms.push_back(multilines->getGeometryRef(geomId));
-				}
-				break;
-			}
-			case wkbLineString:
-			{
-				unsortedGeoms.push_back(unsortedFeatures[k]->ogr().GetGeometryRef());
-				break;
-			}
-			default://Add nothing if it is not a linestring
-				break;
-		}
-	}
-	if(startCoords == 1621)
-		{
-	//	exit(EXIT_FAILURE);
-		}
 	//Sort vector of line string in order to create a close polygon
-	std::vector<OGRGeometry*> sortedGeoms = SortLinesString(unsortedGeoms);
+	std::vector<OGRLineString*> sortedGeoms = VectorOperations::SortLinesString(unsortedGeoms);
 
 	OGRFeatureDefn* rPolyDef = new OGRFeatureDefn();
 	rPolyDef->AddFieldDefn(new OGRFieldDefn(startingCoordsFieldName.c_str(), OFTInteger64));
 	rPolyDef->AddFieldDefn(new OGRFieldDefn(adjStartingCoordsFieldName.c_str(), OFTInteger64List));
+
 	OGRFeatureType* rPolygon = new OGRFeatureType(*rPolyDef);
 	OGRPolygon* geomPoly = new OGRPolygon();
 	OGRLinearRing* extRing = new OGRLinearRing();
+
 	//Loop all features
 	for(unsigned int fId = 0; fId < sortedGeoms.size(); ++fId)
 	{
-		OGRLineString* curLine = (OGRLineString*) sortedGeoms[fId];
+		OGRLineString* curLine = sortedGeoms[fId];
 		for(unsigned int pId = 0; pId < curLine->getNumPoints() ; ++pId)
 		{
 			OGRPoint curPoint;
@@ -506,6 +517,15 @@ SimplifyVectorFilter<TSimplifyFunc>
 			extRing->addPoint(curPoint.getX(), curPoint.getY());
 		}
 	}
+
+	//Copy adj coord to array
+	double arr[adjCoords.size()];
+	std::copy(adjCoords.begin(), adjCoords.end(), arr);
+
+	//Set fields
+	rPolygon->ogr().SetField(adjStartingCoordsFieldName.c_str(), adjCoords.size(), arr);
+	rPolygon->ogr().SetField(startingCoordsFieldName.c_str(), startCoords);
+
 	//Close the ring
 	extRing->closeRings();
 
@@ -520,147 +540,126 @@ SimplifyVectorFilter<TSimplifyFunc>
 }
 
 template <class TSimplifyFunc>
-std::vector<OGRGeometry*>
+std::vector<OGRLineString*>
 SimplifyVectorFilter<TSimplifyFunc>
-::SortLinesString(std::vector<OGRGeometry*> unsortedGeoms)
- {
-	std::vector<OGRGeometry*> sortedGeoms;
-	std::vector<OGRGeometry*> tmpGeoms = unsortedGeoms;
-	bool isSorted = false;
-	OGRPoint startingPoint, lastPoint;
-	OGRLineString*  lastGeom = nullptr;
-	if(unsortedGeoms.size() > 0)
-	{
-		//Initialize first element
-		sortedGeoms.push_back(unsortedGeoms[0]);
-		tmpGeoms.erase(tmpGeoms.begin(), tmpGeoms.begin() + 1);
-		OGRLineString* geom = (OGRLineString*) unsortedGeoms[0];
-		geom->getPoint(0, &startingPoint);
+::ConvertToGeometries(double startCoords, std::vector<double>& adjCoords)
+{
 
-		//Update last geom inserted
-		lastGeom = (OGRLineString*) sortedGeoms.back();
-		lastGeom->getPoint(lastGeom->getNumPoints() - 1, &lastPoint);
+	std::vector<OGRFeatureType*> unsortedFeatures = m_PolygonEdges[startCoords];
 
-		std::cout << "First feature = " << unsortedGeoms[0]->exportToGML() << std::endl;
-	}
-	else
-	{
-		isSorted = true;
-	}
+	//Create vector of geometries
+	std::vector<OGRLineString*> unsortedGeoms;
 
-	unsigned int cpt_while = 0;
-	//While all not sorted
-	while(!isSorted)
+	//Convert to linestring
+	for(unsigned int geomId = 0; geomId < m_bbEdges[startCoords].size(); ++geomId)
 	{
-		//Get last element of the sorted vector
-		//Get the last point in the last element of the vector
-		//Loop all features
-		for(unsigned int fId = 0; fId < tmpGeoms.size(); ++fId)
+		if(m_bbEdges[startCoords][geomId]->getGeometryType() == wkbLineString)
 		{
-			//std::cout << "Fid = " << fId << "/" << tmpFeatures.size() << std::endl;
-			//Check first coord
-			OGRGeometry* curGeom = tmpGeoms[fId];
+			unsortedGeoms.push_back((OGRLineString*)m_bbEdges[startCoords][geomId]);
+		}
+	}
 
-			std::cout << curGeom->exportToGML() << std::endl;
+	for(unsigned int k = 0; k < unsortedFeatures.size(); ++k)
+	{
+		OGRFeatureType* curFeature = unsortedFeatures[k];
+		OGRGeometry* curGeom = curFeature->ogr().GetGeometryRef();
+		OGRwkbGeometryType geomType = curGeom->getGeometryType();
 
-			//Must be a linestring
-			if(curGeom->getGeometryType() == wkbLineString)
+		//Get coord of adjacent feature
+		int nbValues = 0;
+		const double* coords = curFeature->ogr().GetFieldAsDoubleList(polygonEdgeFieldName.c_str(), &nbValues);
+		std::cout << "Nb fields = " << curFeature->GetDefn().GetFieldCount() << std::endl;
+		std::cout << "name " << curFeature->GetFieldDefn(0).GetName() << std::endl;
+		std::cout << "nbValues = " << nbValues << std::endl;
+		for(int i = 0; i < nbValues; i++)
+		{
+			if(coords[i] != startCoords)
 			{
-
-				OGRLineString* curLine = (OGRLineString*) curGeom;
-				OGRPoint firstCurPoint, lastCurPoint;
-
-				//First cur point
-				curLine->getPoint(0, &firstCurPoint);
-
-				//Last cur point
-				curLine->getPoint(curLine->getNumPoints() - 1, &lastCurPoint);
-
-				//if points are equals
-				if(lastPoint.Equals(&firstCurPoint))
-				{
-					//std::cout << "Point equals = " << lastPoint.exportToKML() << "/" << firstCurPoint.exportToGML() << std::endl;
-					//Then add the edge after
-					sortedGeoms.push_back(curGeom);
-
-					//Remove from tmp vector
-					tmpGeoms.erase(tmpGeoms.begin() + fId, tmpGeoms.begin() + fId + 1);
-
-					//break the loop
-					break;
-				}
-				else if(lastPoint.Equal(&lastCurPoint))
-				{
-					//std::cout << "Reverse Point equals = " << lastPoint.exportToKML() << "/" << firstCurPoint.exportToGML() << std::endl;
-					//Then reverse the linestring
-					curLine->reversePoints();
-
-					//Then add the edge after
-					sortedGeoms.push_back(curGeom);
-
-					//Remove from tmp vector
-					tmpGeoms.erase(tmpGeoms.begin() + fId, tmpGeoms.begin() + fId + 1);
-
-				}
+				std::cout << "ADJ COORDS = " << coords[i] << std::endl;
+				adjCoords.push_back(coords[i]);
 			}
-
 		}
 
-		//Update last geom
-		lastGeom = (OGRLineString*) sortedGeoms.back();
-		lastGeom->getPoint(lastGeom->getNumPoints() - 1, &lastPoint);
+		switch(geomType)
+		{
+			case wkbMultiLineString:
+			{
+				OGRMultiLineString* multilines = (OGRMultiLineString*)curGeom;
+				for(unsigned int geomId = 0; geomId < multilines->getNumGeometries(); ++geomId)
+				{
+					//Theorically, we should have only linestring
+					if(multilines->getGeometryRef(geomId)->getGeometryType() == wkbLineString)
+					{
+						unsortedGeoms.push_back((OGRLineString*)multilines->getGeometryRef(geomId));
+					}
+					else
+					{
+						std::cout << "Not a linestring..." << std::endl;
+					}
+				}
+				break;
+			}
+			case wkbLineString:
+			{
+				if(unsortedFeatures[k]->ogr().GetGeometryRef()->getGeometryType() == wkbLineString)
+				{
+					unsortedGeoms.push_back((OGRLineString*)unsortedFeatures[k]->ogr().GetGeometryRef());
+				}
+				else
+				{
+					std::cout << "Not a linestring..." << std::endl;
+				}
 
-		//DEBUG
-		std::cout << "--------------- SORTED -----------" << std::endl;
-		for(unsigned int l = 0; l < sortedGeoms.size(); ++l)
-		{
-			std::cout <<sortedGeoms[l]->exportToGML() <<std::endl;
-		}
-		std::cout << "---------------------------------" << std::endl;
-
-		std::cout << "----------------REMANING-----------" << std::endl;
-		for(unsigned int l = 0; l < tmpGeoms.size(); ++l)
-		{
-			std::cout <<tmpGeoms[l]->exportToGML() <<std::endl;
-		}
-		//if the last point of the last element inserted is equal to the first point, then we can close the external ring
-		if(lastPoint.Equals(&startingPoint))
-		{
-			std::cout << "Sorted and it remains : " << tmpGeoms.size() << std::endl;
-			isSorted = true;
-		}
-
-		cpt_while++;
-		if(cpt_while > 60)
-		{
-			std::cout << "Not good" << std::endl;
-			exit(EXIT_FAILURE);
+				break;
+			}
+			default://Add nothing if it is not a linestring
+				break;
 		}
 	}
-	return sortedGeoms;
 
- }
-
+	return unsortedGeoms;
+}
 
 template <class TSimplifyFunc>
 void SimplifyVectorFilter<TSimplifyFunc>
 ::WriteFile(std::string filepath, int layerId)
 {
 	//Get output
-	OGRDataSourceType::Pointer ogrDS = const_cast< OGRDataSourceType * >( this->GetOutput() );
-
-	otb::ogr::Layer layer = ogrDS->GetLayer(layerId);
-	std::cout << "Layer name = " << layer.GetName() << std::endl;
-	//TODO : Temporaire
+	//OGRDataSourceType::Pointer ogrDS = const_cast< OGRDataSourceType * >( this->GetOutput() );
+	OGRDataSourceType::Pointer ogrDS = const_cast< OGRDataSourceType * >( this->GetInput() );
 	GDALDriver*  poDriverGml = initializeGDALDriver("GML");
 	GDALDataset* polyGDs = poDriverGml->Create(filepath.c_str(), 0, 0, 0, GDT_Unknown, NULL );
 
-	OGRLayer* srcLayer 	  = &(layer.ogr());
-	OGRLayer* outputLayer = polyGDs->CreateLayer(layer.GetName().c_str(), nullptr, wkbUnknown);
-	for(unsigned int i = 0; i < srcLayer->GetFeatureCount(true); ++i)
+
+	if(layerId == -1)
 	{
-		outputLayer->CreateFeature(srcLayer->GetFeature(i));
+		std::cout << "Number of layer = " <<ogrDS->ogr().GetLayerCount() << std::endl;
+		//Write all layers
+		for(unsigned int layerId = 0; layerId < ogrDS->ogr().GetLayerCount(); ++layerId)
+		{
+			OGRLayer* srcLayer 	  = &(ogrDS->GetLayer(layerId).ogr());
+			OGRLayer* outputLayer = polyGDs->CreateLayer(srcLayer->GetName(), nullptr, wkbUnknown);
+			for(unsigned int i = 0; i < srcLayer->GetFeatureCount(true); ++i)
+			{
+				outputLayer->CreateFeature(srcLayer->GetFeature(i));
+			}
+
+			//polyGDs->CopyLayer(curLayer, curLayer->GetName());
+		}
 	}
+	else
+	{
+		otb::ogr::Layer layer = ogrDS->GetLayer(layerId);
+		//TODO : Temporaire
+
+		OGRLayer* srcLayer 	  = &(layer.ogr());
+		OGRLayer* outputLayer = polyGDs->CreateLayer(layer.GetName().c_str(), nullptr, wkbUnknown);
+		for(unsigned int i = 0; i < srcLayer->GetFeatureCount(true); ++i)
+		{
+			outputLayer->CreateFeature(srcLayer->GetFeature(i));
+		}
+	}
+
 
 	//polyGDs->CopyLayer(&(layer.ogr()), layer.GetName().c_str(), nullptr);
 	//Clean memory

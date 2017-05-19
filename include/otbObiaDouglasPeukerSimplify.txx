@@ -36,11 +36,15 @@ DouglasPeukerFunc
 		//forceToLineString consumes the passed geometry, so by cloning we nesure to keep inputgeom
 		m_outputGeom = OGRGeometryFactory::forceToLineString(m_inputGeom->clone(), false);
 
+		//std::cout << "OUTPUT GEOM = " << m_outputGeom->exportToGML() << std::endl;
+
 		//Care: forcetolinestring can still produce a multilinestring which cannot be simplified
 		//TODO: maybe add so robustness to that
 
 		//std::cout << "Line string : " << m_outputGeom->exportToKML() << std::endl;
 		m_outputGeom = m_outputGeom->SimplifyPreserveTopology(this->m_tolerance);
+
+		//std::cout << "AFTER OUTPUT GEOM = " << m_outputGeom->exportToGML() << std::endl;
 
 		//exit(1);
 	}

@@ -63,6 +63,11 @@ namespace obia
        * @return : true or false*/
       static bool isFeatureValid(const OTBFeatureType feature);
 
+      /**Sort linestring in order to reconstruct a polygon
+       * @param : Unsorted linestring
+       * @return : vector of sorted linestring*/
+      static std::vector<OGRLineString*> SortLinesString(std::vector<OGRLineString*> unsortedGeoms);
+
       // This method serializes a layer that can be either sent via MPI requests or written in a binary file.
       static std::vector<char> SerializeLayer(const OTBLayerType layer);
 

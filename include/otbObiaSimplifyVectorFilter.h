@@ -91,14 +91,20 @@ public:
 	/**GDAL Method*/
 	GDALDriver* initializeGDALDriver(std::string driverName);
 
+	/**Initialize output DS*/
+	void InitializeOutputDS();
+
 	/**Create bounding feature to manage border*/
 	OGRFeatureType* CreateBoundingBoxFeature();
 
 	/**Intersect with bounding box*/
 	std::vector<OGRGeometry*> IntersectWithBB(OGRFeatureType feature);
 
-	/**Convert feature to edge*/
-	std::vector<OGRFeatureType*> ConvertToEdges(OGRFeatureType feature, std::vector<OGRFeatureType> adjFeatures);
+	/**Convert feature to edge
+	 * @param : Current feature
+	 * @param: adjacent features
+	 * @param: Layer to store englobed polygons, will be processed later*/
+	std::vector<OGRFeatureType*> ConvertToEdges(OGRFeatureType feature, std::vector<OGRFeatureType> adjFeatures, OGRLayerType& insidePolygons);
 
 	/**Create an edge*/
 	OGRFeatureType* CreateEdge(OGRGeometry* intersectedGeometry,
@@ -120,10 +126,10 @@ public:
 	OGRFeatureType* ReconstructPolygon(double startCoords);
 
 	/** Sort linestring*/
-	std::vector<OGRGeometry*> SortLinesString(std::vector<OGRGeometry*> unsortedGeoms);
+	std::vector<OGRLineString*> ConvertToGeometries(double startCoords, std::vector<double>& adjCoords);
 
 	//Write into a file
-	void WriteFile(std::string filepath, int layerId);
+	void WriteFile(std::string filepath, int layerId = -1);
 
 	private:
 
@@ -137,6 +143,7 @@ public:
 
 	OGRFeatureType* m_BBFeature;
 
+	double m_CurrentCoords;
 	//Edges map
 	std::map<double, std::vector<OGRFeatureType*>> m_PolygonEdges;
 
