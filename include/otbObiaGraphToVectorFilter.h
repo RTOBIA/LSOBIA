@@ -108,9 +108,6 @@ public:
 	/**Initialize all fields*/
 	void InitializeAllFields(OTBLayer& poLayer);
 
-	//Create a field
-	void CreateNewField(OTBLayer poLayer, std::string fieldName, OGRFieldType fieldType);
-
 	//Self intersecting points
 	std::vector<OGRPoint> GetSelfIntersectingPoints(OGRPolygon* ogrPolygon);
 

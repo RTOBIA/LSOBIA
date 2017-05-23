@@ -68,6 +68,29 @@ namespace obia
        * @return : vector of sorted linestring*/
       static std::vector<OGRLineString*> SortLinesString(std::vector<OGRLineString*> unsortedGeoms);
 
+      /**Cast geometry to polygon geometry
+       * @param: Geometry
+       * @return: casted polygon*/
+      static OGRPolygon* CastToPolygon(OGRGeometry* geomRef);
+
+      /**Create a new field to the input layer*/
+      static void CreateNewField(OTBLayerType& poLayer, std::string fieldName, OGRFieldType fieldType);
+
+      /**Display a feature
+       * @param: feature
+       * @param: display geometry*/
+      static void DisplayFeature(const OTBFeatureType feature, bool displayGeom = false);
+
+      /**Check if linestring is vertical or horizontal
+       * @param: Linestring
+       * @return true if vertical or horizontal*/
+      static bool IsVerticalOrHorizontal(const OGRGeometry* geom);
+
+      /**Check if polygon is a rectangle
+       * @param :Polygone
+       * @return true is rectangle*/
+      static bool IsRectangle(const OGRPolygon* polygon);
+
       // This method serializes a layer that can be either sent via MPI requests or written in a binary file.
       static std::vector<char> SerializeLayer(const OTBLayerType layer);
 

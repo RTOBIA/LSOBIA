@@ -104,26 +104,42 @@ public:
 	 * @param : Current feature
 	 * @param: adjacent features
 	 * @param: Layer to store englobed polygons, will be processed later*/
-	std::vector<OGRFeatureType*> ConvertToEdges(OGRFeatureType feature, std::vector<OGRFeatureType> adjFeatures, OGRLayerType& insidePolygons);
+	void ConvertToEdges(OGRFeatureType feature, std::vector<OGRFeatureType> adjFeatures,
+						OGRLayerType& insidePolygons);
 
 	/**Create an edge*/
-	OGRFeatureType* CreateEdge(OGRGeometry* intersectedGeometry,
-						   	   OGRFeatureType refFeature, OGRFeatureType adjFeature,
-							   bool isSimplify = true);
+	void AddEdge(OGRGeometry* intersectedGeometry,
+				 OGRFeatureType refFeature, OGRFeatureType adjFeature,
+				 bool isSimplify = true);
+
+	/**Create interior edge*/
+	void CreateInteriorEdge(OGRFeatureType englobingFeature, OGRFeatureType englobedFeature, bool isSimplify = true);
 
 	/**Compute interected features*/
-	void IntersectFeatures(std::vector<OGRFeatureType*>& edges,
-						   OGRFeatureType refFeature, OGRFeatureType adjFeature, bool isSimplify = true);
+	void IntersectFeatures(OGRFeatureType refFeature, OGRFeatureType adjFeature, bool isSimplify = true);
 
 	/**Compute Edge*/
-	void ConvertGeometryCollectionToEdge(OGRGeometry* intersectedLine, std::vector<OGRFeatureType*>& edges,
-										 OGRFeatureType refFeature, OGRFeatureType adjFeature, bool isSimplify = true);
+	void ConvertGeometryCollectionToEdge(OGRGeometry* intersectedLine, OGRFeatureType refFeature, OGRFeatureType adjFeature, bool isSimplify = true);
 
 	/**Reconstruct all polygons from lines geometry*/
 	void ReconstructAllPolygons();
 
-	/** Reconstruct polygon*/
-	OGRFeatureType* ReconstructPolygon(double startCoords);
+	/** Reconstruct polygon
+	 * @param Coord of polygon
+	 * @param : Vector for adjcent coords
+	 * @return : created feature*/
+	OGRPolygon* ReconstructPolygon(double startCoords, std::vector<double>& adjCoords);
+
+	/** Create feature associated to polygon
+	 * @param : OGRPolygon to add
+	 * @param : layer to add the polygon*/
+	void AddPolygon(OGRPolygon* reconstructedPolygon, double startCoords,
+				    std::vector<double> adjCoords, OGRLayerType& ogrLayer);
+
+	/**Create interior rings for polygon
+	 *@param Coord of the polygon
+	 *@return : vector of Linear Ring*/
+	std::vector<OGRLinearRing*> CreateInteriorRings(double startCoords);
 
 	/** Sort linestring*/
 	std::vector<OGRLineString*> ConvertToGeometries(double startCoords, std::vector<double>& adjCoords);
@@ -143,9 +159,23 @@ public:
 
 	OGRFeatureType* m_BBFeature;
 
+	//Layer edge
+	OGRLayerType m_EdgeLayer;
+
+	//Feature def
+	OGRFeatureDefn* m_EdgeFeatureDefn;
+
+	//Current coord
 	double m_CurrentCoords;
+
 	//Edges map
-	std::map<double, std::vector<OGRFeatureType*>> m_PolygonEdges;
+	std::map<double, std::vector<OGRFeatureType>> m_PolygonEdges;
+
+	//Interior edges
+	std::map<double, std::vector<OGRGeometry*>>	m_InteriorEdges;
+
+	//Keep track of englobing/englobed id
+	std::map<double, std::vector<double>> m_EnglobedId;
 
 	//BB Edges
 	std::map<double, std::vector<OGRGeometry*>> m_bbEdges;

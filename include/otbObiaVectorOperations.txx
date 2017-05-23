@@ -204,6 +204,152 @@ VectorOperations
 	return sortedGeoms;
 }
 
+OGRPolygon*
+VectorOperations
+::CastToPolygon(OGRGeometry* geomRef)
+{
+	OGRwkbGeometryType geomType = geomRef->getGeometryType();
+	if(geomType == wkbPolygon)
+	{
+		return (OGRPolygon*) geomRef;
+	}
+	else
+	{
+		std::cout << "Geometry " << geomRef->exportToKML() << " is not a polygon " << std::endl;
+		return nullptr;
+	}
+}
+
+
+//Create a field
+void
+VectorOperations
+::CreateNewField(OTBLayerType& poLayer, std::string fieldName, OGRFieldType fieldType)
+{
+	OGRFieldDefn fieldDef(fieldName.c_str(), fieldType);
+	poLayer.CreateField(fieldDef, true);
+
+}
+
+void
+VectorOperations
+::DisplayFeature(const OTBFeatureType feature, bool displayGeom)
+{
+	//Number of fields
+	int fieldsCount = feature.GetDefn().GetFieldCount();
+	for(unsigned fId = 0; fId < fieldsCount; ++fId)
+	{
+		std::cout << "---------------------------------------------------" << std::endl;
+		OGRFieldDefn* fieldDef = feature.GetDefn().GetFieldDefn(fId);
+		const char* fieldName = fieldDef->GetNameRef();
+		OGRFieldType fieldType = fieldDef->GetType();
+
+		std::cout << "Field " <<fieldDef->GetNameRef() << std::endl;
+		std::cout <<"Field type = " << fieldDef->GetFieldTypeName(fieldType) << std::endl;
+		//Get value
+		switch(fieldType)
+		{
+			case OFTInteger64:
+			{
+				std::cout << "Value = " << feature.ogr().GetFieldAsDouble(fieldName) << std::endl;
+				break;
+			}
+			case OFTInteger64List:
+			{
+				int nbValues = 0;
+				const GIntBig* values = feature.ogr().GetFieldAsInteger64List(fieldName, &nbValues);
+				for(int k = 0; k < nbValues; ++k)
+				{
+					std::cout << "Element " << k << " = " << values[k] << std::endl;;
+				}
+				break;
+			}
+			default:
+			{
+				break;
+			}
+		}
+		std::cout << "---------------------------------------------------" << std::endl;
+	}
+
+	if(displayGeom)
+	{
+		std::cout << feature.ogr().GetGeometryRef()->exportToKML() << std::endl;
+	}
+}
+
+bool
+VectorOperations
+::IsVerticalOrHorizontal(const OGRGeometry* geom)
+{
+	if(geom->getGeometryType() == wkbLineString)
+	{
+		//Get first point and last point
+		OGRPoint firstPoint,lastPoint;
+		OGRLineString* linestring = (OGRLineString*) geom;
+		if(linestring->getNumPoints() == 2)
+		{
+			//If output linestring contains  2 point and both x or both y are equals, then the line is vertical or horizontal
+			linestring->getPoint(0, &firstPoint);
+			linestring->getPoint(1, &lastPoint);
+
+			if(firstPoint.getX() == lastPoint.getX() ||
+			   firstPoint.getY() == lastPoint.getY())
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+
+
+
+}
+
+bool
+VectorOperations
+::IsRectangle(const OGRPolygon* polygon)
+{
+	//Get exterior ring
+	const OGRLinearRing* extRing = polygon->getExteriorRing();
+
+	//The 5th point correspond to the 1st point, so a rectangle is made with 5 points (the 4 corners, and the first point
+	//in order to close the polygon)
+	if(extRing->getNumPoints() != 5)
+	{
+		return false;
+	}
+	else
+	{
+		OGRPoint lastPoint;
+		extRing->getPoint(0, &lastPoint);
+
+		//Loop accross points
+		double oldX = lastPoint.getX();
+		double oldY = lastPoint.getY();
+
+//		for(unsigned int i = 1; i < (extRing->getNumPoints() - 1); ++i)
+//		{
+//
+//		}
+		//Get bounding box
+		OGRGeometry* boundary = polygon->Boundary();
+
+		//If bounding box equal exterior ring, then polygon is a rectangle
+		if(extRing->Equals(boundary))
+		{
+			std::cout << "isRectangle = " << polygon->exportToKML() << std::endl;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+
+	}
+}
+
 std::vector<char>
 VectorOperations
 ::SerializeLayer(const OTBLayerType layer)
@@ -221,4 +367,5 @@ VectorOperations
 } // end of namespace otb
 
 #endif
+
 

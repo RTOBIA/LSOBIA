@@ -7,7 +7,7 @@
 
 #include "otbImage.h"
 #include "otbObiaGraphToLabelImageFilter.h"
-
+#include "otbObiaVectorOperations.h"
 //Const
 #include "otbObiaConstExpr.h"
 
@@ -271,22 +271,12 @@ GraphToVectorFilter<TInputGraph>
 {
 	//ATTENTION: Label field must be the first in order to the polygonize function use index 0 (label field)
 	//to write pixel value
-	CreateNewField(poLayer, labelFieldName			  , OFTInteger);
-	CreateNewField(poLayer, validPolygonFieldName	  , OFTString);
-	CreateNewField(poLayer, startingCoordsFieldName   , OFTInteger64);
-	CreateNewField(poLayer, adjStartingCoordsFieldName, OFTInteger64List);
+	VectorOperations::CreateNewField(poLayer, labelFieldName			  , OFTInteger);
+	VectorOperations::CreateNewField(poLayer, validPolygonFieldName	      , OFTString);
+	VectorOperations::CreateNewField(poLayer, startingCoordsFieldName     , OFTInteger64);
+	VectorOperations::CreateNewField(poLayer, adjStartingCoordsFieldName  , OFTInteger64List);
 }
 
-//Create a field
-template <class TInputGraph>
-void
-GraphToVectorFilter<TInputGraph>
-::CreateNewField(otb::ogr::Layer poLayer, std::string fieldName, OGRFieldType fieldType)
-{
-	OGRFieldDefn fieldDef(fieldName.c_str(), fieldType);
-	poLayer.CreateField(fieldDef, true);
-
-}
 template <class TInputGraph>
 std::vector<OGRPoint>
 GraphToVectorFilter<TInputGraph>
@@ -431,7 +421,7 @@ void GraphToVectorFilter<TInputGraph>
 
 				OGRPolygon* curPoly = (OGRPolygon*) curGeom;
 				OGRPolygon* cleanedPoly = CleanSelfIntersectingPolygon(curPoly);
-				OGRFeature* cleanFeature = new OGRFeature(originalLayer->GetFeature(i)->GetDefnRef());
+				OGRFeature* cleanFeature = new OGRFeature(originalLayer->GetLayerDefn());
 				cleanFeature->SetField(labelFieldName.c_str(),
 										originalLayer->GetFeature(i)->GetFieldAsInteger(labelFieldName.c_str()));
 				if( cleanFeature->SetGeometryDirectly(cleanedPoly) == 0)

@@ -27,22 +27,28 @@ DouglasPeukerFunc
 ::SimplifyLine()
 {
 	/**Call GDAL Simplify for this geometry*/
-
 	/**TODO*/
 	//Check GDAL version, because the simplify preserve topology is undefined...
+	std::cout <<" SIMPLIFY ==> " << m_inputGeom->exportToKML() << std::endl;
 	if(m_inputGeom->getGeometryType() == wkbMultiLineString)
 	{
 		//Force to linestring (clone the input. The memory is managed outside this class)
 		//forceToLineString consumes the passed geometry, so by cloning we nesure to keep inputgeom
 		m_outputGeom = OGRGeometryFactory::forceToLineString(m_inputGeom->clone(), false);
 
-		//std::cout << "OUTPUT GEOM = " << m_outputGeom->exportToGML() << std::endl;
-
 		//Care: forcetolinestring can still produce a multilinestring which cannot be simplified
 		//TODO: maybe add so robustness to that
 
-		//std::cout << "Line string : " << m_outputGeom->exportToKML() << std::endl;
+		std::cout << "Line string : " << m_outputGeom->exportToKML() << std::endl;
 		m_outputGeom = m_outputGeom->SimplifyPreserveTopology(this->m_tolerance);
+
+		//Check if the output line if vertical or horizontal
+		if(VectorOperations::IsVerticalOrHorizontal((OGRLineString*) m_outputGeom))
+		{
+			//Do not use this geometry, clone the entry one
+			delete m_outputGeom;
+			m_outputGeom = m_inputGeom->clone();
+		}
 
 		//std::cout << "AFTER OUTPUT GEOM = " << m_outputGeom->exportToGML() << std::endl;
 
@@ -62,6 +68,8 @@ DouglasPeukerFunc
 
 		exit(EXIT_FAILURE);
 	}
+
+	std::cout <<" SIMPLIFIED ==> " << m_outputGeom->exportToKML() << std::endl;
 
 }
 }//end obia
