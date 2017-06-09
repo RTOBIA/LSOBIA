@@ -3,7 +3,7 @@
 
 #include "itkProcessObject.h"
 #include <otbOGRDataSourceWrapper.h>
-
+#include "otbImage.h"
 namespace otb
 {
 namespace obia
@@ -30,12 +30,14 @@ public:
   	itkNewMacro(Self);
 
   	/** Some convenient typedefs. */
+    using LabelPixelType		 = unsigned int;
+    using LabelImageType 		 = otb::Image< LabelPixelType, 2 >;
   	using InputGraphType         = TInputGraph;
   	using InputGraphPointer      = typename InputGraphType::Pointer;
   	using InputGraphConstPointer = typename InputGraphType::ConstPointer;
 
-  	using OTBFeature			 = otb::ogr::Feature;
-  	using OTBLayer			     = otb::ogr::Layer;
+  	using OTBFeatureType			 = otb::ogr::Feature;
+  	using OGRLayerType			     = otb::ogr::Layer;
 
   	/** Return the name of the class. */
 	itkTypeMacro(GraphToVectorFilter, ProcessObject);
@@ -43,7 +45,6 @@ public:
 	  /** Definition of the input image */
 	using OGRDataSourceType = otb::ogr::DataSource;
 	using OGRDataSourcePointerType = OGRDataSourceType::Pointer;
-	using OGRLayerType = OTBLayer;
 	using DataObjectPointerArraySizeType =  itk::ProcessObject::DataObjectPointerArraySizeType;
 
 
@@ -51,6 +52,11 @@ public:
 	using Superclass::SetInput;
 	virtual void SetInput(const TInputGraph *input);
 	virtual const TInputGraph * GetInput(void);
+
+
+	/**Update output information*/
+	virtual void UpdateOutputInformation();
+
 
 	/** Set the Field Name in which labels will be written. (default is "DN")
 	* A field "FieldName" of type integer is created in the output memory layer.
@@ -60,6 +66,11 @@ public:
 	* Return the Field name in which labels have been written.
 	*/
 	itkGetMacro(FieldName, std::string);
+
+	/**
+	 *
+	 */
+	itkSetMacro(OutputDir, std::string);
 
 	/**
 	* Set the value of 8-connected neighborhood option used in \c GDALPolygonize
@@ -102,38 +113,37 @@ public:
 	DataObjectPointer MakeOutput(DataObjectPointerArraySizeType idx) ITK_OVERRIDE;
 	using Superclass::MakeOutput;
 
-	/**GDAL Method*/
-	GDALDriver* initializeGDALDriver(std::string driverName);
-
 	/**Initialize all fields*/
-	void InitializeAllFields(OTBLayer& poLayer);
+	void InitializeAllFields(OGRLayerType& poLayer);
 
-	//Self intersecting points
-	std::vector<OGRPoint> GetSelfIntersectingPoints(OGRPolygon* ogrPolygon);
 
 	//Clean Layer
-	void CleanOGRLayer(OTBLayer poLayer, OTBLayer& poLayer_cleaned);
+	void CleanOGRLayer(OGRLayerType poLayer, OGRLayerType& poLayer_cleaned, OGRLayerType& polayer_nodata);
 
-	//Clean Geometry
-	OGRPolygon* CleanSelfIntersectingPolygon(OGRPolygon* ogrPolygon);
+	//Check feature
 
-	//Create new Geometry
-	OGRPolygon* CreateSubGeomtry(OGRPointIterator* pIt, OGRPoint selfIntersectingPoint);
+	//Clean feature
+	//OGRFeature* CleanFeature(OGRFeature* feature, OGRFeatureDefn* layerDefn);
 
-	//Self intetrsecting
-	bool IsSelfIntersecting(OGRPoint p, std::vector<OGRPoint> listSelf);
+//	//Self intersecting points
+//	std::vector<OGRPoint> GetSelfIntersectingPoints(OGRPolygon* ogrPolygon);
+//	//Clean Geometry
+//	OGRPolygon* CleanSelfIntersectingPolygon(OGRPolygon* ogrPolygon);
+//
+//	//Create new Geometry
+//	OGRPolygon* CreateSubGeomtry(OGRPointIterator* pIt, OGRPoint selfIntersectingPoint);
+//
+//	//Self intetrsecting
+//	bool IsSelfIntersecting(OGRPoint p, std::vector<OGRPoint> listSelf);
 
 	//Create feature for all polygons
-	void CreateAllFeatures(OTBLayer& poLayer);
+	void CreateAllFeatures(OGRLayerType& poLayer);
 
 	//Update the feature like adjacent polygons, etc ...
 	void UpdateFeatureFields(OGRFeature* curFeature);
 
 	//Add Feature for a given geometry
 	void SetNewFields(OGRFeature* curFeature);
-
-	//Write into a file
-	void WriteFile(std::string filepath);
 
 	private:
 
@@ -148,13 +158,19 @@ public:
 	bool m_Use8Connected;
 
 	//Input graph
-	InputGraphPointer m_graph;
+	InputGraphPointer m_Graph;
 
 	//X shift
 	unsigned int m_Xshift;
 
 	//Y shift
 	unsigned int m_Yshift;
+
+	//LUT for correpsondance between label and node id
+	std::vector<LabelPixelType> m_ReverseLut;
+
+	//Output dir
+	std::string m_OutputDir;
 };
 
 } // end of namespace obia

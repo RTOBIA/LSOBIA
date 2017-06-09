@@ -211,6 +211,8 @@ namespace obia
         }
     }
 
+    static void DisplayNode(const GraphPointerType graph, unsigned int coordNode);
+
 };
 
 } // end of namespace obia

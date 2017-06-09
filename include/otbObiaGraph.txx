@@ -169,6 +169,10 @@ template< typename TNode >
 typename Graph<TNode>::NodeType* 
 Graph<TNode>::GetNodeAt(const IdType id)
 {
+	if(id > (m_Nodes.size() - 1) || id < 0)
+	{
+		return nullptr;
+	}
     return &(m_Nodes[id]);
 }
 

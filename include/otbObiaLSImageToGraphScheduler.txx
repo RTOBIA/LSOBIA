@@ -322,10 +322,11 @@ void
 LSImageToGraphScheduler<TInputImage, TOutputGraph>
 ::CreateOutput()
 {
-
+	std::cout << "-------------- CREATE OUTPUT -------------" << std::endl;
     auto mpiConfig = MPIConfig::Instance();
     auto mpiTools = MPITools::Instance();
 
+    /************************Write graph on the disk if asked***********************************/
     if(m_SplittedGraph && m_WriteGraph)
     {
         uint32_t tid = 0;
@@ -360,47 +361,76 @@ LSImageToGraphScheduler<TInputImage, TOutputGraph>
         GraphOperationsType::WriteGraphToDisk(this->m_Graph, os.str());
     }
 
+    /************************Convert graph to image if asked***********************************/
     if(m_WriteLabelImage)
     {
-        for(auto& kv : this->m_TileMap)
-        {
-            uint32_t tx = kv.first % this->m_NumberOfTilesX;
-            uint32_t ty = kv.first / this->m_NumberOfTilesX;
+    	//If the graph is splitted, we have to read each temp graph and convert to image
+    	if(m_SplittedGraph)
+		{
+    		for(auto& kv : this->m_TileMap)
+			{
+				uint32_t tx = kv.first % this->m_NumberOfTilesX;
+				uint32_t ty = kv.first / this->m_NumberOfTilesX;
+				std::cout << "Convert Graph" << ty << "_" << tx << std::endl;
 
-            std::stringstream os;
-            os << this->m_TemporaryDirectory << "Graph_" << ty << "_" << tx << ".dat";
-            this->m_Graph = GraphOperationsType::ReadGraphFromDisk(os.str());
-            this->m_Graph->SetImageWidth(this->m_ImageWidth);
-            this->m_Graph->SetImageHeight(this->m_ImageHeight);
-            this->m_Graph->SetNumberOfSpectralBands(this->m_NumberOfSpectralBands);
-
-            using LabelPixelType = unsigned int;
-            using LabelImageType = otb::Image< LabelPixelType, 2 >;
-            using GraphToLabelImageFilterType = otb::obia::GraphToLabelImageFilter<TOutputGraph, LabelImageType>;
-            using RGBPixelType = itk::RGBPixel<unsigned char>;
-            using RGBImageType = otb::Image<RGBPixelType, 2>;
-            using LabelToRGBFilterType = itk::LabelToRGBImageFilter<LabelImageType, RGBImageType>;
-            using RGBWriterType = otb::ImageFileWriter< RGBImageType >;
-            using FillholeFilterType           = itk::GrayscaleFillholeImageFilter<LabelImageType,LabelImageType>;
-
-
-            auto graphToLabelFilter = GraphToLabelImageFilterType::New();
-            auto labelToRGBFilter = LabelToRGBFilterType::New();
-            auto rgbWriter = RGBWriterType::New();
-            os.str("");
-            os.clear();
-            os << this->m_OutputDir << m_LabelImageName << ty << "_" << tx << ".tif";
-            rgbWriter->SetFileName(os.str());
-            graphToLabelFilter->SetInput(m_Graph);
-            auto fillHoleFilter = FillholeFilterType::New();
-            fillHoleFilter->SetInput(graphToLabelFilter->GetOutput());
-            labelToRGBFilter->SetInput(fillHoleFilter->GetOutput());
-            rgbWriter->SetInput(labelToRGBFilter->GetOutput());
-            rgbWriter->Update();
-        }
+				std::stringstream os;
+				if(this->m_TileMap.size() > 1)
+				{
+					os << this->m_TemporaryDirectory << "Graph_" << ty << "_" << tx << ".dat";
+					this->m_Graph = GraphOperationsType::ReadGraphFromDisk(os.str());
+					this->m_Graph->SetImageWidth(this->m_ImageWidth);
+					this->m_Graph->SetImageHeight(this->m_ImageHeight);
+					this->m_Graph->SetNumberOfSpectralBands(this->m_NumberOfSpectralBands);
+				}
+				//Convert to image
+				ConvertGraphToImage(ty, tx);
+			}
+		}
+    	else
+    	{
+    		//We can directly convert the in-memory graph
+			ConvertGraphToImage(0, 0);
+    	}
     }
+}
 
+template< typename TInputImage, typename TOutputGraph >
+void
+LSImageToGraphScheduler<TInputImage, TOutputGraph>
+::ConvertGraphToImage(const unsigned int ty, const unsigned int tx)
+{
+	if(m_Graph == nullptr)
+	{
+		std::cout << "Graph " << ty << "_" << tx << " is not set..." << std::endl;
+		exit(EXIT_FAILURE);
+	}
 
+	using LabelPixelType = unsigned int;
+	using LabelImageType = otb::Image< LabelPixelType, 2 >;
+	using GraphToLabelImageFilterType = otb::obia::GraphToLabelImageFilter<TOutputGraph, LabelImageType>;
+	using WriterType = otb::ImageFileWriter< LabelImageType>;
+
+	/** FOR COLOR IMAGE
+	using RGBPixelType = itk::RGBPixel<unsigned char>;
+	using RGBImageType = otb::Image<RGBPixelType, 2>;
+	using LabelToRGBFilterType = itk::LabelToRGBImageFilter<LabelImageType, RGBImageType>;
+	using RGBWriterType = otb::ImageFileWriter< RGBImageType >;
+	*/
+	using FillholeFilterType           = itk::GrayscaleFillholeImageFilter<LabelImageType,LabelImageType>;
+
+	//Output name
+	std::stringstream os;
+	os << this->m_OutputDir << m_LabelImageName << ty << "_" << tx << ".tif";
+
+	auto graphToLabelFilter = GraphToLabelImageFilterType::New();
+	auto grayWriter = WriterType::New();
+	auto fillHoleFilter = FillholeFilterType::New();
+
+	grayWriter->SetFileName(os.str());
+	graphToLabelFilter->SetInput(m_Graph);
+	fillHoleFilter->SetInput(graphToLabelFilter->GetOutput());
+	grayWriter->SetInput(fillHoleFilter->GetOutput());
+	grayWriter->Update();
 }
 
 } // end of namespace obia

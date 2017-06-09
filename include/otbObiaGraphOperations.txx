@@ -2,6 +2,9 @@
 #define otbObiaGraphOperations_txx
 #include "otbObiaGraphOperations.h"
 
+//TEMP
+#include "otbMPIConfig.h"
+
 namespace otb
 {
 namespace obia
@@ -548,12 +551,12 @@ GraphOperations<TGraph>::GetListOfBorderNodes(const GraphPointerType graph,
 
     auto lambdaOp = [&](NodeType& node){
 
-        if(!SpatialTools::IsBboxStrictlyInsideBoundaries(node.m_BoundingBox,
-                                                            lowerCol,
-                                                            lowerRow,
-                                                            upperCol,
-                                                            upperRow))
-        {
+	if(!SpatialTools::IsBboxStrictlyInsideBoundaries(node.m_BoundingBox,
+													 lowerCol,
+													 lowerRow,
+													 upperCol,
+													 upperRow))
+	{
         // The node may not be strictly within the tile, it can overlap the borders.
         std::unordered_set<CoordValueType> borderPixels;
         node.m_Contour.GenerateBorderPixels(borderPixels, inputLSImageWidth);
@@ -561,7 +564,6 @@ GraphOperations<TGraph>::GetListOfBorderNodes(const GraphPointerType graph,
         // Loop over the pixels
         for(const auto& pix : borderPixels)
         {
-
             if(SpatialTools::IsPixelAtTileBorder(pix,
                                                  tile.m_Tx,
                                                  tile.m_Ty,
@@ -608,6 +610,7 @@ GraphOperations<TGraph>::ExtractStabilityMargin(const GraphPointerType graph,
     {
       RecursiveDepthBreadFirstExploration(n, extractedNodes, graph, 0, numMaxAdjacencyLayers);
     }
+
 
     return extractedNodes;
 }
@@ -759,17 +762,6 @@ GraphOperations<TGraph>::AggregateGraphs(GraphPointerType graph,
     // in graph in order to preserve the relative order of the nodes
     // in the adjacency list of the resulting graph.
     const IdType numNodes = graph->GetNumberOfNodes();
-
-    for(auto nodeIt = otherGraph->Begin(); nodeIt != otherGraph->End(); nodeIt++)
-    {
-        nodeIt->m_Id += numNodes;
-
-        for(auto& edg : nodeIt->m_Edges)
-        {
-              edg.m_TargetId += numNodes;
-        }
-
-    }
 
   // Step 2: We can safely copy the nodes of subgraph into the adjacent list of graph.
   graph->InsertAtEnd(otherGraph);
@@ -1092,6 +1084,25 @@ GraphOperations<TGraph>::DetectNewAdjacentNodes(std::unordered_map<CoordValueTyp
   // Can safely remove the duplicated nodes.
   graph->RemoveNodes();
 }
+template <typename TGraph >
+void GraphOperations<TGraph>
+::DisplayNode(const GraphPointerType graph, unsigned int coordNode)
+ {
+	std::cout << "Looking for node " << coordNode << std::endl;
+	for(int i = 0; i < graph->GetNumberOfNodes(); ++i)
+	{
+		auto node = graph->GetNodeAt(i);
+		if(node->GetFirstPixelCoords() == coordNode)
+		{
+			for(int k = 0; k < node->m_Edges.size(); k++)
+			{
+				auto adjNode =  graph->GetNodeAt(node->m_Edges[k].m_TargetId);
+				std::cout << "PROC " << MPIConfig::Instance()->GetMyRank() << " :: Adjacent Marge stabilité = " << adjNode->GetFirstPixelCoords() << std::endl;
+			}
+		}
+	}
+
+ }
 
 } // end of namespace obia
 } // end of namespace otb

@@ -73,7 +73,7 @@ public:
 	protected:
 
 	SimplifyVectorFilter();
-	~SimplifyVectorFilter() ITK_OVERRIDE {}
+	~SimplifyVectorFilter() ITK_OVERRIDE;
 
 	void GenerateInputRequestedRegion() ITK_OVERRIDE;
 
@@ -88,17 +88,14 @@ public:
 
 	using Superclass::MakeOutput;
 
-	/**GDAL Method*/
-	GDALDriver* initializeGDALDriver(std::string driverName);
-
 	/**Initialize output DS*/
 	void InitializeOutputDS();
 
 	/**Create bounding feature to manage border*/
 	OGRFeatureType* CreateBoundingBoxFeature();
 
-	/**Intersect with bounding box*/
-	std::vector<OGRGeometry*> IntersectWithBB(OGRFeatureType feature);
+	/**Intersect with bounding box and nodata layer*/
+	std::vector<OGRGeometry*> IntersectWithBoundaries(OGRFeatureType feature);
 
 	/**Convert feature to edge
 	 * @param : Current feature
@@ -144,8 +141,20 @@ public:
 	/** Sort linestring*/
 	std::vector<OGRLineString*> ConvertToGeometries(double startCoords, std::vector<double>& adjCoords);
 
-	//Write into a file
-	void WriteFile(std::string filepath, int layerId = -1);
+	/**Create interior rings for fixed polygons
+	 * @param: Polygon after repairing it
+	 * @param: Start coords
+	 * @param: New geometry with "holes" (removed englobed polygons)*/
+	OGRGeometry* AddInteriorRings(OGRGeometry* fixedPolygon,double startCoords);
+
+	/** Clean OGR Layer*/
+	void CleanLayer();
+
+	/** Remove overlapping after fixing features*/
+	void RemoveOverlappingFeatures(OGRLayerType& reconstructedLayer, unsigned int nbFixedFeatures);
+
+	/** Remove border polygons*/
+	void RemoveTileBorderPolygons(OGRLayerType& layer);
 
 	private:
 
@@ -157,7 +166,11 @@ public:
 	SimplifyFunc* m_simplifyFunc;
 	std::string m_LayerName;
 
+	/**BB Features*/
 	OGRFeatureType* m_BBFeature;
+
+	/**No data layer*/
+	OGRLayerType m_NodataLayer;
 
 	//Layer edge
 	OGRLayerType m_EdgeLayer;
@@ -177,7 +190,12 @@ public:
 	//Keep track of englobing/englobed id
 	std::map<double, std::vector<double>> m_EnglobedId;
 
-	//BB Edges
+	//Map to indicate if a feature is englobed or not
+	std::map<double, bool> m_IsEnglobedMap;
+
+	//BB Edges :
+	//key is coordinate of the polygon
+	//value is a vector containaing all intersection with boundaries
 	std::map<double, std::vector<OGRGeometry*>> m_bbEdges;
 
 

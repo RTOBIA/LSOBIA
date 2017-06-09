@@ -175,7 +175,7 @@ private:
 				lsBaatzFilter->SetShapeWeight(shapeW);
 				lsBaatzFilter->SetWriteLabelImage(true);
 				lsBaatzFilter->SetWriteGraph(true);
-                                lsBaatzFilter->SetLabelImageName(labelImage);
+                lsBaatzFilter->SetLabelImageName(labelImage);
 				lsBaatzFilter->SetOutputDir(outDir);
 				lsBaatzFilter->Update();
 
@@ -234,7 +234,7 @@ private:
 				lsMSFilter->SetSpectralRangeRamp(ranger);
 				lsMSFilter->SetModeSearch(modeSearch);
 				lsMSFilter->SetOutputDir(outDir);
-                                lsMSFilter->SetLabelImageName(labelImage);
+                lsMSFilter->SetLabelImageName(labelImage);
 				lsMSFilter->SetWriteLabelImage(true);
 				lsMSFilter->SetWriteGraph(true);
 				lsMSFilter->Update();

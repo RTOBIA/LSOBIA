@@ -20,19 +20,25 @@ public:
     using Superclass                 = itk::ImageSource<TOutputImage>;
     using Pointer                    = itk::SmartPointer<Self>;
     using ConstPointer               = itk::SmartPointer< const Self >;
-    using InputGraphType           = TInputGraph;
-    using InputGraphPointerType   = typename TInputGraph::Pointer;
-    using NodeType                = typename InputGraphType::NodeType;
-    using OutputImageType           = TOutputImage;
-    using OutputImagePointerType  = typename TOutputImage::Pointer;
-    using OutputImageIteratorType = itk::ImageRegionIterator<OutputImageType>;
-    using FillholeFilterType      = itk::GrayscaleFillholeImageFilter<OutputImageType,OutputImageType>;
+    using InputGraphType             = TInputGraph;
+    using InputGraphPointerType  	 = typename TInputGraph::Pointer;
+    using NodeType                	 = typename InputGraphType::NodeType;
+    using OutputImageType         	 = TOutputImage;
+    using OutputImagePointerType  	 = typename TOutputImage::Pointer;
+    using OutputImageIteratorType  	 = itk::ImageRegionIterator<OutputImageType>;
+    using FillholeFilterType      	 = itk::GrayscaleFillholeImageFilter<OutputImageType,OutputImageType>;
 
     itkNewMacro(Self);
+
+    //Get LUT
+    std::vector<typename OutputImageType::InternalPixelType> GetReverseLut(){return m_ReverseLut;};
 
 protected:
 
     virtual void GenerateData();
+
+    //Keep LUT to get correspondance between label and node id
+    std::vector<typename OutputImageType::InternalPixelType> m_ReverseLut;
 };
 
 } // end of namespace obia

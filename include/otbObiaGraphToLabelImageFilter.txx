@@ -55,6 +55,10 @@ GenerateData()
     };
     labeledCopy->ApplyForEachNode(lambdaLabelWriter);
 
+    //Initialize reverse lut
+    m_ReverseLut.clear();
+    m_ReverseLut.resize(labeledCopy->GetNumberOfNodes()+1, noDataLabel);
+
     // Re-order node labels(left->right to top->bottom) (Remi Cresson correction)
     std::vector<typename OutputImageType::InternalPixelType> lut(labeledCopy->GetNumberOfNodes()+1, noDataLabel);
     typename OutputImageType::InternalPixelType label = 1;
@@ -64,14 +68,15 @@ GenerateData()
         if(inputLabel != noDataLabel && lut[inputLabel] == noDataLabel)
           {
             lut[ inputLabel ] = label;
+            m_ReverseLut[label] = inputLabel;
             label++;
           }
       }
     // Apply lut
     for(it.GoToBegin(); !it.IsAtEnd(); ++it)
-      {
-        it.Set(lut[it.Get()]);
-      }
+	{
+		it.Set(lut[it.Get()]);
+	}
 }
 
 

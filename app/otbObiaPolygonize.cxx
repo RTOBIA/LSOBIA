@@ -1,8 +1,10 @@
 #include "otbWrapperApplication.h"
 #include "otbWrapperApplicationFactory.h"
-#include "otbObiaLSPolygonizeScheduler.h"
-#include "otbObiaDouglasPeukerSimplify.h"
+#include "otbObiaGraphOperations.h"
+#include "otbObiaGraphToVectorFilter.h"
+#include "otbObiaSimplifyVectorFilter.h"
 #include "otbObiaImageToBaatzGraphFilter.h"
+#include "otbObiaDouglasPeukerSimplify.h"
 #include "otbObiaConstExpr.h"
 #include <string>
 #include <sstream>
@@ -16,11 +18,11 @@ namespace otb
 namespace Wrapper
 {
 
-class LSPolygonize : public Application
+class GraphPolygonize : public Application
 {
 public:
 
-	typedef LSPolygonize Self;
+	typedef GraphPolygonize Self;
         typedef Application SuperClass;
 	typedef itk::SmartPointer<Self> Pointer;
 
@@ -35,11 +37,11 @@ private:
 	{
 
 		//General description
-		SetName("LSPolygonize");
-		SetDescription("Large Scale Image Polygonize Application");
+		SetName("GraphPolygonize");
+		SetDescription("Graph Polygonize Application");
 
 		//Documentation
-		SetDocName("Large Scale Polygonization");
+		SetDocName("Graph  Polygonization");
 		SetDocLongDescription("This application provides several methods to perform polygonization of very high resolution images");
 		SetDocLimitations("None");
 		SetDocAuthors("OBIA-Team");
@@ -49,7 +51,6 @@ private:
 		AddParameter(ParameterType_Group,"io","Set of parameters related to input/output");
 		AddParameter(ParameterType_String,  "io.gr",   "Input graph path");
 		SetParameterDescription("io.gr", "Graph");
-
 		AddParameter(ParameterType_Group, "io.out",  "Output directory");
 		AddParameter(ParameterType_Directory, "io.out.dir",  "Output directory");
 		SetParameterDescription("io.out.dir", "Output Directory");
@@ -92,32 +93,37 @@ private:
 		using InputGraphType = otb::obia::Graph< otb::obia::Node<
 												 otb::obia::BaatzNodeAttribute,
 												 otb::obia::BaatzEdgeAttribute> >;
-		using TilesMapType = std::map< int, std::set<uint32_t> >;
-		using SimplifyFuncType =  otb::obia::DouglasPeukerFunc;
-		using LSPolygonizeSchedulerType = otb::obia::LSPolygonizeScheduler<InputGraphType, SimplifyFuncType>;
+
+		using GraphToVectorFilterType = otb::obia::GraphToVectorFilter<InputGraphType>;
 
 		//Read graph from disk
 		auto graph = otb::obia::GraphOperations<InputGraphType>::ReadGraphFromDisk(filename);
 
 		//Create filter to vectorize
-		auto LSPolygonizeScheduler = LSPolygonizeSchedulerType::New();
+		auto graphToVectorFilter = GraphToVectorFilterType::New();
+		graphToVectorFilter->SetInput(graph);
+		graphToVectorFilter->SetXshift(0);
+		graphToVectorFilter->SetYshift(0);
 
-		auto simplifyFunc = new SimplifyFuncType;
+		//TODO : Modify in order to call Update only on last filter...
+		graphToVectorFilter->Update();
+
+		std::cout << "After graph filter" <<std::endl;
+
+		//std::cout << "Nombre layer = " << graphToVectorFilter->GetOutput()->GetLayersCount() << std::endl;
+		//Create filter to simplify
+		using SimplifyVectorFilterType = otb::obia::SimplifyVectorFilter<otb::obia::DouglasPeukerFunc>;
+		auto simplifyVectorFilter = SimplifyVectorFilterType::New();
+		auto simplifyFunc = new otb::obia::DouglasPeukerFunc();
 		simplifyFunc->SetTolerance(1.0);
+		simplifyVectorFilter->SetSimplifyFunc(simplifyFunc);
+		simplifyVectorFilter->SetInput(graphToVectorFilter->GetOutput());
+		simplifyVectorFilter->SetLayerName(otb::obia::cleanedLayerName);
 
-		//Number of tiles per processor
-		TilesMapType tilesPerProcessor;
-		tilesPerProcessor[0].insert(0);
-		tilesPerProcessor[1].insert(0);
+		//Check why we have to update for each filter?
+		simplifyVectorFilter->Update();
 
-	    LSPolygonizeScheduler->SetTilesPerProcessor(tilesPerProcessor);
-	    LSPolygonizeScheduler->SetSimplifyFunc(simplifyFunc);
-	    LSPolygonizeScheduler->SetWriteVector(true);
-	    LSPolygonizeScheduler->SetOutputDir(outDir);
-	    LSPolygonizeScheduler->SetTemporaryDirectory(tmpDir);
-	    LSPolygonizeScheduler->SetGraphPrefixName("Graph_Vector");
-	    LSPolygonizeScheduler->SetGraph(graph);
-	    LSPolygonizeScheduler->Update();
+		std::cout << "After simplify update" <<std::endl;
 
 //		std::cout << "Nombre layer = " << graphToVectorFilter->GetOutput()->GetLayersCount() << std::endl;
 //		otb::ogr::Layer layer = graphToVectorFilter->GetOutput()->GetLayer(otb::obia::cleanedLayerName);
@@ -130,6 +136,6 @@ private:
 	}
 };
 
-OTB_APPLICATION_EXPORT(LSPolygonize)
+OTB_APPLICATION_EXPORT(GraphPolygonize)
 }
 }

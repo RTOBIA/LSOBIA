@@ -70,6 +70,11 @@ int otbObiaLSBaatzSegmentation(int argc, char *argv[])
         }
     }
 
+    std::cout << "Memory set = " << mem << std::endl;
+    if(isOn(aggregateGraphs))
+    {
+    	std::cout << "Activation of aggregate graph" << std::endl;
+    }
     lsBaatzFilter->SetFileName(filename);
     lsBaatzFilter->SetMaxTileSizeX(MaxTileWidth);
     lsBaatzFilter->SetMaxTileSizeY(MaxTileHeight);

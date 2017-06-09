@@ -82,14 +82,6 @@ SRMHeuristic<TGraph>
 ::GetBestAdjacentNode(NodeType* node)
 {
 
-	if(node->GetFirstPixelCoords() == 477336)
-	{
-		std::cout << "Aire : " << node->m_Attributes.m_Area  << std::endl;
-	}
-	if(node->GetFirstPixelCoords() == 478346)
-	{
-		std::cout << "Aire : " << node->m_Attributes.m_Area  << std::endl;
-	}
 	//If this node has an area too big, do not consider it
 	if(node->m_Attributes.m_Area > m_MinimalSurface || !node->m_Valid){
 		//std::cout << "Noeud " << node->m_Id << " a une surface de " << node->m_Attributes.m_Area << std::endl;
@@ -312,19 +304,6 @@ SRMHeuristic<TGraph>
 
 	return nullptr;
 
-	//return GetBestSmallAdjacentNode(nodeIn);
-	/*auto outputGraph = this->m_Graph;
-	auto nodeOut = outputGraph->GetNodeAt(nodeIn->m_Edges.front().m_TargetId);
-
-	if(nodeOut->GetFirstPixelCoords() == 477336 ||
-			nodeOut->GetFirstPixelCoords() == 478346	)
-	{
-		std::cout << "Node In : " << nodeIn->GetFirstPixelCoords()  << " Surface = " <<  nodeIn->m_Attributes.m_Area << " \n"
-				  << "Node Out : " << nodeOut->GetFirstPixelCoords() << " Surface = " <<  nodeOut->m_Attributes.m_Area << std::endl;
-	}
-
-	return nodeOut;*/
-	//return GetMostSimilarNode(nodeIn);
 }
 
 template< typename TGraph >

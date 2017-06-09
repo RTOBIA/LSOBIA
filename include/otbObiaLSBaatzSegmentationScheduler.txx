@@ -349,6 +349,9 @@ LSBaatzSegmentationScheduler<TInputImage>
     auto mpiConfig = MPIConfig::Instance();
     auto mpiTools = MPITools::Instance();
 
+    //initialize margins
+    ExtractStabilityMargins();
+
     while( m_CurrentNumberOfIterations <= m_MaxNumberOfIterations &&
            accumulatedMemory > this->m_AvailableMemory &&
            fusionSum > 0)
@@ -356,7 +359,7 @@ LSBaatzSegmentationScheduler<TInputImage>
         std::cout << "Current iteration " << m_CurrentNumberOfIterations << "/" << m_MaxNumberOfIterations << std::endl;
         std::cout << "Memory : " << accumulatedMemory << "/" << this->m_AvailableMemory << std::endl;
         std::cout << "Local sum : " << fusionSum << std::endl;
-        ExtractStabilityMargins();
+        //TODO : ExtractStabilityMargins();
         
         AggregateStabilityMargins();
         
@@ -364,11 +367,15 @@ LSBaatzSegmentationScheduler<TInputImage>
 
         m_CurrentNumberOfIterations += m_PartialNumberOfIterations;
 
+        //Extract for next iterations
+        ExtractStabilityMargins();
+
     } // end while( accumulatedMemory > this->m_AvailableMemory && fusionSum > 0)
 
     if(accumulatedMemory < this->m_AvailableMemory)
     {
-        std::cout << "Aggregation" << std::endl;
+        std::cout << "Aggregation (accumulated memory = " << accumulatedMemory << " and available = "
+        		  << this->m_AvailableMemory << ")" << std::endl;
         FinalGraphAgregation();
         this->m_SplittedGraph = false;
 
@@ -381,7 +388,7 @@ LSBaatzSegmentationScheduler<TInputImage>
     else
     {
         // For now, we do not write the label image in this situation.
-        this->m_WriteLabelImage = false;
+        //this->m_WriteLabelImage = false;
 
         // Since we cannot aggregate the graph is splitted
         this->m_SplittedGraph = true;
@@ -400,17 +407,22 @@ LSBaatzSegmentationScheduler<TInputImage>
     auto mpiConfig = MPIConfig::Instance();
     auto mpiTools = MPITools::Instance();
 
+    //Initialize Stability Margins
+    ExtractStabilityMargins();
+
     while( m_CurrentNumberOfIterations <= m_MaxNumberOfIterations &&
            accumulatedMemory > this->m_AvailableMemory &&
            fusionSum > 0)
     {
-        ExtractStabilityMargins();
+       //TODO Previous: ExtractStabilityMargins();
 
         AggregateStabilityMargins();
 
         RunPartialSegmentation(accumulatedMemory, fusionSum);
 
         m_CurrentNumberOfIterations += m_PartialNumberOfIterations;
+
+        ExtractStabilityMargins();
 
     } // end while( accumulatedMemory > this->m_AvailableMemory && fusionSum > 0)
 
@@ -825,9 +837,9 @@ LSBaatzSegmentationScheduler<TInputImage>
             {
                 // Retrieve the nodes on the borders of the adjacent tiles.
                 auto borderNodeMap = GraphOperationsType::BuildBorderNodesMapForFinalAggregation(this->m_Graph, 
-                                                                                                  rowBounds, 
+                                                                                                 rowBounds,
                                                                                                  colBounds, 
-                                                                                                  this->m_ImageWidth);
+                                                                                                 this->m_ImageWidth);
 
                 // Remove the duplicated nodes
                 GraphOperationsType::RemoveDuplicatedNodes(borderNodeMap, this->m_Graph, this->m_ImageWidth);
@@ -991,21 +1003,29 @@ void
 LSBaatzSegmentationScheduler<TInputImage>
 ::NoAggregationAndPartialSegmentation()
 {
+	std::cout << "-------------NO AGGR AND PARTIAL SEG--------------" << std::endl;
     int fusionSum = 1;
     unsigned long int accumulatedMemory = this->m_AvailableMemory + 1;
+
+    //Initialize stability margins
+    ExtractStabilityMargins();
 
     /**TODO : Add condition when localSum < 1*/
     while(m_CurrentNumberOfIterations <= m_MaxNumberOfIterations &&
           fusionSum > 0)
     {
-        ExtractStabilityMargins();
+       // ExtractStabilityMargins();
 
         AggregateStabilityMargins();
 
         RunPartialSegmentation(accumulatedMemory, fusionSum);
 
         m_CurrentNumberOfIterations += m_PartialNumberOfIterations;
+
+        //Extract stability margins for next iteration
+        ExtractStabilityMargins();
     }
+
 }
 
 template< class TInputImage >

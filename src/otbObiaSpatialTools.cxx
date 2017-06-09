@@ -207,12 +207,12 @@ namespace obia
 
     const uint32_t x = pixCoords % imageWidth;
     const uint32_t y = pixCoords / imageWidth;
+    bool isBorder = ( (tx > 0 && x == lowerCol) ||
+    				(tx < nbTilesX - 1 && x == upperCol) ||
+					(ty > 0 && y == lowerRow) ||
+					(ty < nbTilesY - 1 && y == upperRow));
 
-    return  ( (tx > 0 && x == lowerCol) ||
-              (tx < nbTilesX - 1 && x == upperCol) ||
-              (ty > 0 && y == lowerRow) ||
-              (ty < nbTilesY - 1 && y == upperRow));
-
+    return isBorder;
   }
 
   bool

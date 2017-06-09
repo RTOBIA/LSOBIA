@@ -102,6 +102,10 @@ protected:
     void ReadGraphIfNecessary(const unsigned int ty,
                               const unsigned int tx);
 
+    /**Write graph into a label image*/
+    void ConvertGraphToImage(const unsigned int ty,
+            				 const unsigned int tx);
+
 
     /** Path of the input big image */
     std::string m_FileName;

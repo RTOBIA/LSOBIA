@@ -95,13 +95,22 @@ otb_test_application(NAME apLSOBIA_BaatzOneProcLittle
 	-processing.maxtilesizey 100
 	)
 	
-otb_test_application(NAME apLSOBIA_PolygonizeOneProc
-	APP LSPolygonize
+otb_test_application(NAME apLSOBIA_GraphPolygonizeOneProc
+	APP GraphPolygonize
 	OPTIONS -io.gr ${LSOBIA_SOURCE_DIR}/data/Graph_little.dat
 	-io.out.dir ${TEMP_DIR}
 	-io.out.gmlfile "PolygonsFile.gml"
 	-io.temp ${TEMP_DIR}
 	)	
+	
+otb_test_application(NAME apLSOBIA_LSPolygonizeOneProc
+	APP LSPolygonize
+	OPTIONS -io.gr ${LSOBIA_SOURCE_DIR}/data/Graph_little.dat
+	-io.out.dir ${TEMP_DIR}
+	-io.out.gmlfile "PolygonsFile.gml"
+	-io.temp ${TEMP_DIR}
+)	
+
 # ----------------------------------------------------------------------------------------------
 # Segmentation Application Tests
 # - Mean Shift Tests
@@ -167,11 +176,12 @@ otb_add_test(NAME otbLSOBIALSBaatzSegmentation COMMAND otbLSOBIALSBaatzSegmentat
              0.05
              0.95
              ${TEMP_DIR}
-	     "on"
+	     	 "on"
              "on"
              "on"
              "LSBaatzSegmentationTestLabelImage"
-	     )
+)
+
 
 otb_add_test_mpi(NAME otbLSOBIALSBaatzSegmentationMPI COMMAND otbLSOBIALSBaatzSegmentationTestDriver
              NBPROCS 4
@@ -187,7 +197,7 @@ otb_add_test_mpi(NAME otbLSOBIALSBaatzSegmentationMPI COMMAND otbLSOBIALSBaatzSe
              0.05
              0.95
              ${TEMP_DIR}
-	     "on"
+	         "on"
              "on"
              "on"
              "LSBaatzSegmentationMPITestLabelImage"
@@ -289,18 +299,6 @@ otb_module_target_label(otbLSOBIASmallRegionMergingOnFileTestDriver)
 #             ${TEMP_DIR}
 #             )
 
-# ----------------------------------------------------------------------------------------------
-# Image Smoothing test driver
-# TODO : implement driver and add tests
-set(${otb-module}SmoothImageTests
-    otbLSOBIASmoothImageTestDriver.cxx
-    otbObiaSmoothImage.cxx
-    )
-
-add_executable(otbLSOBIASmoothImageTestDriver ${${otb-module}SmoothImageTests})
-target_link_libraries(otbLSOBIASmoothImageTestDriver ${${otb-module}-Test_LIBRARIES})
-otb_module_target_label(otbLSOBIASmoothImageTestDriver)
-
 
 # ----------------------------------------------------------------------------------------------
 # Graph Splitting test driver
@@ -317,7 +315,7 @@ otb_add_test(NAME otbLSOBIASplitGraph COMMAND otbLSOBIASplitGraphTestDriver
              otbObiaSplitGraph
              ${LSOBIA_SOURCE_DIR}/data/Graph_0_0.dat
              ${TEMP_DIR}
-            250
+             250
              250
              )
 
@@ -341,4 +339,25 @@ otb_test_application(NAME apLSOBIA_SRMOneProc
 	-processing.maxtilesizey 500
 	-processing.minimalsurface 200
 	)
+
+#---------------------------------------------------------------------------------------------------
+# Polygonize Test
+
+# Large Scale Polygonize test driver
+set(${otb-module}LSPolygonizeTests
+    otbLSOBIALSPolygonizeTestDriver.cxx
+    otbObiaLSPolygonizeTest.cxx
+    )
+
+add_executable(otbLSOBIALSPolygonizeTestDriver ${${otb-module}LSPolygonizeTests})
+target_link_libraries(otbLSOBIALSPolygonizeTestDriver ${${otb-module}-Test_LIBRARIES})
+otb_module_target_label(otbLSOBIALSPolygonizeTestDriver)
+
+otb_add_test_mpi(NAME otbObiaLSPolygonizeMPI COMMAND otbLSOBIALSPolygonizeTestDriver
+             NBPROCS 4
+             otbObiaLSPolygonize
+             ${LSOBIA_SOURCE_DIR}/data/
+             ${TEMP_DIR}
+             ${TEMP_DIR}
+	     )
 

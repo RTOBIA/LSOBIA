@@ -25,12 +25,14 @@ constexpr uint64_t CoordValueSize = sizeof(CoordValueType);
 //Layer name
 const std::string originalLayerName		= "original";
 const std::string cleanedLayerName		= "cleaned";
-
+const std::string nodataLayerName		= "nodata";
 //Field for vector
 const std::string labelFieldName		  	 	= "Label";
 const std::string startingCoordsFieldName 		= "StartingCoords";
 const std::string adjStartingCoordsFieldName 	= "AdjStartingCoords";
 const std::string validPolygonFieldName		  	= "isValid";
+const std::string reconstructedLayerName		= "Reconstructed";
+const std::string unvalidLayerName				= "Unvalid";
 
 //Field for edge
 const std::string polygonEdgeFieldName			= "PolygonCoords";
