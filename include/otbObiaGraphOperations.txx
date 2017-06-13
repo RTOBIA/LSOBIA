@@ -521,6 +521,8 @@ GraphOperations<TGraph>::ReadGraphFromDisk(const std::string & inputPath)
         graph->SetImageWidth(info.m_width);
         graph->SetImageHeight(info.m_height);
         graph->SetNumberOfSpectralBands(info.m_nbBands);
+        graph->SetOriginX(info.m_originX);
+        graph->SetOriginY(info.m_originY);
         graph->SetProjectionRef(info.m_projectionRef);
         return graph;
     }
@@ -763,8 +765,21 @@ GraphOperations<TGraph>::AggregateGraphs(GraphPointerType graph,
     // in the adjacency list of the resulting graph.
     const IdType numNodes = graph->GetNumberOfNodes();
 
-  // Step 2: We can safely copy the nodes of subgraph into the adjacent list of graph.
-  graph->InsertAtEnd(otherGraph);
+    auto lambdaIncrementIdEdge = [&](EdgeType& edge){
+        edge.m_TargetId = edge.m_TargetId + numNodes;
+    };
+
+    auto lambdaOp = [&](NodeType& node)
+    {
+    	node.m_Id = node.m_Id + numNodes;
+    	node.ApplyForEachEdge(lambdaIncrementIdEdge);
+    };
+
+
+    otherGraph->ApplyForEachNode(lambdaOp);
+
+    // Step 2: We can safely copy the nodes of subgraph into the adjacent list of graph.
+    graph->InsertAtEnd(otherGraph);
 
 }
 
@@ -901,7 +916,6 @@ GraphOperations<TGraph>
 
             for(; nodePtrIt != kv.second.end(); nodePtrIt++)
             {
-
                 // Loop over their edges
                 for(auto& edg : (*nodePtrIt)->m_Edges)
                 {

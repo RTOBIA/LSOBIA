@@ -1,8 +1,7 @@
-
-
 cmake_minimum_required(VERSION 2.8.9)
 project(LSOBIA)
 set(LSOBIA_LIBRARIES LSOBIA)
+
 if(NOT OTB_SOURCE_DIR)
     find_package(OTB REQUIRED)
     list(APPEND CMAKE_MODULE_PATH ${OTB_CMAKE_DIR})

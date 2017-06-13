@@ -100,7 +100,7 @@ namespace obia
 
   std::array<uint32_t, 4> 
   SpatialTools
-  ::GetMergedBoundingBox(std::array<uint32_t,4>& bboxIn, 
+  ::GetMergedBoundingBox(const std::array<uint32_t,4>& bboxIn,
 			 const std::array<uint32_t, 4>& bboxOut)
   {
     const uint32_t minUX = std::min(bboxIn[0], bboxOut[0]);

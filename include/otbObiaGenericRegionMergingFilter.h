@@ -41,7 +41,7 @@ public:
     itkNewMacro(Self);
 
     /** Run-time type information (and related methods). */
-    itkTypeMacro(GraphToGraphFilter, GraphSource);
+    itkTypeMacro(GenericRegionMergingFilter, GraphToGraphFilter);
 
     itkSetMacro(MaxNumberOfIterations, unsigned int);
     itkGetMacro(MergingOver, bool);

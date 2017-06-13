@@ -54,6 +54,9 @@ UpdateOutputInformation()
     image->SetRegions(region);
     image->SetProjectionRef(graph->GetProjectionRef());
     image->SetNumberOfComponentsPerPixel(graph->GetNumberOfSpectralBands());
+
+    const double origin[2] = { graph->GetOriginX(),  graph->GetOriginY()};
+    image->SetOrigin(origin);
 }
 
 

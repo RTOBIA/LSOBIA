@@ -41,8 +41,8 @@ public:
     void SetThreshold(float threshold){m_Threshold = threshold;};
 
     const ValueType GetMax() const {return m_MaxCost;};
-    bool ComputeMergingCostsForThisNode(NodeType* curNode);
-    bool ComputeMergingCostsForThisAdjNode(NodeType* curNode);
+    bool ComputeMergingCostsForThisNode(const NodeType* curNode);
+    bool ComputeMergingCostsForThisAdjNode(const NodeType* curNode);
     ValueType ComputeMergingCost(NodeType* NodeIn, NodeType* NodeOut);
 protected:
 

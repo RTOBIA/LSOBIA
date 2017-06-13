@@ -22,17 +22,15 @@ BaatzMergingCost<TCost, TGraph>
 
 template< typename TCost, typename TGraph >
 bool
-BaatzMergingCost<TCost, TGraph>::ComputeMergingCostsForThisNode(NodeType* curNode)
+BaatzMergingCost<TCost, TGraph>::ComputeMergingCostsForThisNode(const NodeType* curNode)
 {
-    (void) curNode;
     return true;
 }
 
 template< typename TCost, typename TGraph >
 bool
-BaatzMergingCost<TCost, TGraph>::ComputeMergingCostsForThisAdjNode(NodeType* curNode)
+BaatzMergingCost<TCost, TGraph>::ComputeMergingCostsForThisAdjNode(const NodeType* curNode)
 {
-    (void) curNode;
     return true;
 }
 

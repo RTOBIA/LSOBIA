@@ -243,6 +243,10 @@ public:
     itkGetConstMacro(NumberOfSpectralBands, uint32_t);
     itkSetMacro(ProjectionRef, std::string);
     itkGetConstMacro(ProjectionRef, std::string);
+    itkGetConstMacro(OriginX, uint32_t);
+    itkSetMacro(OriginX, uint32_t);
+    itkGetConstMacro(OriginY, uint32_t);
+    itkSetMacro(OriginY, uint32_t);
 
     /** To avoid multiple memory reallocation, it would be better to indicate
         as soon as possible the maximum number of nodes in the graph in order
@@ -326,7 +330,9 @@ protected:
         m_ImageWidth = other->m_ImageWidth;
         m_ImageHeight = other->m_ImageHeight;
         m_NumberOfSpectralBands = other->m_NumberOfSpectralBands;
-        m_ProjectionRef = other->m_ProjectionRef;;
+        m_ProjectionRef = other->m_ProjectionRef;
+        m_OriginX = other->m_OriginX;
+        m_OriginY = other->m_OriginY;
     }
 
     NodeListType m_Nodes;
@@ -334,7 +340,10 @@ protected:
     uint32_t m_ImageWidth;
     uint32_t m_ImageHeight;
     uint32_t m_NumberOfSpectralBands;
+    uint32_t m_OriginX;
+    uint32_t m_OriginY;
     std::string m_ProjectionRef;
+
 
 private:
 

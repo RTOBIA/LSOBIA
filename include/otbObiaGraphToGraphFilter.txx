@@ -2,6 +2,8 @@
 #define otbObiaGraphToGraphFilter_txx
 #include "otbObiaGraphToGraphFilter.h"
 
+#include "otbMPIConfig.h"
+
 namespace otb
 {
 namespace obia
@@ -81,6 +83,7 @@ GraphToGraphFilter<TInputGraph, TOutputGraph>
 
     //Reset
     inputGraphPtr->Reset();
+
     return outputGraph;
 }
 

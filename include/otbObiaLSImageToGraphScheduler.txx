@@ -120,6 +120,8 @@ LSImageToGraphScheduler<TInputImage, TOutputGraph>
     m_ImageHeight = imgReader->GetOutput()->GetLargestPossibleRegion().GetSize()[1];
     m_NumberOfSpectralBands = imgReader->GetOutput()->GetNumberOfComponentsPerPixel();
     m_ProjectionRef = imgReader->GetOutput()->GetProjectionRef();
+    m_OriginX = imgReader->GetOutput()->GetOrigin()[0];
+    m_OriginY = imgReader->GetOutput()->GetOrigin()[1];
 
     // Compute the padding value
     ComputePaddingValue();
@@ -314,6 +316,8 @@ LSImageToGraphScheduler<TInputImage, TOutputGraph>
         m_Graph->SetImageWidth(m_ImageWidth);
         m_Graph->SetImageHeight(m_ImageHeight);
         m_Graph->SetNumberOfSpectralBands(m_NumberOfSpectralBands);
+        m_Graph->SetOriginX(m_OriginX);
+        m_Graph->SetOriginY(m_OriginY);
     }
 }
 
@@ -329,6 +333,7 @@ LSImageToGraphScheduler<TInputImage, TOutputGraph>
     /************************Write graph on the disk if asked***********************************/
     if(m_SplittedGraph && m_WriteGraph)
     {
+    	std::cout << "WRITE SPLITTED GRAPH FOR " << MPIConfig::Instance()->GetMyRank() << std::endl;
         uint32_t tid = 0;
         for(auto& kv : this->m_TileMap)
         {
@@ -356,6 +361,7 @@ LSImageToGraphScheduler<TInputImage, TOutputGraph>
     }
     else if(m_WriteGraph && mpiConfig->GetMyRank() == 0)
     {
+    	std::cout << "WRITE AGGREGATED GRAPH FOR " << MPIConfig::Instance()->GetMyRank() << std::endl;
         std::stringstream os;
         os << this->m_OutputDir << "Graph_" << 0 << "_" << 0 << ".dat";
         GraphOperationsType::WriteGraphToDisk(this->m_Graph, os.str());
@@ -382,14 +388,19 @@ LSImageToGraphScheduler<TInputImage, TOutputGraph>
 					this->m_Graph->SetImageHeight(this->m_ImageHeight);
 					this->m_Graph->SetNumberOfSpectralBands(this->m_NumberOfSpectralBands);
 				}
+
 				//Convert to image
 				ConvertGraphToImage(ty, tx);
 			}
 		}
     	else
     	{
-    		//We can directly convert the in-memory graph
-			ConvertGraphToImage(0, 0);
+    		//Convert to label only if rank == 0 (master proc)
+    		if(mpiConfig->GetMyRank() == 0)
+    		{
+    			//We can directly convert the in-memory graph
+    			ConvertGraphToImage(0, 0);
+    		}
     	}
     }
 }
@@ -399,6 +410,7 @@ void
 LSImageToGraphScheduler<TInputImage, TOutputGraph>
 ::ConvertGraphToImage(const unsigned int ty, const unsigned int tx)
 {
+	std::cout << "WRITE LABEL IMAGE FOR " << ty <<"_"<< tx << std::endl;
 	if(m_Graph == nullptr)
 	{
 		std::cout << "Graph " << ty << "_" << tx << " is not set..." << std::endl;

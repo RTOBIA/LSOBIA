@@ -63,7 +63,6 @@ void
 GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeuristic, TUpdateAttributeFunc>::
 GenerateData()
 {
-    std::cout << "Generate Data" << std::endl;
     auto outputGraph = this->GetOutputByMove();
 
     //Set the graph for the heuristic
@@ -85,6 +84,7 @@ GenerateData()
     for(uint32_t i = 0; i < m_MaxNumberOfIterations; i++)
     {
         std::cout << "iteration " << i+1 << "/" << m_MaxNumberOfIterations <<  std::endl;
+        std::cout <<"Number of nodes = " << this->GetOutput()->GetNumberOfNodes() << std::endl;
         if(!DoOneIteration())
         {
             m_MergingOver = true;
@@ -117,7 +117,6 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
             auto nodeOut = outputGraph->GetNodeAt(nodeIn->m_Edges.front().m_TargetId);
 
             auto cost = nodeIn->m_Edges.front().m_Attributes.m_MergingCost;
-            (void) cost;
 
             Merge(nodeIn, nodeOut);
 
@@ -160,7 +159,6 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
     // Retrieve the output graph.
     auto outputGraph = this->GetOutput();
 
-
     MergingCostValueType minCost;
     // Fix : uninitialized variable
     uint64_t minNodeId = outputGraph->GetNumberOfNodes()+1, idx, minIdx;
@@ -175,11 +173,11 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
     }
 
     // Loop over the nodes
-    for(auto nodeIt =outputGraph->Begin(); nodeIt != outputGraph->End(); nodeIt++)
+    for(auto nodeIt = outputGraph->Begin(); nodeIt != outputGraph->End(); nodeIt++)
     {
+
         if(m_MergingCostFunc->ComputeMergingCostsForThisNode(&(*nodeIt)))
         {
-
             // The merging cost function must give the maximum value of the merging cost.
             minCost = MergingCostFunctionType::Max();
             idx = 0;
@@ -190,9 +188,9 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
             // Loop over the edges
             for(auto edgeIt = nodeIt->m_Edges.begin(); edgeIt != nodeIt->m_Edges.end(); edgeIt++)
             {
-
                 // Retrieve the adjacent node.
                 auto adjNode = outputGraph->GetNodeAt(edgeIt->m_TargetId);
+
 
                 if(m_MergingCostFunc->ComputeMergingCostsForThisAdjNode(adjNode))
                 {

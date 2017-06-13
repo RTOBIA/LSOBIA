@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "otbMPIConfig.h"
+#include "otbObiaConstExpr.h"
+
 namespace otb
 {
 namespace obia
@@ -492,20 +494,14 @@ VectorOperations
 
 	if(layerId == -1)
 	{
-		std::cout << "Number of layer = " <<ogrDS->ogr().GetLayerCount() << std::endl;
 		//Write all layers
 		for(unsigned int layerId = 0; layerId < ogrDS->ogr().GetLayerCount(); ++layerId)
 		{
+			std::cout << "--------------------------------------------------------" << std::endl;
 			std::cout << "Writing layer " << ogrDS->GetLayer(layerId).ogr().GetName() << std::endl;
 			std::cout << "Number feature = " << ogrDS->GetLayer(layerId).ogr().GetFeatureCount(true) << std::endl;
+			std::cout << "--------------------------------------------------------" << std::endl;
 			OGRLayerType curLayer = ogrDS->GetLayer(layerId);
-			/*OGRLayer* srcLayer 	  = &(ogrDS->GetLayer(layerId).ogr());
-			OGRLayer* outputLayer = polyGDs->CreateLayer(srcLayer->GetName(), nullptr, wkbUnknown);
-			for(unsigned int i = 0; i < srcLayer->GetFeatureCount(true); ++i)
-			{
-				outputLayer->CreateFeature(srcLayer->GetFeature(i));
-			}
-			 */
 			polyGDs->CopyLayer(&(curLayer.ogr()), curLayer.GetName().c_str());
 		}
 	}
@@ -513,14 +509,6 @@ VectorOperations
 	{
 		otb::ogr::Layer curLayer = ogrDS->GetLayer(layerId);
 		polyGDs->CopyLayer(&(curLayer.ogr()), curLayer.GetName().c_str());
-		//TODO : Temporaire
-
-//		OGRLayer* srcLayer 	  = &(layer.ogr());
-//		OGRLayer* outputLayer = polyGDs->CreateLayer(layer.GetName().c_str(), nullptr, wkbUnknown);
-//		for(unsigned int i = 0; i < srcLayer->GetFeatureCount(true); ++i)
-//		{
-//			outputLayer->CreateFeature(srcLayer->GetFeature(i));
-//		}
 	}
 
 
@@ -528,6 +516,30 @@ VectorOperations
 	//Clean memory
 	//Maybe see if we need to delete driver...
 	GDALClose(polyGDs);
+}
+
+void
+VectorOperations
+::WriteOGRDataSource(OGRDataSourceType* ogrDS, std::string filename, std::string layerName)
+{
+	if(layerName.compare("") == 0)
+	{
+		WriteOGRDataSource(ogrDS, filename, -1);
+	}
+	else
+	{
+		//Loop layer
+		for(unsigned int layerId = 0; layerId < ogrDS->ogr().GetLayerCount(); ++layerId)
+		{
+			std::string currentLayerName = ogrDS->GetLayer(layerId).GetName();
+			if(currentLayerName.compare(layerName))
+			{
+				WriteOGRDataSource(ogrDS, filename, layerId);
+				return;
+			}
+		}
+
+	}
 }
 //
 OGRGeometry* VectorOperations

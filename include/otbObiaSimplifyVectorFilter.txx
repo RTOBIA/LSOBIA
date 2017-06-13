@@ -142,6 +142,11 @@ SimplifyVectorFilter<TSimplifyFunc>
 		m_CurrentCoords = curFeature.ogr().GetFieldAsInteger64(startingCoordsFieldName.c_str());
 		m_bbEdges[m_CurrentCoords] = IntersectWithBoundaries(curFeature);
 
+		if(m_CurrentCoords == 517731 && MPIConfig::Instance()->GetMyRank() == 0)
+		{
+			std::cout << "PROBLEM WITH " << curFeature.GetGeometry()->exportToGML() << std::endl;
+		}
+
 		//Initialize is englobed map value
 		if(m_IsEnglobedMap.find(m_CurrentCoords) == m_IsEnglobedMap.end())
 		{
@@ -183,14 +188,10 @@ SimplifyVectorFilter<TSimplifyFunc>
 
 	//Remove border polygons from both layer
 	std::cout << "------------- REMOVE OUTSIDERS FOR " << MPIConfig::Instance()->GetMyRank() <<"----------" << std::endl;
-	//OGRLayerType reconstructedLayer = outputOGRDS->GetLayer(reconstructedLayerName);
-	//OGRLayerType unvalidLayer	    = outputOGRDS->GetLayer(unvalidLayerName);
-	//RemoveTileBorderPolygons(reconstructedLayer);
-	//RemoveTileBorderPolygons(unvalidLayer);
-
-	std::cout << "Write output" << std::endl;
-	std::string  output_gml = "/space/USERS/isnard/tmp/mypolygonsSimplified.gml";
-	VectorOperations::WriteOGRDataSource(ogrDS, output_gml, -1);
+	OGRLayerType reconstructedLayer = outputOGRDS->GetLayer(reconstructedLayerName);
+	OGRLayerType unvalidLayer	    = outputOGRDS->GetLayer(unvalidLayerName);
+	RemoveTileBorderPolygons(reconstructedLayer);
+	RemoveTileBorderPolygons(unvalidLayer);
 
 }
 
@@ -224,7 +225,17 @@ SimplifyVectorFilter<TSimplifyFunc>
 	//Maybe set false for bounding box
 	ogrDS->GetGlobalExtent(ulx, uly, lrx, lry, true) ;
 
-	std::cout << "ULx = " << ulx << " / ULy = " << uly << " / LRx = " << lrx << " / LRy = " << lry << std::endl;
+//	//Get tile information
+//	int originX = std::stoi(ogrDS->ogr().GetMetadataItem("OriginTileX"));
+//	int originY = std::stoi(ogrDS->ogr().GetMetadataItem("OriginTileY"));
+//	int sizeX = std::stoi(ogrDS->ogr().GetMetadataItem("TileSizeX"));
+//	int sizeY = std::stoi(ogrDS->ogr().GetMetadataItem("TileSizeY"));
+//
+//	//Modify tile origin in order to take the image origin
+//	ulx = originX + ulx;
+//	uly = originY + uly;
+//	lrx = ulx + sizeX;
+//	lry = uly + sizeY;
 
 	//Create a feature
 	OGRFeatureDefn* bbDef = new OGRFeatureDefn();
@@ -498,6 +509,8 @@ SimplifyVectorFilter<TSimplifyFunc>
 	polygonsId[1] = englobedId;
 	simplifiedFeature.ogr().SetField(polygonEdgeFieldName.c_str(), 2, polygonsId);
 	m_PolygonEdges[englobedId].push_back(simplifiedFeature);
+
+	delete polygonsId;
 }
 
 template <class TSimplifyFunc>
@@ -936,7 +949,11 @@ void SimplifyVectorFilter<TSimplifyFunc>
 	}//end loop features
 
 
-	//Remove overlap
+	//Number of reconstructed features
+	std::cout << "Reconstructed features for " << MPIConfig::Instance()->GetMyRank() << " = "
+			  << reconstructedOgrLayer->GetFeatureCount(true) << std::endl;
+	//Remove overlapping polygons
+	//Indeed, when we reconstruct polygons, some can overlapp with valid polygons
 	RemoveOverlappingFeatures(reconstructedLayer, featuresToDelete.size());
 
 	std::cout << "REMOVING FIXED FEATURES FOR "<< MPIConfig::Instance()->GetMyRank() << std::endl;
@@ -945,6 +962,17 @@ void SimplifyVectorFilter<TSimplifyFunc>
 	{
 		std::cout << "DELETING FEATURE : " << k +1 << "/" << featuresToDelete.size() << std::endl;
 		unvalidLayer.DeleteFeature(featuresToDelete[k]);
+	}
+
+	//Check emptyness
+	for(unsigned int k = 0; k  < reconstructedOgrLayer->GetFeatureCount(true); k++)
+	{
+		OGRGeometry* geom =  reconstructedOgrLayer->GetFeature(k)->GetGeometryRef();
+		OGRPolygon* poly = (OGRPolygon*) geom;
+		if(geom->IsEmpty())
+		{
+			std::cout << "Feature " << k << " is empty" << std::endl;
+		}
 	}
 }
 
@@ -983,7 +1011,7 @@ void SimplifyVectorFilter<TSimplifyFunc>
 			{
 				std::cout << "Intersection is a polygon" << std::endl;
 				std::cout << intersectedGeom->exportToGML() <<std::endl;
-				OGRGeometry* diffGeom = curGeom->SymmetricDifference(adjGeom);
+				OGRGeometry* diffGeom = curGeom->SymDifference(adjGeom);
 				if(diffGeom != nullptr)
 				{
 					//Set new geometry for the feature
@@ -1012,16 +1040,20 @@ template <class TSimplifyFunc>
 void SimplifyVectorFilter<TSimplifyFunc>
 ::RemoveTileBorderPolygons(OGRLayerType& layer)
 {
-
+	std::cout << "REMOVE TILE BORDER POLYGONS FOR " << layer.GetName() << std::endl;
 	OGRDataSourceType::Pointer ogrDS = const_cast< OGRDataSourceType * >( this->GetOutput() );
-	const OGRGeometry* tileGeom = m_BBFeature->GetGeometry();
+
+	//Create tile geom
+	OGRPolygon* tileGeom = CreateTilePolygon();
 
 	std::vector<unsigned int> outsideFeaturesId;
 
 	//Loop each features and check if it touches tile polygon
 	for(unsigned int fid = 0; fid < layer.GetFeatureCount(true); ++fid)
 	{
-		const OGRGeometry* curGeom = layer.GetFeature(fid).GetGeometry();
+		OGRFeatureType currentFeature = layer.GetFeature(fid);
+
+		const OGRGeometry* curGeom = currentFeature.GetGeometry();
 		if(!curGeom->Intersects(tileGeom))
 		{
 			//If there is no intersection, then the feature is outside the tile
@@ -1035,6 +1067,38 @@ void SimplifyVectorFilter<TSimplifyFunc>
 	{
 		layer.DeleteFeature(outsideFeaturesId[fid]);
 	}
+
+	delete tileGeom;
+}
+
+template <class TSimplifyFunc>
+OGRPolygon* SimplifyVectorFilter<TSimplifyFunc>
+::CreateTilePolygon()
+{
+	OGRDataSourceType::Pointer ogrDS = const_cast< OGRDataSourceType * >( this->GetInput() );
+	int originX = std::stoi(ogrDS->ogr().GetMetadataItem("OriginTileX"));
+	int originY = std::stoi(ogrDS->ogr().GetMetadataItem("OriginTileY"));
+	int sizeX = std::stoi(ogrDS->ogr().GetMetadataItem("TileSizeX"));
+	int sizeY = std::stoi(ogrDS->ogr().GetMetadataItem("TileSizeY"));
+
+	//Create a feature
+	OGRFeatureDefn* bbDef = new OGRFeatureDefn();
+	bbDef->AddFieldDefn(new OGRFieldDefn(startingCoordsFieldName.c_str(), OFTInteger64));
+	OGRFeatureType* bbFeature = new OGRFeatureType(*bbDef);
+	bbFeature->ogr().SetField(startingCoordsFieldName.c_str(), -1);
+
+	//Create polygon
+	OGRLinearRing* bbGeom = new OGRLinearRing();
+	bbGeom->addPoint(originX, originY);
+	bbGeom->addPoint(originX, originY + sizeY);
+	bbGeom->addPoint(originX + sizeX, originY + sizeY);
+	bbGeom->addPoint(originX + sizeX, originY);
+	bbGeom->addPoint(originX, originY);
+
+	OGRPolygon* tilePolygon = new OGRPolygon();
+	tilePolygon->addRingDirectly(bbGeom);
+
+	return tilePolygon;
 }
 
 } //End namespace obia

@@ -9,12 +9,17 @@ otb_module(LSOBIA
     OTBMeanShift
     OTBMathParser
     OTBMPI
+    OTBGdalAdapters
+    OTBSampling
   TEST_DEPENDS
     OTBImageBase
     OTBImageIO
     OTBTestKernel
     OTBCommandLine
     OTBMathParser
+    OTBGdalAdapters
+    OTBSampling
   DESCRIPTION
     "Large Scale Object Based Image Analysis algorithms"
 )
+

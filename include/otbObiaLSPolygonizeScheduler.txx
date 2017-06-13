@@ -60,6 +60,8 @@ LSPolygonizeScheduler<TInputGraph, TSimplifyFunc>
 
     if(this->m_TilesPerProcessor.size() == 1 && this->m_TilesPerProcessor.begin()->second.size() == 1)
     {
+    	//Set false for tile processing
+    	m_IsTileProcessing = false;
 
         // Only the master node segments the entire input image.
         NoTilingExecution();
@@ -71,6 +73,9 @@ LSPolygonizeScheduler<TInputGraph, TSimplifyFunc>
     }
     else
     {
+    	//Set true for tile processing
+    	m_IsTileProcessing = true;
+
         TilingExecution();
     }
 }
@@ -89,15 +94,10 @@ LSPolygonizeScheduler<TInputGraph, TSimplifyFunc>
     {
     	//Temp
     	this->ReadGraphIfNecessary(0, 0, this->m_InputDirectory, "Graph");
+
     	//Create and update filter
     	RunFilters();
 
-    	std::cout << "Get layer 0 " << std::endl;
-    	otb::ogr::Layer a =  this->m_OutputDS->GetLayer(0);
-    	std::cout << "Layer obtained" << std::endl;
-    	std::cout << "nb feature = " << a.GetFeatureCount(true) << std::endl;
-    	otb::ogr::Feature b = a.GetFeature(4);
-    	VectorOperations::DisplayFeature(b, true);
     	//Write vector
     	this->WriteVectorIfNecessary(0, 0);
     }
@@ -119,6 +119,8 @@ LSPolygonizeScheduler<TInputGraph, TSimplifyFunc>
     	uint32_t tx = kv.first % this->m_NumberOfTilesX;
 		uint32_t ty = kv.first / this->m_NumberOfTilesX;
 
+		//Current tile
+		m_CurrentTile = kv.second;
 
     	// Load the graph if necessary
 		this->ReadGraphIfNecessary(ty, tx, this->m_InputDirectory, this->m_GraphPrefixName);
@@ -179,7 +181,7 @@ LSPolygonizeScheduler<TInputGraph, TSimplifyFunc>
 		RunFilters();
 
 		//Remove outside polygons
-		RemovePolygonsOutsideTile(kv.second);
+		//RemovePolygonsOutsideTile(kv.second);
 
 		if(this->m_WriteVector)
 		{
@@ -206,11 +208,35 @@ LSPolygonizeScheduler<TInputGraph, TSimplifyFunc>
 	std::cout << "Number of nodes in the graph : " << this->m_Graph->GetNumberOfNodes() << std::endl;
 	graphToVectorFilter->SetInput(this->m_Graph);
 	graphToVectorFilter->SetOutputDir(this->m_OutputDir);
-	graphToVectorFilter->SetXshift(0);
-	graphToVectorFilter->SetYshift(0);
 
 	//Update filter
 	graphToVectorFilter->Update();
+
+	//Update output DS
+	this->m_OutputDS = const_cast<OGRDataSourceType*>(graphToVectorFilter->GetOutput());
+
+	//Update layer name
+	m_OutputLayerName = cleanedLayerName;
+
+	//Add tile information meta data
+	if(m_IsTileProcessing)
+	{
+		AddMetaData(m_CurrentTile);
+	}
+	else
+	{
+		//Create empty tile
+		ProcessingTile tile;
+		tile.m_Tx = 0;
+		tile.m_Ty = 0;
+
+		//Update max tile size
+		this->m_MaxTileSizeX = this->m_ImageWidth;
+		this->m_MaxTileSizeY = this->m_ImageHeight;
+
+		//add metadata
+		AddMetaData(tile);
+	}
 
 	//Create filter to simplify
 	if(m_IsSimplify)
@@ -247,11 +273,7 @@ LSPolygonizeScheduler<TInputGraph, TSimplifyFunc>
 		//std::cout << "End run filter" << std::endl;
 		m_OutputLayerName = reconstructedLayerName;
 	}
-	else
-	{
-		m_OutputLayerName = cleanedLayerName;
-		this->m_OutputDS = const_cast<OGRDataSourceType*>(graphToVectorFilter->GetOutput());
-	}
+
 }
 template< class TInputGraph, class TSimplifyFunc >
 void
@@ -306,11 +328,6 @@ LSPolygonizeScheduler<TInputGraph, TSimplifyFunc>
 		margeGraph->SetNumberOfSpectralBands(this->m_Graph->GetNumberOfSpectralBands());
 		margeGraph->SetProjectionRef(this->m_Graph->GetProjectionRef());
 		ConvertGraphToImage(margeGraph, os.str());
-
-		GraphOperationsType::DisplayNode(margeGraph, 69492);
-		std::cout << "Original = " << std::endl;
-		GraphOperationsType::DisplayNode(this->m_Graph, 69492);
-		GraphOperationsType::DisplayNode(this->m_Graph, 70490);
 		/********************************************************************************************/
 
 
@@ -483,6 +500,18 @@ LSPolygonizeScheduler<TInputGraph, TSimplifyFunc>
 
 			GraphOperationsType::AggregateGraphs(this->m_Graph, subGraph);
 
+			for(unsigned int i = 0; i < this->m_Graph->GetNumberOfNodes(); i++)
+			{
+				auto node = this->m_Graph->GetNodeAt(i);
+				if(node->GetFirstPixelCoords() == 517731 && mpiConfig->GetMyRank() == 0)
+				{
+					for(auto& edge : node->m_Edges)
+					{
+						std::cout << "ADJACENT TO 517731 " << this->m_Graph->GetNodeAt(edge.m_TargetId)->GetFirstPixelCoords() << std::endl;
+					}
+				}
+			}
+
 		}
 
 		// Remove duplicated nodes
@@ -498,6 +527,18 @@ LSPolygonizeScheduler<TInputGraph, TSimplifyFunc>
 		// Update edges
 		GraphOperationsType::DetectNewAdjacentNodes(borderNodeMap, this->m_Graph, this->m_ImageWidth, this->m_ImageHeight);
 
+		for(unsigned int i = 0; i < this->m_Graph->GetNumberOfNodes(); i++)
+		{
+			auto node = this->m_Graph->GetNodeAt(i);
+			if(node->GetFirstPixelCoords() == 517731 && mpiConfig->GetMyRank() == 0)
+			{
+				for(auto& edge : node->m_Edges)
+				{
+					std::cout << "ADJACENT AFTER  TO 517731 " << this->m_Graph->GetNodeAt(edge.m_TargetId)->GetFirstPixelCoords() << std::endl;
+				}
+			}
+		}
+
 		this->WriteGraphIfNecessary(ty, tx, this->m_TemporaryDirectory, "Graph_With_Marge");
 
     }
@@ -511,7 +552,64 @@ LSPolygonizeScheduler<TInputGraph, TSimplifyFunc>
 template< class TInputGraph, class TSimplifyFunc >
 void
 LSPolygonizeScheduler<TInputGraph, TSimplifyFunc>
-::RemovePolygonsOutsideTile(ProcessingTile& tile)
+::AddMetaData(const ProcessingTile tile)
+{
+	std::cout << "Adding Metadata to tile " << tile.m_Tx << "_" << tile.m_Ty << std::endl;
+	std::ostringstream ss;
+
+	//Compute origin tile X
+	ss.clear();
+	ss.str("");
+	ss << tile.m_Tx*this->m_MaxTileSizeX;
+	std::string originX = ss.str();
+
+	//Compute origin tile Y
+	ss.str("");
+	ss << tile.m_Ty*this->m_MaxTileSizeY;
+	std::string originY = ss.str();
+
+	//Add tile size
+	ss.str("");
+	ss << this->m_MaxTileSizeX;
+	std::string tileSizeX = ss.str();
+
+	//Add tile size
+	ss.str("");
+	ss << this->m_MaxTileSizeY;
+	std::string tileSizeY = ss.str();
+
+	//Add origin X image
+	ss.str("");
+	ss << this->m_Graph->GetOriginX();
+	std::string imageOriginX = ss.str();
+
+	//Add origin Y image
+	ss.str("");
+	ss << this->m_Graph->GetOriginY();
+	std::string imageOriginY = ss.str();
+
+	this->m_OutputDS->ogr().SetMetadataItem("OriginTileX"	, originX.c_str());
+	this->m_OutputDS->ogr().SetMetadataItem("OriginTileY"	, originY.c_str());
+	this->m_OutputDS->ogr().SetMetadataItem("TileSizeX"  	, tileSizeX.c_str());
+	this->m_OutputDS->ogr().SetMetadataItem("TileSizeY" 	, tileSizeY.c_str());
+	this->m_OutputDS->ogr().SetMetadataItem("ImageOriginX"  , imageOriginX.c_str());
+	this->m_OutputDS->ogr().SetMetadataItem("ImageOriginY"  , imageOriginY.c_str());
+//	char* metaDataArgs[] = { "-OriginTileX", const_cast<char*>(originX.c_str()),
+//							 "-OriginTileY", const_cast<char*>(originY.c_str()),
+//							 "-TileSizeX"  , const_cast<char*>(tileSizeX.c_str()),
+//							 "-TileSizeY"  , const_cast<char*>(tileSizeY.c_str())};
+//
+//	CPLErr errMeta = this->m_OutputDS->ogr().SetMetadata(metaDataArgs);
+//	if(errMeta != 0)
+//	{
+//		std::cout << "Error setting metadata" << std::endl;
+//	}
+}
+
+template< class TInputGraph, class TSimplifyFunc >
+void
+LSPolygonizeScheduler<TInputGraph, TSimplifyFunc>
+::RemovePolygonsOutsideTile(const ProcessingTile& tile)
 {
 	//Create a polygon equivalent to the tile
 	OGRPolygon* tilePolygon = CreateTilePolygon(tile);
@@ -542,7 +640,7 @@ LSPolygonizeScheduler<TInputGraph, TSimplifyFunc>
 template< class TInputGraph, class TSimplifyFunc >
 OGRPolygon*
 LSPolygonizeScheduler<TInputGraph, TSimplifyFunc>
-::CreateTilePolygon(ProcessingTile& tile)
+::CreateTilePolygon(const ProcessingTile& tile)
 {
 	int xStart = tile.m_Frame.GetIndex().GetElement(0);
 	int yStart = tile.m_Frame.GetIndex().GetElement(1);
@@ -568,27 +666,32 @@ LSPolygonizeScheduler<TInputGraph, TSimplifyFunc>
 template< class TInputGraph, class TSimplifyFunc >
 void
 LSPolygonizeScheduler<TInputGraph, TSimplifyFunc>
-::WriteFeatures(ProcessingTile& tile)
+::WriteFeatures(const ProcessingTile& tile)
 {
+	std::cout << "WRITING FEATURES FOR TILE " << tile.m_Ty << "_" << tile.m_Tx << std::endl;
 	//Create filename
 	std::stringstream ss;
 	ss << this->m_OutputDir << "Reconstructed_Polygons_" << tile.m_Tx << "_" << tile.m_Ty << ".gml";
 
-	//Get output
-	GDALDriver*  poDriverGml = VectorOperations::InitializeGDALDriver("GML");
-	GDALDataset* polyGDs = poDriverGml->Create(ss.str().c_str(), 0, 0, 0, GDT_Unknown, NULL );
+	VectorOperations::WriteOGRDataSource(this->m_OutputDS, ss.str(), "");
 
-	//Write all layers
-	for(unsigned int layerId = 0; layerId < this->m_OutputDS->ogr().GetLayerCount(); ++layerId)
-	{
-		OGRLayerType curLayer =  this->m_OutputDS->GetLayer(layerId);
-		//std::cout << "Layer = " << curLayer.GetName() << std::endl;
-		polyGDs->CopyLayer(&(curLayer.ogr()), curLayer.GetName().c_str());
-	}
-
-
-	//Clean memory
-	GDALClose(polyGDs);
+//	//Get output
+//	GDALDriver*  poDriverGml = VectorOperations::InitializeGDALDriver("GML");
+//	GDALDataset* polyGDs = poDriverGml->Create(ss.str().c_str(), 0, 0, 0, GDT_Unknown, NULL );
+//
+//	std::cout << "Number of layer = " << this->m_OutputDS->GetLayersCount() << std::endl;
+//	//Write all layers
+//	for(unsigned int layerId = 0; layerId < this->m_OutputDS->ogr().GetLayerCount(); ++layerId)
+//	{
+//		OGRLayerType curLayer =  this->m_OutputDS->GetLayer(layerId);
+//		std::cout << "Number of polygon to write = " << curLayer.GetFeatureCount(true) << std::endl;
+//		//std::cout << "Layer = " << curLayer.GetName() << std::endl;
+//		polyGDs->CopyLayer(&(curLayer.ogr()), curLayer.GetName().c_str());
+//	}
+//
+//
+//	//Clean memory
+//	GDALClose(polyGDs);
 }
 
 template< class TInputGraph, class TSimplifyFunc >

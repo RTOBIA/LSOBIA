@@ -33,6 +33,7 @@ const std::string adjStartingCoordsFieldName 	= "AdjStartingCoords";
 const std::string validPolygonFieldName		  	= "isValid";
 const std::string reconstructedLayerName		= "Reconstructed";
 const std::string unvalidLayerName				= "Unvalid";
+const std::string attributsLayerName			= "AttributsLayer";
 
 //Field for edge
 const std::string polygonEdgeFieldName			= "PolygonCoords";

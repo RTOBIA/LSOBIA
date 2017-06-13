@@ -62,18 +62,13 @@ LSBaatzSegmentationScheduler<TInputImage>
         // Segmentation filter
         auto baatzFilter = CreateFilter();
         baatzFilter->SetMaxNumberOfIterations(m_MaxNumberOfIterations);
-        /*auto baatzFilter = BaatzSegmentationFilterType::New();
-        baatzFilter->SetMaxNumberOfIterations(m_MaxNumberOfIterations);
-        baatzFilter->SetThreshold(m_Threshold);
-        baatzFilter->SetSpectralWeight(m_SpectralWeight);
-        baatzFilter->SetShapeWeight(m_ShapeWeight);
-        baatzFilter->SetBandWeights(m_BandWeights);*/
 
         // Pipeline branching
         imgToBaatzFilter->SetInput(imgReader->GetOutput());
         baatzFilter->SetInput(imgToBaatzFilter->GetOutput());
         baatzFilter->Update();
         this->m_Graph = baatzFilter->GetOutput();
+
     }
 
     this->m_SplittedGraph = false;
@@ -251,36 +246,31 @@ LSBaatzSegmentationScheduler<TInputImage>
 				auto imgToBaatzFilter = ImageToBaatzGraphFilterType::New();
 
 				// Segmentation filter
+				// Baatz & Shäpe segmentation
 				auto baatzFilter = CreateFilter();
 				baatzFilter->SetMaxNumberOfIterations(this->m_StartingNumberOfIterations);
-				// Baatz & Shäpe segmentation
-				/*auto baatzFilter = BaatzSegmentationFilterType::New();
-				baatzFilter->SetMaxNumberOfIterations(m_StartingNumberOfIterations);
-				baatzFilter->SetThreshold(m_Threshold);
-				baatzFilter->SetSpectralWeight(m_SpectralWeight);
-				baatzFilter->SetShapeWeight(m_ShapeWeight);
-				baatzFilter->SetBandWeights(m_BandWeights);*/
 
 				// Pipeline branching
 				tileExtractor->SetInput(imgReader->GetOutput());
 				imgToBaatzFilter->SetInput(tileExtractor->GetOutput());
 				baatzFilter->SetInput(imgToBaatzFilter->GetOutput());
-
 				baatzFilter->Update();
+
+				//Update image origin in graph
 				this->m_Graph = baatzFilter->GetOutput();
 
 				// Determine if the segmentation is over
 				localFusion += (baatzFilter->GetMergingOver()) ? 0 : 1;
 
-
 				// tile referential -> image referential
 				RescaleGraph(tile);
-
 
 				// Now we are in the image referential
 				this->m_Graph->SetImageWidth(this->m_ImageWidth);
 				this->m_Graph->SetImageHeight(this->m_ImageHeight);
 				this->m_Graph->SetNumberOfSpectralBands(this->m_NumberOfSpectralBands);
+				this->m_Graph->SetOriginX(imgReader->GetOutput()->GetOrigin()[0]);
+				this->m_Graph->SetOriginY(imgReader->GetOutput()->GetOrigin()[1]);
 
 				// Remove the unstable segments
 				GraphOperationsType::RemoveUnstableNodes(this->m_Graph,
@@ -710,6 +700,9 @@ LSBaatzSegmentationScheduler<TInputImage>
                 // Load the graph if necessary
                 this->ReadGraphIfNecessary(ty, tx);
 
+               // std::cout << "ORIGINE = " << this->m_Graph->GetOriginX() << "/" << this->m_Graph->GetOriginY() << std::endl;
+
+
                 // Retrieve the tile
                 auto tile = this->m_TileMap[tid];
 
@@ -859,28 +852,76 @@ LSBaatzSegmentationScheduler<TInputImage>
     if(mpiConfig->GetMyRank() == 0)
     {
         m_SerializedStabilityMargin.clear();
+
+//        for(auto nodeIt = this->m_Graph->Begin(); nodeIt != this->m_Graph->End(); nodeIt++)
+//		{
+//			if(nodeIt->GetFirstPixelCoords() == 1348)
+//			{
+//				std::cout << "RANK = " << mpiConfig->GetMyRank() << std::endl;
+//				for(auto edgeIt = nodeIt->m_Edges.begin(); edgeIt != nodeIt->m_Edges.end(); edgeIt++)
+//				{
+//					std::cout << "Edge = " << edgeIt->m_TargetId << std::endl;
+//				}
+//			}
+//		}
     }
     else
     {
         uint32_t tid = 0;
 
-        for(uint32_t ty = 0; ty < this->m_NumberOfTilesY; ty++)
+        for(auto& kv : this->m_TileMap)
         {
-            for(uint32_t tx = 0; tx < this->m_NumberOfTilesX; tx++)
-            {
-                if(mpiTools->IsMyTurn(tid))
-                {
+            uint32_t tx = kv.first % this->m_NumberOfTilesX;
+            uint32_t ty = kv.first / this->m_NumberOfTilesX;
 
-                    // Serialize the current graph
-                    m_SerializedStabilityMargin = GraphOperationsType::SerializeGraph(this->m_Graph);
+            std::cout << "GRAPH AGREGATION FOR " << tx << "/" << ty << std::endl;
 
-                }
+            for(auto nodeIt = this->m_Graph->Begin(); nodeIt != this->m_Graph->End(); nodeIt++)
+             {
+            	if(nodeIt->GetFirstPixelCoords() == 1348)
+            	{
+            		std::cout << "RANK = " << mpiConfig->GetMyRank() << std::endl;
+            	    for(auto edgeIt = nodeIt->m_Edges.begin(); edgeIt != nodeIt->m_Edges.end(); edgeIt++)
+            	    {
+            	    	std::cout << "Edge = " << edgeIt->m_TargetId << std::endl;
+            	    }
+            	}
+             }
+            // Serialize the current graph
+		   m_SerializedStabilityMargin = GraphOperationsType::SerializeGraph(this->m_Graph);
 
-                tid++;
+		   //Deserialize
+		   this->m_Graph = GraphOperationsType::DeSerializeGraph(m_SerializedStabilityMargin);
+		   for(auto nodeIt = this->m_Graph->Begin(); nodeIt != this->m_Graph->End(); nodeIt++)
+			{
+			if(nodeIt->GetFirstPixelCoords() == 1348)
+			{
+				std::cout << "RANK = " << mpiConfig->GetMyRank() << std::endl;
+				for(auto edgeIt = nodeIt->m_Edges.begin(); edgeIt != nodeIt->m_Edges.end(); edgeIt++)
+				{
+					std::cout << "Edge = " << edgeIt->m_TargetId << std::endl;
+				}
+			}
+			}
 
-            } // end for(uint32_t tx = 0; tx < nbTilesX; tx++)
+        }
 
-        } // end for(uint32_t ty = 0; ty < nbTilesY; ty++)
+//        for(uint32_t ty = 0; ty < this->m_NumberOfTilesY; ty++)
+//        {
+//            for(uint32_t tx = 0; tx < this->m_NumberOfTilesX; tx++)
+//            {
+//                if(mpiTools->IsMyTurn(tid))
+//                {
+//                	// Serialize the current graph
+//                   m_SerializedStabilityMargin = GraphOperationsType::SerializeGraph(this->m_Graph);
+//
+//                }
+//
+//                tid++;
+//
+//            } // end for(uint32_t tx = 0; tx < nbTilesX; tx++)
+//
+//        } // end for(uint32_t ty = 0; ty < nbTilesY; ty++)
 
     } // end if (rank !=0 )
 
@@ -1049,9 +1090,12 @@ LSBaatzSegmentationScheduler<TInputImage>
         baatzFilter->SetSpectralWeight(m_SpectralWeight);
         baatzFilter->SetShapeWeight(m_ShapeWeight);
         baatzFilter->SetBandWeights(m_BandWeights);*/
+
         baatzFilter->Update();
         this->m_Graph = baatzFilter->GetOutput();
         this->m_Graph->SetProjectionRef(this->m_ProjectionRef);
+        this->m_Graph->SetOriginX(this->m_OriginX);
+        this->m_Graph->SetOriginY(this->m_OriginY);
     }
 }
 

@@ -70,7 +70,7 @@ enum Direction{
                 const std::array<uint32_t, 4>& bboxOut);
 
      /** Returns the union of bounding boxe bboxIn with bboxOut */
-     static std::array<uint32_t, 4> GetMergedBoundingBox(std::array<uint32_t,4>& bboxIn, 
+     static std::array<uint32_t, 4> GetMergedBoundingBox(const std::array<uint32_t,4>& bboxIn,
                                const std::array<uint32_t, 4>& bboxOut);
 
 

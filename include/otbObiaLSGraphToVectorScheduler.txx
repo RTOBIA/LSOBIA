@@ -22,12 +22,12 @@ LSGraphToVectorScheduler<TInputGraph>
  m_NumberOfTilesY(0)
  {
 	/**TODO Temporaire, a mettre en paramètre*/
-    m_ImageWidth = 1000;
-    m_ImageHeight = 1000;
     m_NumberOfTilesX = 2;
     m_NumberOfTilesY = 2;
     m_MaxTileSizeX = 500;
     m_MaxTileSizeY = 500;
+    m_ImageHeight = 1000;
+    m_ImageWidth = 1000;
 //    m_NumberOfTilesX = 1;
 //    m_NumberOfTilesY = 1;
 //    m_MaxTileSizeX = 1000;
@@ -281,9 +281,6 @@ LSGraphToVectorScheduler<TInputGraph>
         in << graph_dir << prefix_name << "_" << ty << "_" << tx << ".dat";
         std::cout << "Read graph : "  << in.str() << std::endl;
         m_Graph = GraphOperationsType::ReadGraphFromDisk(in.str());
-        m_Graph->SetImageWidth(m_ImageWidth);
-        m_Graph->SetImageHeight(m_ImageHeight);
-        m_Graph->SetNumberOfSpectralBands(m_NumberOfSpectralBands);
     //}
 }
 

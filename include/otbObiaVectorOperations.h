@@ -117,6 +117,12 @@ namespace obia
        * @param: Layer id (-1 for all)*/
       static void WriteOGRDataSource(OGRDataSourceType* ogrDS, std::string filename, int layerId = - 1);
 
+      /**Write OGR DS into file
+       * @param: OGR Datasource
+       * @param: Filename
+       * @param: Layer name ("" for all)*/
+      static void WriteOGRDataSource(OGRDataSourceType* ogrDS, std::string filename, const std::string layerName = "");
+
       // This method serializes a layer that can be either sent via MPI requests or written in a binary file.
       static std::vector<char> SerializeLayer(const OGRLayerType layer);
 

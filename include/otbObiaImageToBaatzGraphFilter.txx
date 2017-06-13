@@ -130,6 +130,10 @@ ImageToBaatzGraphFilter< TInputImage >
     outputGraph->SetNumberOfSpectralBands(numBands);
     outputGraph->SetProjectionRef(inputPtr->GetProjectionRef());
 
+    //Set origin
+    outputGraph->SetOriginX(inputPtr->GetOrigin()[0]);
+    outputGraph->SetOriginY(inputPtr->GetOrigin()[1]);
+
     // Set the right number of starting nodes for memory allocation
     // 1 pixel = 1 node
     outputGraph->SetNumberOfNodes(imageWidth * imageHeight);

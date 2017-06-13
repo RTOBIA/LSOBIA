@@ -171,6 +171,8 @@ Graph<TNode>::GetNodeAt(const IdType id)
 {
 	if(id > (m_Nodes.size() - 1) || id < 0)
 	{
+		std::cout <<"NULL NODE FOR " << id << std::endl;
+		exit(EXIT_FAILURE);
 		return nullptr;
 	}
     return &(m_Nodes[id]);
@@ -210,7 +212,10 @@ template< typename TNode >
 void
 Graph<TNode>::MergeEdge(NodeType* nodeIn, NodeType* nodeOut)
 {
-    // Explore the edges of nodeOut
+	double startCoords = nodeIn->GetFirstPixelCoords();
+	double startCoords2 = nodeOut->GetFirstPixelCoords();
+
+	// Explore the edges of nodeOut
     for(auto edgeIt = nodeOut->m_Edges.begin(); edgeIt != nodeOut->m_Edges.end(); edgeIt++)
     {
         // Local variable to record the boundary length of nodeOut with its
@@ -278,6 +283,7 @@ Graph<TNode>::MergeEdge(NodeType* nodeIn, NodeType* nodeOut)
     // All the edges of nodeOut can be safely removes
     nodeOut->m_Edges.clear();
     nodeOut->m_Edges.shrink_to_fit();
+
 }
 
 template< typename TNode >
@@ -353,7 +359,8 @@ template< typename TNode >
 uint64_t
 Graph<TNode>::GetMemorySize() const
 {
-    uint64_t graphMemory = 3 * UInt32Size + // image infos
+	unsigned int nbImageInfos = 5;
+    uint64_t graphMemory = nbImageInfos * UInt32Size + // image infos
                            sizeof(std::string) + // container for projection
                            m_ProjectionRef.size() * CharSize +
                            sizeof(NodeListType);

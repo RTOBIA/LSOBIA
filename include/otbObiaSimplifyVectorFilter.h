@@ -94,6 +94,9 @@ public:
 	/**Create bounding feature to manage border*/
 	OGRFeatureType* CreateBoundingBoxFeature();
 
+	/**Create Tile polygon*/
+	OGRPolygon* CreateTilePolygon();
+
 	/**Intersect with bounding box and nodata layer*/
 	std::vector<OGRGeometry*> IntersectWithBoundaries(OGRFeatureType feature);
 

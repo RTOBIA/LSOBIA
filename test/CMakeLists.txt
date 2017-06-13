@@ -360,4 +360,25 @@ otb_add_test_mpi(NAME otbObiaLSPolygonizeMPI COMMAND otbLSOBIALSPolygonizeTestDr
              ${TEMP_DIR}
              ${TEMP_DIR}
 	     )
+	     
+#---------------------------------------------------------------------------------------------------
+# Compute Attributs Test	  
 
+# Compute attribute test driver
+set(${otb-module}ComputeAttributsTests
+  	otbLSOBIAComputeAttributsTestDriver.cxx
+    otbLSOBIAComputeAttributsTest.cxx
+    )
+    
+add_executable(otbLSOBIAComputeAttributsTestDriver ${${otb-module}ComputeAttributsTests})
+target_link_libraries(otbLSOBIAComputeAttributsTestDriver ${${otb-module}-Test_LIBRARIES})
+otb_module_target_label(otbLSOBIAComputeAttributsTestDriver)
+
+otb_add_test(NAME otbLSOBIAComputeAttributsTest COMMAND otbLSOBIAComputeAttributsTestDriver
+             otbLSOBIAComputeAttributsTest
+             ${LSOBIA_SOURCE_DIR}/data/Vector_0_0.gml
+             ${LSOBIA_SOURCE_DIR}/data/pleiades_1000_1000.tif
+             ${TEMP_DIR}
+             ${TEMP_DIR}
+             ${TEMP_DIR}/Vector_with_attributs_0_0.gml
+)

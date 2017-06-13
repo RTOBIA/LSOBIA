@@ -65,14 +65,14 @@ protected:
 private:
 
     void RunFilters();
-    void RescaleGraph(ProcessingTile& tile);
     void ExtractStabilityMargins();
     void AggregateStabilityMargins();
-    void RemovePolygonsOutsideTile(ProcessingTile& tile);
-    OGRPolygon* CreateTilePolygon(ProcessingTile& tile);
+    void AddMetaData(const ProcessingTile tile);
+    void RemovePolygonsOutsideTile(const ProcessingTile& tile);
+    OGRPolygon* CreateTilePolygon(const ProcessingTile& tile);
 
     //Write the features belonging to a tile
-    void WriteFeatures(ProcessingTile& tile);
+    void WriteFeatures(const ProcessingTile& tile);
 
     //For debug
     void ConvertGraphToImage(InputGraphPointerType inputGraph, std::string filename);
@@ -92,8 +92,14 @@ private:
     /**Output layer name*/
     std::string m_OutputLayerName;
 
+    /**Current tile*/
+    ProcessingTile m_CurrentTile;
+
     //Simplify func
     SimplifyFuncType* m_SimplifyFunc;
+
+    //Tile processing
+    bool m_IsTileProcessing;
 
 };
 

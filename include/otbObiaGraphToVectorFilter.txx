@@ -2,6 +2,7 @@
 #define otbObiaGraphToVectorFilter_txx
 
 #include <sstream>
+#include <string>
 
 #include "otbObiaGraphToVectorFilter.h"
 #include "otbGdalDataTypeBridge.h"
@@ -132,6 +133,9 @@ GraphToVectorFilter<TInputGraph>
 
 	unsigned int nX =  m_Graph->GetImageWidth();
 	unsigned int nY =  m_Graph->GetImageHeight();
+	m_Xshift = 0;//this->m_Graph->GetOriginX();
+	m_Yshift = 0;//this->m_Graph->GetOriginY();
+
 	std::cout << "Nombre de noeud : " << m_Graph->GetNumberOfNodes() << std::endl;
 	auto graphToLabelFilter = GraphToLabelImageFilterType::New();
 	graphToLabelFilter->SetInput(m_Graph);
@@ -224,8 +228,9 @@ GraphToVectorFilter<TInputGraph>
 	{
 		/*rasterBand->RasterIO(GF_Write ,0, 0,graph->GetImageWidth(), graph->GetImageHeight(), image_array,
 						graph->GetImageWidth(), graph->GetImageHeight(), GDT_UInt32, 0, 0, nullptr);*/
+
 		if(rasterBand->RasterIO(GF_Write ,0, 0, nX, nY, fillHoleFilter->GetOutput()->GetBufferPointer(),
-							  nX, nY, GDT_UInt32, 0, 0, nullptr) != 0)
+							    nX, nY, GDT_UInt32, 0, 0, nullptr) != 0)
 		{
 			std::cout << "Error creating rasterIo" << std::endl;
 		}
@@ -269,9 +274,7 @@ GraphToVectorFilter<TInputGraph>
 	//this->SetNthOutput(0, ogrDS);
 	this->SetPrimaryOutput(ogrDS);
 
-	//Write into a file
-	//Temporary
-	//unsigned int nbFeatures =  ogrDS->GetLayerChecked(cleanedLayerName).GetFeatureCount(true);
+	/**DEEBUG**/
 	std::stringstream ss;
 	ss << "/space/USERS/isnard/tmp/mypolygons_" << MPIConfig::Instance()->GetMyRank() << ".gml";
 	std::string  output_gml = ss.str();
@@ -282,7 +285,6 @@ GraphToVectorFilter<TInputGraph>
 
 	//Clear memory
 	GDALClose(poDataset);
-
 }
 
 //Create a field
@@ -585,11 +587,6 @@ void GraphToVectorFilter<TInputGraph>
 			return;
 		}
 
-
-		if(startingCoords == 5508)
-		{
-			std::cout << "Adjcent NODE TO 5508 = " << adjNode->GetFirstPixelCoords() << std::endl;
-		}
 		//Add to field
 		double adjStartingCoords = adjNode->GetFirstPixelCoords();
 		adjacentCoords[cpt] =  adjStartingCoords;

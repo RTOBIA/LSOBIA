@@ -147,6 +147,12 @@ protected:
     /** Number of tiles wrt to Y axis */
     uint32_t m_NumberOfTilesY;
 
+    /**Image origin X*/
+    uint32_t m_OriginX;
+
+    /**Image origin Y*/
+    uint32_t m_OriginY;
+
     /** Tiles processed by this processor */
     std::map< uint32_t, ProcessingTile > m_TileMap;
     

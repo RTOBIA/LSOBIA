@@ -19,12 +19,16 @@ namespace obia
         int m_height;
         int m_nbBands;
         std::string m_projectionRef;
+        int m_originX;
+        int m_originY;
 
         GraphImageInfo():
             m_width(0),
             m_height(0),
             m_nbBands(0),
-            m_projectionRef("")
+            m_projectionRef(""),
+			m_originX(0),
+			m_originY(0)
         {}
     };
     /*
@@ -172,8 +176,9 @@ namespace obia
             content << graph->GetImageHeight()<<"\n";
             content << graph->GetImageWidth()<<"\n";
             content << graph->GetNumberOfSpectralBands()<<"\n";
+            content << graph->GetOriginX() <<"\n";
+            content << graph->GetOriginY() <<"\n";
             content << graph->GetProjectionRef()<<"\n";
-
             std::ofstream header;
             header.open(headerPath);
             header << content.str();
@@ -191,18 +196,35 @@ namespace obia
         {
             // Skip first line
             std::getline (header,line);
+
+            //Read height
             std::getline (header,line);
             info.m_height = std::stod(line);
+
+            //Read width
             std::getline (header,line);
             info.m_width = std::stod(line);
+
+            //Read nb bands
             std::getline (header,line);
             info.m_nbBands = std::stod(line);
+
+            //Read originX
+            std::getline (header,line);
+            info.m_originX = std::stod(line);
+
+            //Read originY
+			std::getline (header,line);
+		    info.m_originY = std::stod(line);
+
             std::string projectionRef;
             while (std::getline (header,line))
             {
                 projectionRef+=line+"\n";
             }
-            info.m_projectionRef = projectionRef;
+           info.m_projectionRef = projectionRef;
+
+
             header.close();
             return info;
         }else
