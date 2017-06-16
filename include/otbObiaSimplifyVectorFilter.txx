@@ -129,8 +129,6 @@ SimplifyVectorFilter<TSimplifyFunc>
 
 	//Maybe not usefull
 	OGRLayerType insidePolygons	= ogrDS->CreateLayer("Inside"  , ITK_NULLPTR, wkbUnknown);
-	//VectorOperations::CreateNewField(insidePolygons, "Inside", OFTInteger64);
-	//VectorOperations::CreateNewField(insidePolygons, "Englobing", OFTInteger64);
 
 	for(unsigned int fId = 0; fId < nbFeatures; ++fId)
 	{
@@ -167,12 +165,6 @@ SimplifyVectorFilter<TSimplifyFunc>
 		//Update feature to modify field value
 		layer.SetFeature(curFeature);
 
-//		//Create all edge feature to add into layer
-//		for(unsigned int fId = 0; fId < edges.size(); ++fId)
-//		{
-//			//edgesLayer.SetFeature(*edges[fId]);
-//			edgesLayer.CreateFeature(*edges[fId]);
-//		}
 	}
 
 	//Get output pointer
@@ -224,18 +216,6 @@ SimplifyVectorFilter<TSimplifyFunc>
 	double ulx, uly, lrx, lry;
 	//Maybe set false for bounding box
 	ogrDS->GetGlobalExtent(ulx, uly, lrx, lry, true) ;
-
-//	//Get tile information
-//	int originX = std::stoi(ogrDS->ogr().GetMetadataItem("OriginTileX"));
-//	int originY = std::stoi(ogrDS->ogr().GetMetadataItem("OriginTileY"));
-//	int sizeX = std::stoi(ogrDS->ogr().GetMetadataItem("TileSizeX"));
-//	int sizeY = std::stoi(ogrDS->ogr().GetMetadataItem("TileSizeY"));
-//
-//	//Modify tile origin in order to take the image origin
-//	ulx = originX + ulx;
-//	uly = originY + uly;
-//	lrx = ulx + sizeX;
-//	lry = uly + sizeY;
 
 	//Create a feature
 	OGRFeatureDefn* bbDef = new OGRFeatureDefn();
@@ -295,11 +275,6 @@ void
 SimplifyVectorFilter<TSimplifyFunc>
 ::ConvertToEdges(OGRFeatureType feature, std::vector<OGRFeatureType> adjFeatures, OGRLayerType& insidePolygons)
 {
-	/**TODO: S'assurer que l'on obtient que des lines strings
-	 * Si ce n'est pas le cas, on sépare de nouveau*/
-
-	//std::cout << "Convert to edges for " << m_CurrentCoords << std::endl;
-	//std::cout << "GEOM REF NOT CAST> " << feature.ogr().GetGeometryRef()->exportToGML() << std::endl;
 	bool refIsParallelogram = false;
 	bool adjIsParallelogram = false;
 	bool isSimplify = true;
@@ -318,7 +293,6 @@ SimplifyVectorFilter<TSimplifyFunc>
 	for(unsigned int fId = 0; fId < adjFeatures.size(); ++fId)
 	{
 
-		//std::cout << "ID " << fId + 1 << "/" << adjFeatures.size() << std::endl;
 		//Adj feature
 		OGRFeatureType adjFeature = adjFeatures[fId];
 
@@ -656,24 +630,8 @@ SimplifyVectorFilter<TSimplifyFunc>
 	//Set geometry
 	polygonFeature.SetGeometry(reconstructedPolygon);
 
-	//Display
-	//VectorOperations::DisplayFeature(polygonFeature, false);
-
-	//Display Feature
-
 	//Update
 	ogrLayer.SetFeature(polygonFeature);
-
-	//Set fields
-//	std::cout << "Before = " << ogrLayer.GetLayerDefn().GetReferenceCount() << std::endl;
-//	OGRFeatureType* polygonFeature = new OGRFeatureType(ogrLayer.GetLayerDefn());
-//	std::cout << "After = " << ogrLayer.GetLayerDefn().GetReferenceCount() << std::endl;
-//	polygonFeature->ogr().SetField(startingCoordsFieldName.c_str()   , startCoords);
-//	polygonFeature->ogr().SetField(adjStartingCoordsFieldName.c_str(), adjCoords.size(), arr);
-//
-//
-//	//Add geom to feature
-//	polygonFeature->SetGeometry(reconstructedPolygon);
 
 
 }
@@ -888,6 +846,9 @@ void SimplifyVectorFilter<TSimplifyFunc>
 			cleanFeature->SetField(startingCoordsFieldName.c_str(), startCoords);
 			cleanFeature->SetField(adjStartingCoordsFieldName.c_str(), nbAdjacents, adjCoordinates);
 
+			//For error
+			OGRErr errRecon = 0;
+
 			if(!extendedGeom->IsValid())
 			{
 				std::cout << "Extended not valid = " << extendedGeom->exportToGML() << std::endl;
@@ -911,7 +872,8 @@ void SimplifyVectorFilter<TSimplifyFunc>
 					featuresToDelete.push_back(i);
 
 					//Create feature for reconstructed
-					reconstructedOgrLayer->CreateFeature(cleanFeature);
+					errRecon = reconstructedOgrLayer->CreateFeature(cleanFeature);
+
 				}
 
 				//Free memory
@@ -930,11 +892,12 @@ void SimplifyVectorFilter<TSimplifyFunc>
 
 				std::cout << "Before : " << updatedGeom->exportToGML() <<std::endl;
 				//Create feature for reconstructed
-				reconstructedOgrLayer->CreateFeature(cleanFeature);
+				errRecon = reconstructedOgrLayer->CreateFeature(cleanFeature);
+			}
 
-				std::cout << "Get last feature "
-						  << reconstructedOgrLayer->GetFeature(reconstructedOgrLayer->GetFeatureCount(true) - 1)
-						      ->GetGeometryRef()->exportToGML() << std::endl;
+			if(errRecon != 0)
+			{
+				std::cerr << "Error when creating feature in " << __func__ << " function" << std::endl;
 			}
 
 			//Free memory

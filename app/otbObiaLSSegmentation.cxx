@@ -207,7 +207,7 @@ private:
 				float spectralW = GetParameterFloat("algorithm.baatz.spectralweight");
 				float shapeW = GetParameterFloat("algorithm.baatz.geomweight");
 
-                                auto lsBaatzFilter = LSBaatzSegmentationSchedulerType::New();
+                auto lsBaatzFilter = LSBaatzSegmentationSchedulerType::New();
 				lsBaatzFilter->SetFileName(filename);
 				lsBaatzFilter->SetMaxTileSizeX(maxTileWidth);
 				lsBaatzFilter->SetMaxTileSizeY(maxTileHeight);

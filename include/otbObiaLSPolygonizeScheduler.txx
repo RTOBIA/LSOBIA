@@ -242,28 +242,14 @@ LSPolygonizeScheduler<TInputGraph, TSimplifyFunc>
 	if(m_IsSimplify)
 	{
 
-		//TODO A modifier pour ne pas casser le pipeline
-		//En effet, l'update ne doit se fire que sur le dernier filtre
 		auto simplifyVectorFilter = SimplifyFilterType::New();
 		simplifyVectorFilter->SetSimplifyFunc(m_SimplifyFunc);
 		simplifyVectorFilter->SetInput(graphToVectorFilter->GetOutput());
 		simplifyVectorFilter->SetLayerName(otb::obia::cleanedLayerName);
-
-		//Check why we have to update for each filter?
+		//FIXME : A modifier pour ne pas casser le pipeline
+		//En effet, l'update ne doit se faire que sur le dernier filtre
+		//Il faut ajouter un updateOutputInformation
 		simplifyVectorFilter->Update();
-
-		//Set output
-		//this->m_OutputDS = const_cast<OGRDataSourceType*>(simplifyVectorFilter->GetOutput());
-		//std::cout << "Initialize output ds " << std::endl;
-		//std::cout << "tmp = " << tmp->ogr().GetLayerCount() << std::endl;
-		//this->m_OutputDS =OGRDataSourceType::New(&tmp->ogr());
-
-		//New(ogr::version_proxy::GDALDatasetType * sourcemode, Modes::type mode = Modes::Read);
-
-		//std::cout << "Graft data" << std::endl;
-	//	this->m_OutputDS->Graft(simplifyVectorFilter->GetOutput());
-
-		//std::cout << "Number of layer after simplify = " << tmp->ogr().GetLayerCount() << std::endl;
 
 		//By using New with GDALdataset, the new OGRDatasource get ownership of Dataset.
 		//So we have to clone it

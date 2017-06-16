@@ -7,7 +7,6 @@
 
 #include "itkMacro.h"
 #include "itkSmartPointer.h"
-//#include "otbObiaSmallRegionsMergingGraph.h"
 
 namespace otb
 {
@@ -16,18 +15,15 @@ namespace obia
 
 /** \class SmallRegionMergingFilter
  *    \brief Class that builds an adjacency graph where all smalls regions are merged
- *
+ *    Templated by an input graph type
  */
-//Define the graph type : SRM (Small Region Merging)
-//using GraphType = Graph< Node< SRMNodeAttribute, SRMEdgeAttribute > >;
-
 template< typename TGraph >
 class LSSmallRegionsMergingScheduler : public LSGraphToGraphFilter< TGraph, TGraph >
 {
 
 public:
     /** Standard class alias */
-    using Self            = LSSmallRegionsMergingScheduler;
+    using Self         = LSSmallRegionsMergingScheduler;
     using SuperClass   = itk::Object;
     using Pointer      = itk::SmartPointer< Self >;
     using ConstPointer = itk::SmartPointer< const Self >;
@@ -37,12 +33,12 @@ public:
     using NodeType                    = typename GraphType::NodeType;
     using GraphPointerType            = typename GraphType::Pointer;
     using GraphOperationsType         = GraphOperations<GraphType>;
-    /*using SRMFilterType                   = GenericRegionMergingFilter<GraphType, GraphType,
-                                                                    SRMMergingCost<float, GraphType> ,
-                                                                    SRMHeuristic<GraphType>,
-                                                                    SRMUpdateAttribute<GraphType> >;*/
+    using SRMFilterType               = GenericRegionMergingFilter<GraphType, GraphType,
+																	SRMMergingCost<float, GraphType> ,
+																	SRMHeuristic<GraphType>,
+																	SRMUpdateAttribute<GraphType> >;
     /**TODO : Temporaire*/
-    using SRMFilterType = SmallRegionsMergingFilter<GraphType>;
+    //using SRMFilterType = SmallRegionsMergingFilter<GraphType>;
 
     /** Method for creation through the object factory. */
     itkNewMacro(Self);
@@ -117,9 +113,6 @@ private:
 
     /** Check if node is in border*/
     bool IsBorderNode(NodeType* node, const std::vector< typename GraphOperations<TGraph>::NodeType* > borderNodes);
-
-    /** Check if duplicated node*/
-    bool HasDuplicatedNodes();
 
     /**Reconditionning graph*/
     void ReconditionGraph();

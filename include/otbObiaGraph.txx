@@ -333,6 +333,7 @@ Graph<TNode>::RemoveNodes()
         numMergedNodes[idx] = numMerged;
         idx++;
     };
+
     ApplyForEachNode(lambdaNumMerges);
 
     // Remove the nodes: Linear in time wrt to the number of nodes

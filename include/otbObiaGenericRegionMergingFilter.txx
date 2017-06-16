@@ -1,5 +1,6 @@
 #ifndef __otbObiaGenericRegionMergingFilter_txx
 #define __otbObiaGenericRegionMergingFilter_txx
+
 #include "otbObiaGenericRegionMergingFilter.h"
 
 namespace otb
@@ -17,7 +18,6 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
 : m_MaxNumberOfIterations(75), m_AppliedNumberOfIterations(0), m_MergingOver(false), m_MergingCostFunc(nullptr),
 m_HeuristicFunc(nullptr), m_UpdateAttributeFunc(nullptr)
 {
-    std::cout << "Create Filter Object" << std::endl;
 }
 
 template< typename TInputGraph, 
@@ -63,6 +63,9 @@ void
 GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeuristic, TUpdateAttributeFunc>::
 GenerateData()
 {
+	//Check validity
+	CheckValidity();
+
     auto outputGraph = this->GetOutputByMove();
 
     //Set the graph for the heuristic

@@ -1,7 +1,7 @@
 #ifndef otbObiaComputeAttributsFilter_txx
 #define otbObiaComputeAttributsFilter_txx
 
-#include "otbObiaComputeAttributsFilter.h"
+#include <otbObiaComputeAttributesFilter.h>
 #include "itkDefaultConvertPixelTraits.h"
 #include "otbObiaVectorOperations.h"
 
@@ -12,13 +12,15 @@ namespace obia
 
 /** Constructor */
 template <class TInputImage, class TMaskImage>
-ComputeAttributsFilter<TInputImage,TMaskImage>
-::ComputeAttributsFilter()
+ComputeAttributesFilter<TInputImage,TMaskImage>
+::ComputeAttributesFilter() :   m_NumberOfBands(1),
+								m_InputImage(nullptr)
 {
     // Modify superclass default values, can be overridden by subclasses
     this->SetNumberOfRequiredInputs(1);
-    this->SetNumberOfOutputs(1);
+    this->SetNumberOfRequiredOutputs(1);
     this->SetNumberOfThreads(1);
+
 }
 
 /**
@@ -26,7 +28,7 @@ ComputeAttributsFilter<TInputImage,TMaskImage>
  */
 template <class TInputImage, class TMaskImage>
 void
-ComputeAttributsFilter<TInputImage,TMaskImage>
+ComputeAttributesFilter<TInputImage,TMaskImage>
 ::Reset()
 {
 
@@ -36,7 +38,7 @@ ComputeAttributsFilter<TInputImage,TMaskImage>
  */
 template <class TInputImage, class TMaskImage>
 void
-ComputeAttributsFilter<TInputImage,TMaskImage>
+ComputeAttributesFilter<TInputImage,TMaskImage>
 ::Synthetize()
 {
 
@@ -44,7 +46,7 @@ ComputeAttributsFilter<TInputImage,TMaskImage>
 /** Generate data should thread over */
 template <class TInputImage, class TMaskImage>
 void
-ComputeAttributsFilter<TInputImage,TMaskImage>
+ComputeAttributesFilter<TInputImage,TMaskImage>
 ::GenerateData()
 {
 	//Initialize output layer
@@ -71,7 +73,7 @@ ComputeAttributsFilter<TInputImage,TMaskImage>
 
 template <class TInputImage, class TMaskImage>
 void
-ComputeAttributsFilter<TInputImage,TMaskImage>
+ComputeAttributesFilter<TInputImage,TMaskImage>
 ::InitializeOutput()
 {
 	std::cout << "-------------- INITIALIZE OUTPUT -------------" << std::endl;
@@ -84,7 +86,7 @@ ComputeAttributsFilter<TInputImage,TMaskImage>
 	//Create all new fields
 	for(unsigned int k = 0; k < m_Attributs.size(); ++k)
 	{
-		GenericAttributType* currentAttribut = m_Attributs[k];
+		GenericAttributeType* currentAttribut = m_Attributs[k];
 		this->CreateAdditionalField(currentAttribut->GetFieldName(), currentAttribut->GetFieldType());
 	}
 
@@ -97,7 +99,7 @@ ComputeAttributsFilter<TInputImage,TMaskImage>
 
 template <class TInputImage, class TMaskImage>
 void
-ComputeAttributsFilter<TInputImage,TMaskImage>
+ComputeAttributesFilter<TInputImage,TMaskImage>
 ::ComputeAllAttributs()
 {
 	std::cout << "-------- COMPUTING ALL ATTRIBUTS -------------------------" << std::endl;
@@ -148,7 +150,7 @@ ComputeAttributsFilter<TInputImage,TMaskImage>
 			m_Samples.clear();
 
 			//Get current attribut class
-			GenericAttributType* currentAttribut = m_Attributs[k];
+			GenericAttributeType* currentAttribut = m_Attributs[k];
 
 			//Use extract shape from the attribut method
 			OGRFeatureType requiredFeature = currentAttribut->GenerateFeature(currentFeature);
@@ -184,7 +186,7 @@ ComputeAttributsFilter<TInputImage,TMaskImage>
 /** Generic method called for each matching pixel position*/
 template <class TInputImage, class TMaskImage>
 void
-ComputeAttributsFilter<TInputImage,TMaskImage>
+ComputeAttributesFilter<TInputImage,TMaskImage>
 ::ProcessSample(const ogr::Feature& feature,
 			    typename InputImageType::IndexType& imgIndex,
 			    typename InputImageType::PointType& imgPoint,
@@ -206,7 +208,7 @@ ComputeAttributsFilter<TInputImage,TMaskImage>
 
 template <class TInputImage, class TMaskImage>
 void
-ComputeAttributsFilter<TInputImage,TMaskImage>
+ComputeAttributesFilter<TInputImage,TMaskImage>
 ::UpdateLayer(OGRLayer* layer, ogr::Feature& feature,
 			  std::string fieldName, double fieldValue)
 {
@@ -216,11 +218,12 @@ ComputeAttributsFilter<TInputImage,TMaskImage>
 	//Set field
 	updatedFeature.ogr().SetField(fieldName.c_str(), fieldValue);
 
-//	itk::Indent ident;
-//	updatedFeature.PrintSelf(std::cout, ident );
-
 	//Update layer
-	layer->CreateFeature(&(updatedFeature.ogr()));
+	OGRErr errCreate = layer->CreateFeature(&(updatedFeature.ogr()));
+	if(errCreate != 0)
+	{
+		std::cerr << "Error when creating feature " << updatedFeature.ogr().GetFID() << " in " << __func__ << std::endl;
+	}
 }
 
 

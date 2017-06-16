@@ -8,6 +8,7 @@
 #include "otbImage.h"
 #include "itkRGBPixel.h"
 #include "itkLabelToRGBImageFilter.h"
+#include "otbObiaGraphToLabelImageFilter.h"
 #include "otbImageFileWriter.h"
 #include <unordered_set>
 
@@ -30,7 +31,7 @@ LSSmallRegionsMergingScheduler<TGraph>
 ::~LSSmallRegionsMergingScheduler()
 {
 }
-/*
+
 
 template< class TGraph >
 itk::SmartPointer<typename LSSmallRegionsMergingScheduler<TGraph>::SRMFilterType> LSSmallRegionsMergingScheduler<TGraph>
@@ -40,30 +41,39 @@ itk::SmartPointer<typename LSSmallRegionsMergingScheduler<TGraph>::SRMFilterType
 	auto srmFilter = SRMFilterType::New();
 
 	//Create the 3 classes
-	auto mergingFunc = srmFilter->GetMergingCostFunc();//new SRMMergingCost<float, GraphType>(); //::New();
+	auto mergingFunc = new SRMMergingCost<float, GraphType>();
 	mergingFunc->SetMinimalSurface(this->m_MinimalSurface);
-	srmFilter->GetHeuristicFunc()->SetMinimalSurface(this->m_MinimalSurface);
+
+	auto heuristicFunc = new SRMHeuristic<GraphType>();//::New();
+	heuristicFunc->SetGraph(this->m_Graph);
+	heuristicFunc->SetMinimalSurface(this->m_MinimalSurface);
+
+	auto updateFunc = new SRMUpdateAttribute<GraphType>();
+
+	srmFilter->SetMergingCostFunc(mergingFunc);
+	srmFilter->SetHeuristicFunc(heuristicFunc);
+	srmFilter->SetUpdateAttributeFunc(updateFunc);
 	srmFilter->SetMaxNumberOfIterations(this->m_NumberOfIterations);
 	srmFilter->SetInput(this->m_Graph);
 	return srmFilter;
 
-
 }
-*/
 
-template< class TGraph >
-itk::SmartPointer<typename LSSmallRegionsMergingScheduler<TGraph>::SRMFilterType> LSSmallRegionsMergingScheduler<TGraph>
-::CreateFilter()
-{
-	// Merging filter
-	auto srmFilter = SRMFilterType::New();
-
-	srmFilter->SetMinimalSurface(this->m_MinimalSurface);
-	srmFilter->SetNumberOfIterations(this->m_NumberOfIterations);
-	srmFilter->SetInput(this->m_Graph);
-	return srmFilter;
-
-}
+//
+//
+//template< class TGraph >
+//itk::SmartPointer<typename LSSmallRegionsMergingScheduler<TGraph>::SRMFilterType> LSSmallRegionsMergingScheduler<TGraph>
+//::CreateFilter()
+//{
+//	// Merging filter
+//	auto srmFilter = SRMFilterType::New();
+//
+//	srmFilter->SetMinimalSurface(this->m_MinimalSurface);
+//	srmFilter->SetNumberOfIterations(this->m_NumberOfIterations);
+//	srmFilter->SetInput(this->m_Graph);
+//	return srmFilter;
+//
+//}
 
 template< typename TGraph >
 void LSSmallRegionsMergingScheduler<TGraph>
@@ -233,11 +243,11 @@ LSSmallRegionsMergingScheduler<TGraph>
 
 		/**Compute stability margins*/
 		std::cout << "------- EXTRACT -------------" << std::endl;
-		//ExtractStabilityMargins();
+		ExtractStabilityMargins();
 
 		/** Aggregate*/
 		std::cout << "------- AGGREGATE ------------- " << std::endl;
-		//AggregateStabilityMargins();
+		AggregateStabilityMargins();
 
 		unsigned long int accumulatedMemory = this->m_AvailableMemory + 1;
 
@@ -248,10 +258,7 @@ LSSmallRegionsMergingScheduler<TGraph>
 			os << this->m_TemporaryDirectory << "AFTER_" << mpiConfig->GetMyRank() << ".dat";
 			GraphOperationsType::WriteGraphToDisk(this->m_Graph, os.str());
 		}*/
-		//ReconditionGraph();
-		/*if(HasDuplicatedNodes()){
-			exit(1);
-		}*/
+
 		if(localFusion == 0)
 		{
 			std::cout <<"Local fusion = 0" << std::endl;
@@ -262,9 +269,9 @@ LSSmallRegionsMergingScheduler<TGraph>
 			merge_over = false;
 		}
 
-//		if(cur_it > maxNumberOfIterations){
-//			merge_over = true;
-//		}
+		if(cur_it > maxNumberOfIterations){
+			merge_over = true;
+		}
 
 		cur_it++;
 
@@ -286,8 +293,9 @@ LSSmallRegionsMergingScheduler<TGraph>
     auto mpiTools = MPITools::Instance();
 
     // Compute the number of adjacency layers to extract
-    const uint32_t nbAdjacencyLayers = (m_NumberOfIterations < 0) ? ComputeMaxDepth() : m_NumberOfIterations;//ComputeMaxDepth();
-
+   // const uint32_t nbAdjacencyLayers = (m_NumberOfIterations < 0) ? ComputeMaxDepth() : m_NumberOfIterations;//ComputeMaxDepth();
+   // const uint32_t nbAdjacencyLayers = pow(2, m_NumberOfIterations + 1) - 2;
+    const uint32_t nbAdjacencyLayers = pow(2, 1 + 1) - 2;
     std::cout << "Number of adjacency layers : " << nbAdjacencyLayers << std::endl;
     // the local serialized margin
     std::vector< char > serializedMargin;
@@ -305,7 +313,7 @@ LSSmallRegionsMergingScheduler<TGraph>
         this->ReadGraphIfNecessary(ty, tx);
 
         //std::cout << "Graph "  << ty << "_" << tx  <<  " read : " << this->m_Graph->GetNumberOfNodes() << std::endl;
-		std::cout << "------ TUILE : " << ty << "_" << tx << " for processor : " << mpiConfig->GetMyRank()<< std::endl;
+		std::cout << "------ TILE : " << ty << "_" << tx << " for processor : " << mpiConfig->GetMyRank()<< std::endl;
 
         auto subGraphMap = GraphOperationsType::ExtractStabilityMargin(this->m_Graph,
                                                                        nbAdjacencyLayers,
@@ -419,7 +427,7 @@ LSSmallRegionsMergingScheduler<TGraph>
 		uint32_t tx = kv.first % this->m_NumberOfTilesX;
 		uint32_t ty = kv.first / this->m_NumberOfTilesX;
 
-		std::cout << "------ AGGREGATE TUILE : " << ty << "_" << tx << " for processor : " << mpiConfig->GetMyRank()<< std::endl;
+		std::cout << "------ AGGREGATE TILE : " << ty << "_" << tx << " for processor : " << mpiConfig->GetMyRank()<< std::endl;
 
 		// Retrieve the tile by reference since it will be modified.
 		auto& tile = kv.second;
@@ -428,7 +436,6 @@ LSSmallRegionsMergingScheduler<TGraph>
 
 		// Retrieve the neighbor tiles
 		uint32_t tile_id = ty*this->m_NumberOfTilesX + tx;
-		std::cout << "TILE ID = " << tile_id << std::endl;;
 		auto neighborTiles = SpatialTools::EightConnectivity(tile_id, this->m_NumberOfTilesX, this->m_NumberOfTilesY);
 		for(unsigned short n = 0; n < 8; n++)
 		{
@@ -500,15 +507,18 @@ LSSmallRegionsMergingScheduler<TGraph>
 
 			std::cout << "Sub Graph : " << subGraph->GetNumberOfNodes() << " for tile "   << ty << "_" << tx << std::endl;
 
+			std::cout << "Adding " << this->m_Graph->GetNumberOfNodes()
+					  << " and " << subGraph->GetNumberOfNodes() << " nodes " << std::endl;
 			//Add the sub graph to the graph
 			GraphOperationsType::AggregateGraphs(this->m_Graph, subGraph);
+
+			//Free memory
+			subGraph->Reset();
 		}
 
 		// Remove duplicated nodes
 		auto borderNodeMap = GraphOperationsType::BuildBorderNodesMap(this->m_Graph,
 																	  tile,
-																	  this->m_MaxTileSizeX,
-																	  this->m_MaxTileSizeY,
 																	  this->m_NumberOfTilesX,
 																	  this->m_NumberOfTilesY,
 																	  this->m_ImageWidth);
@@ -518,6 +528,10 @@ LSSmallRegionsMergingScheduler<TGraph>
 
 		// Update edges
 		GraphOperationsType::DetectNewAdjacentNodes(borderNodeMap, this->m_Graph, this->m_ImageWidth, this->m_ImageHeight);
+
+		//Clear borderNodeMap
+		borderNodeMap.clear();
+
 		this->WriteGraphIfNecessary(ty, tx);
 		ntile++;
 	}
@@ -562,9 +576,10 @@ LSSmallRegionsMergingScheduler<TGraph>
 
 
         //Execute the small region filter
-        //auto SRMFilter = CreateFilter();
         auto srmFilter  = CreateFilter();
         srmFilter->Update();
+
+        std::cout << "After update" << std::endl;
         //srmFilter->GetOutput()->CopyGraph(&(*this->m_Graph));
         this->m_Graph = srmFilter->GetOutput();
 
@@ -600,61 +615,6 @@ LSSmallRegionsMergingScheduler<TGraph>
 
     return localFusion;
 
-}
-
-template< typename TGraph >
-bool
-LSSmallRegionsMergingScheduler<TGraph>
-::HasDuplicatedNodes()
-{
-    /**Parcours des noeuds*/
-    uint32_t nb_nodes =     this->m_Graph->GetNumberOfNodes();
-    std::map<uint32_t, std::vector<NodeType*> > map_nodes;
-    for(uint32_t k = 0; k < nb_nodes; ++k)
-    {
-        NodeType* node = this->m_Graph->GetNodeAt(k);
-        map_nodes[node->GetFirstPixelCoords()].push_back(node);
-    }
-    //std::cout << "Taille map : " << map_nodes.size() << "/ nombre noeuds " << nb_nodes << std::endl;
-
-    for(auto& kv : map_nodes)
-    {
-        if(kv.second.size() > 1)
-        {
-            //std::cout << "Several nodes at coord " << kv.first << "(" <<  kv.second.size() << ")" << std::endl;
-            //exit(1);
-            //return true;
-        }
-    }
-
-    if(map_nodes.find(455538) != map_nodes.end()){
-
-        std::vector<NodeType*> nodes = map_nodes[455538];
-        std::cout << "Nombre noeud " << nodes.size() << std::endl;
-        for(int k = 0; k < nodes.size(); k++)
-        {
-            std::unordered_set<CoordValueType> borderPixels;
-            std::cout << "Starting Coords : " << nodes[k]->m_Contour.GetStartingCoords()
-                      <<  " proc " << MPIConfig::Instance()->GetMyRank() << std::endl;
-            //nodes[k]->m_Contour.GenerateBorderPixels(borderPixels, this->m_ImageWidth);
-        /*    for(auto &p : borderPixels){
-                std::cout << "\t" << p << " ;";
-            }*/
-
-            /* for ( auto it = borderPixels.begin(); it != borderPixels.end(); ++it )
-             {
-                 std::cout << "\t" << *it << ";";
-             }*/
-             std::cout << std::endl;
-            //std::cout << std::endl;
-            //nodes[k]->m_Contour.PrintSelf();
-        }
-    }
-
-        //    exit(1);
-
-
-    return false;
 }
 
 template< typename TGraph >
@@ -818,8 +778,6 @@ LSSmallRegionsMergingScheduler<TGraph>
         std::stringstream os;
         os << this->m_TemporaryDirectory << "Graph_SRM.dat";
         GraphOperationsType::WriteGraphToDisk(this->m_Graph, os.str());
-
-        return;
     }
     for(auto& kv : this->m_TileMap)
     {
@@ -831,7 +789,10 @@ LSSmallRegionsMergingScheduler<TGraph>
             GraphOperationsType::WriteGraphToDisk(this->m_Graph, os.str());
 
             //this->ReadGraphIfNecessary(ty, tx);
-            //ConvertToImage(ty, tx);
+            if(m_WriteImage)
+            {
+            	ConvertToImage(ty, tx);
+            }
     }
 
 }
@@ -841,29 +802,46 @@ void
 LSSmallRegionsMergingScheduler<TGraph>
 ::ConvertToImage(uint32_t ty, uint32_t tx)
 {
-      std::stringstream os;
-      os << this->m_OutputDir << "Graph_SRM_" << ty << "_" << tx << ".tif";
 
-      using LabelPixelType = unsigned int;
-      using LabelImageType = otb::Image< LabelPixelType, 2 >;
-      using GraphToLabelImageFilterType = otb::obia::GraphToLabelImageFilter<GraphType, LabelImageType>;
-      using RGBPixelType = itk::RGBPixel<unsigned char>;
-      using RGBImageType = otb::Image<RGBPixelType, 2>;
-      using LabelToRGBFilterType = itk::LabelToRGBImageFilter<LabelImageType, RGBImageType>;
-      using RGBWriterType = otb::ImageFileWriter< RGBImageType >;
+	std::cout << "WRITE LABEL IMAGE FOR " << ty <<"_"<< tx << std::endl;
+	if(this->m_Graph == nullptr)
+	{
+		std::cout << "Graph " << ty << "_" << tx << " is not set..." << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	using LabelPixelType = unsigned int;
+	using LabelImageType = otb::Image< LabelPixelType, 2 >;
+	using GraphToLabelImageFilterType = otb::obia::GraphToLabelImageFilter<GraphType, LabelImageType>;
+	using WriterType = otb::ImageFileWriter< LabelImageType>;
 
-      auto graphToLabelFilter = GraphToLabelImageFilterType();
-      auto labelToRGBFilter = LabelToRGBFilterType::New();
-      auto rgbWriter = RGBWriterType::New();
+	//FOR COLOR IMAGE
+	//      	using RGBPixelType = itk::RGBPixel<unsigned char>;
+	//      	using RGBImageType = otb::Image<RGBPixelType, 2>;
+	//      	using LabelToRGBFilterType = itk::LabelToRGBImageFilter<LabelImageType, RGBImageType>;
+	//      	using RGBWriterType = otb::ImageFileWriter< RGBImageType >;
 
-      graphToLabelFilter.SetInput(this->m_Graph);
-      graphToLabelFilter.Update();
+	using FillholeFilterType           = itk::GrayscaleFillholeImageFilter<LabelImageType,LabelImageType>;
 
-      labelToRGBFilter->SetInput(graphToLabelFilter.GetOutput());
-      rgbWriter->SetFileName(os.str());
-      rgbWriter->SetInput(labelToRGBFilter->GetOutput());
+	//Output name
+	std::stringstream os;
+	os << this->m_OutputDir << "Graph_SRM_" << ty << "_" << tx << ".tif";
 
-      rgbWriter->Update();
+	auto graphToLabelFilter = GraphToLabelImageFilterType::New();
+	auto grayWriter = WriterType::New();
+	auto fillHoleFilter = FillholeFilterType::New();
+	//auto labelRGB = LabelToRGBFilterType::New();
+	//auto rgbWriter = RGBWriterType::New();
+
+	graphToLabelFilter->SetInput(this->m_Graph);
+	fillHoleFilter->SetInput(graphToLabelFilter->GetOutput());
+	//labelRGB->SetInput(fillHoleFilter->GetOutput());
+	//rgbWriter->SetInput(labelRGB->GetOutput());
+	//rgbWriter->SetFileName(os.str());
+	//rgbWriter->Update();
+	//
+	grayWriter->SetFileName(os.str());
+	grayWriter->SetInput(fillHoleFilter->GetOutput());
+	grayWriter->Update();
 }
 
 

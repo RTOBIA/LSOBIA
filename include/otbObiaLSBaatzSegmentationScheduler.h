@@ -5,11 +5,18 @@
 #include "otbObiaImageToBaatzGraphFilter.h"
 #include "otbObiaGenericRegionMergingFilter.h"
 
+
+/**
+\file otbObiaLSBaatzSegmentationScheduler.h
+\brief This file define the class baatz graph scheduler used to handle multi-processing of baatz filtering
+*/
 namespace otb
 {
 namespace obia
 {
 
+/**\class LSBaatzSegmentationScheduler otbObiaLSBaatzSegmentationScheduler.h
+ * \brief Class handling multi-processing of baatz segmentation, sharing stability margins, etc ...*/
 template< class TInputImage >
   class LSBaatzSegmentationScheduler : public LSImageToGraphScheduler< TInputImage,
                         typename ImageToBaatzGraphFilter<TInputImage>::OutputGraphType >
@@ -43,14 +50,39 @@ public:
     /** Run-time type information (and related methods). */
     itkTypeMacro(LSBaatzSegmentationScheduler, itk::LightObject);
 
-    /** Get/Set methods */
+    /**\brief Set the maximum number of iterations (to prevent infinite looping)
+     * \param: Max number of iterations */
     void SetMaxNumberOfIterations(const uint32_t niter){ m_MaxNumberOfIterations = niter;}
+
+    /**\brief Set the starting number of iterations (usually 0)
+     * \param: Starting number of iterations */
     void SetStartingNumberOfIterations(const uint32_t nbiter){ m_StartingNumberOfIterations = nbiter; }
+
+
+    /**\brief Set the partial number of iterations. Used in BaatzSegmentationFilter to compute nPartialIteration
+     * before next step. Required to compute number of adjacency layers.
+     * \param: Partial number of iterations */
     void SetPartialNumberOfIterations(const uint32_t nbiter){ m_PartialNumberOfIterations = nbiter; }
+
+    /**\brief Set the threshold for baatz segmentation criterion
+	 * \param: Threshold*/
     void SetThreshold(const float thresh){ m_Threshold = thresh; }
+
+    /**\brief Set the spectral weight, used for baatz segmentation criterion
+	 * \param: Spectral weight*/
     void SetSpectralWeight(const float sw){ m_SpectralWeight = sw; }
+
+    /**\brief Set the shape weight, used for baatz segmentation criterion
+ 	 * \param: Shape weight*/
     void SetShapeWeight(const float spaw){ m_ShapeWeight = spaw; }
+
+    /**\brief Set the band weight, used for baatz segmentation criterion
+ 	 * \param: band weight*/
     void SetBandWeights(const std::vector<float> bw){ m_BandWeights = bw; }
+
+    /**\brief Set the boolean to indicate if graphs need to be merged (to save some memory for example, or to
+     * get only 1 graph as output)
+ 	 * \param: Boolean*/
     void SetAggregateGraphs(bool AggregateGraphs){m_AggregateGraphs = AggregateGraphs;};
 
 protected:
@@ -64,13 +96,23 @@ protected:
     /**Create Filter*/
     itk::SmartPointer<BaatzSegmentationFilterType> CreateFilter();
 
-    /** Generation method */
+    /**\brief Implementation of generate data. It checks if the process is with tiles or not*/
     virtual void GenerateData();
 
+    /**\brief Compute required padding for stability margin*/
     virtual void ComputePaddingValue();
 
+    /**\brief Process in case of no tiles. it only load the input image and run baatz filter segmentation.
+     * No need to handle stability margin*/
     virtual void NoTilingExecution();
 
+
+    /**\brief Process in case of tiles. It first execute some iterations before deciding if graphs need to be
+     * aggregate, or if segmentation keep going on each graph.It will loop over all tiles, extract all required stability margins,
+     * aggregate these margins, and then run filter of each aggregate graphs, and so on. Synchronization is required for
+     * following steps:
+     * - Extract stability margins
+     * - Aggregate stability margins*/
     virtual void TilingExecution();
 
 private:
@@ -83,15 +125,39 @@ private:
         AGGR_NO_SEG, // Next step is merging the graphs. 
         SEG_STATE_UNDEF
     };
-
+    /**\brief Modify coordinate of the graph associated to the tile to be in a absolute reference (and not tile reference)
+     * \param: Tile associated to graph
+     * */
     void RescaleGraph(ProcessingTile& tile);
+
+    /**\brief Achieve segmentation if graphs are aggregated and current process is rank 0
+     * */
     void AchieveSegmentation();
+
+    /**\brief Aggregate all graphs to the master graph (rank 0)
+     * */
     void FinalGraphAgregation();
+
+    /**\brief Run m_PartialNumberOfIterations on current graph. It will call BaatzGraphFilter
+     * with m_PartialNumberOfIterations iteration
+     * */
     void PartialSegmentation();
-    void PartialSegmentation(uint32_t numberIterations);
+
+    /**\brief Extract stability margin of the current graph
+     * */
     void ExtractStabilityMargins();
+
+    /**\brief Aggregate all stability margins to the current graph
+     * */
     void AggregateStabilityMargins();
+
+
+    /**\brief Run partial segmentation
+     * */
     void RunPartialSegmentation(unsigned long int& accumulatedMemory, int& fusionSum);
+
+    /**\brief In case of no aggregation and we still doing partial segmentation
+     * */
     void NoAggregationAndPartialSegmentation();
 
     SegState FirstPartialSegmentation();

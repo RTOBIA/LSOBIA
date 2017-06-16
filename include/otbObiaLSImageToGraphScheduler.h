@@ -14,11 +14,22 @@
 #include "otbImage.h"
 #include "otbImageFileWriter.h"
 
+
+/**
+\file otbObiaLSImageToGraphScheduler.h
+\brief This file define the class which will be used for filter processing an image to a graph
+ 	 	in a multiprocess environnment
+*/
 namespace otb
 {
 namespace obia
 {
 
+/**\class LSImageToGraphScheduler otbObiaLSImageToGraphScheduler.h
+ * \brief Class handling multi-processing of an image to a graph
+ * Templated by:
+ * - an input image type
+ * - an output graph type (like baatz)*/
 template< typename TInputImage, typename TOutputGraph>
 class LSImageToGraphScheduler : public itk::LightObject
 {

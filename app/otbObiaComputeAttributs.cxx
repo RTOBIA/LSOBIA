@@ -1,8 +1,8 @@
+#include <otbObiaComputeAttributesFilter.h>
 #include "otbWrapperApplication.h"
 #include "otbWrapperApplicationFactory.h"
 #include "otbObiaGraphOperations.h"
 #include "otbObiaGraphToVectorFilter.h"
-#include "otbObiaComputeAttributsFilter.h"
 #include "otbObiaConstExpr.h"
 #include "otbImageFileReader.h"
 #include <string>
@@ -98,7 +98,7 @@ private:
 		imgReader->SetFileName(imagePath);
 
 		//Compute attributs
-		using ComputeAttributsFilterType = otb::obia::ComputeAttributsFilter<InputImageType>;
+		using ComputeAttributsFilterType = otb::obia::ComputeAttributesFilter<InputImageType>;
 		auto computeAttributs = ComputeAttributsFilterType::New();
 
 		const ogr::DataSource* outputDs =ogr::DataSource::New(vectorFile); //default 2nd argument is read

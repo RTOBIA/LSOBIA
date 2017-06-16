@@ -5,6 +5,11 @@
 #include "otbObiaContour.h"
 #include "itkProcessObject.h"
 
+/**
+\file otbObiaGraph.h
+\brief This file define all classes or structures used to describe a graph
+*/
+
 namespace otb
 {
 namespace obia
@@ -20,18 +25,18 @@ namespace obia
  */
 struct GraphAttribute
 {
-    /** Returns the memory size in bytes needed to store this object in computer memory */
+    /**\brief Returns the memory size in bytes needed to store this object in computer memory */
     virtual uint64_t GetMemorySize() const = 0;
 
-    /** Returns the number of bytes to serialize. It may be different from the memory size
+    /**\brief Returns the number of bytes to serialize. It may be different from the memory size
      *  since some attributes may not need to be serialized.
      */
     virtual uint64_t GetNumberOfBytesToSerialize() const = 0;
 
-    /** Returns a stream of bits containing those attributes */
+    /**\brief Returns a stream of bits containing those attributes */
     virtual void Serialize(std::vector<char>& stream, uint64_t& position) const = 0;
 
-    /** Given a stream of bits, this method rebuilds the attributes */
+    /**\brief Given a stream of bits, this method rebuilds the attributes */
     virtual void DeSerialize(const std::vector<char>& stream, uint64_t& position) = 0;
 };
 
@@ -91,13 +96,13 @@ struct Edge
 
     uint64_t GetNumberOfBytesToSerialize() const;
 
-    // The position of the edge in the adjacency graph
+    /**\brief The position of the edge in the adjacency graph */
     IdType m_TargetId;
 
-    // The boundary length between both adjacent nodes
+    /**\brief The boundary length between both adjacent nodes*/
     uint32_t m_Boundary;
 
-    // Specific attributes attached to the edge
+    /**\brief Specific attributes attached to the edge*/
     EdgeAttributeType m_Attributes;
 };
 
@@ -135,64 +140,64 @@ struct Node
          m_Attributes(other.m_Attributes)
     {}
 
-    /** Returns the vectorized coordinates (x,y) of the first pixel composing this node. */
+    /**\brief Returns the vectorized coordinates (x,y) of the first pixel composing this node. */
     inline uint64_t GetFirstPixelCoords() const { return m_Contour.GetStartingCoords(); }
 
-    /** Change the vectorized coordinates (x,y) of the first pixel composing this node. */
+    /**\brief Change the vectorized coordinates (x,y) of the first pixel composing this node. */
     inline void SetFirstPixelCoords(const uint64_t newCoords){ m_Contour.SetStartingCoords(newCoords); }
 
-    /** Given the position of the adjacent node, find the outgoing edge to it. */
+    /**\brief Given the position of the adjacent node, find the outgoing edge to it. */
     EdgeIteratorType FindEdge(const IdType targetId);
 
-    /** Find the first edge that satisfies the lambda function predicate */
+    /**\brief Find the first edge that satisfies the lambda function predicate */
     template< typename LambdaFunctionType >
     EdgeIteratorType FindEdgeIf(LambdaFunctionType f)
     {
         return std::find_if(m_Edges.begin(), m_Edges.end(), f);
     }
 
-    /** Add an edge and returns its address */
+    /**\brief Add an edge and returns its address */
     inline EdgeType* AddEdge();
 
-    /** Convenient method to apply arbitarily lambda function on each edge. */
+    /**\brief Convenient method to apply arbitarily lambda function on each edge. */
     template< typename LambdaFunctionType >
     void ApplyForEachEdge(LambdaFunctionType f)
     {
         std::for_each(m_Edges.begin(), m_Edges.end(), f);
     }
 
-    // Returns the memory size in bytes of the node.
+    /**\brief Returns the memory size in bytes of the node.*/
     uint64_t GetMemorySize() const;
 
-    // Return the number of bytes to serialize
+    /**\brief Return the number of bytes to serialize*/
     uint64_t GetNumberOfBytesToSerialize() const;
 
-    // Flag indicating if the node has to be removed from the graph
+    /**\brief Flag indicating if the node has to be removed from the graph*/
     bool m_HasToBeRemoved:1;
 
-    // Flag indicating if this node has to be considered for merging
+    /**\brief Flag indicating if this node has to be considered for merging*/
     bool m_Valid:1;
 
-    // Position of the node in the adjacency list
+    /**\brief Position of the node in the adjacency list*/
     IdType m_Id;
 
-    // Bounding box (the itk::ImageRegion consumes too much memory)
+    /**\brief Bounding box (the itk::ImageRegion consumes too much memory)*/
     // 0: upper left x
     // 1: upper left y
     // 2: size x
     // 3: size y
     std::array<uint32_t, 4> m_BoundingBox;
 
-    // Optimized representation of the contour
+    /**\brief Optimized representation of the contour*/
     Contour m_Contour;
 
-    // A list of outgoing edges targeting adjacent nodes
+    /**\brief A list of outgoing edges targeting adjacent nodes*/
     EdgeListType m_Edges;
 
-    // Specific attributes related to the node
+    /**\brief Specific attributes related to the node*/
     NodeAttributeType m_Attributes;
 
-    /* Debug */
+    /**\brief Debug */
     EdgeIteratorType Begin(){return m_Edges.begin();}
     EdgeIteratorType End(){return m_Edges.end();}
 };
@@ -243,47 +248,49 @@ public:
     itkGetConstMacro(NumberOfSpectralBands, uint32_t);
     itkSetMacro(ProjectionRef, std::string);
     itkGetConstMacro(ProjectionRef, std::string);
-    itkGetConstMacro(OriginX, uint32_t);
-    itkSetMacro(OriginX, uint32_t);
-    itkGetConstMacro(OriginY, uint32_t);
-    itkSetMacro(OriginY, uint32_t);
+    itkGetConstMacro(OriginX, double);
+    itkSetMacro(OriginX, double);
+    itkGetConstMacro(OriginY, double);
+    itkSetMacro(OriginY, double);
 
-    /** To avoid multiple memory reallocation, it would be better to indicate
+    /**\brief To avoid multiple memory reallocation, it would be better to indicate
         as soon as possible the maximum number of nodes in the graph in order
         to reserve memory space.
     */
     void SetNumberOfNodes(const uint64_t numNodes);
 
-    /** This method adds a node in the graph and returns its address */
+    /**\brief This method adds a node in the graph and returns its address */
     inline NodeType* AddNode();
 
-    /** This methods initialize the node given its position in the image */
+    /**\brief This methods initialize the node given its position in the image */
     void InitStartingNode(NodeType* node, const IdType id);
 
-    /** This method simply returns the number of nodes in the graph */
+    /**\brief This method simply returns the number of nodes in the graph */
     inline uint64_t GetNumberOfNodes() const;
 
-    /** Given the position of the node in the graph, this methods simply
+    /**\brief Given the position of the node in the graph, this methods simply
         returns the adress to this node.
      */
     inline NodeType* GetNodeAt(const IdType id);
 
-    /** This methods removes all outgoing edges targeting this node */
+    /**\brief This methods removes all outgoing edges targeting this node */
     void RemoveEdgesToThisNode(NodeType& node);
 
-    /** This method applies a lambda function on each node of the graph. */
+    /**\brief This method applies a lambda function on each node of the graph. */
     template< typename LambdaFunctionType >
     void ApplyForEachNode(LambdaFunctionType f);
 
-    /** This method merges two adjacent nodes: nodeOut merges into nodeIn */
+    /**\brief This method merges two adjacent nodes: nodeOut merges into nodeIn
+     * @param: Node in (node which will be updated after merge)
+     * @param: Node out (node which will be removed after merge)*/
     void Merge(NodeType* nodeIn, NodeType* nodeOut);
 
-    /** This methods removes the expired nodes from the graph, i.e
+    /** \brief This methods removes the expired nodes from the graph, i.e
         those whose m_HasToBeRemoved is true.
     */
     void RemoveNodes();
 
-    /** This methods returns the quantity of memory in bytes to store this graph */
+    /** \brief This methods returns the quantity of memory in bytes to store this graph */
     uint64_t GetMemorySize() const;
 
     /* Debug */
@@ -293,23 +300,29 @@ public:
     inline NodeIterator Begin(){ return m_Nodes.begin(); }
     inline NodeIterator End(){return m_Nodes.end();}
 
+    /**\brief Insert another graph at the end of this graph
+     * \param : Other graph*/
     void InsertAtEnd(const Pointer& other)
     {
         m_Nodes.insert(m_Nodes.end(), other->Begin(), other->End());
     }
 
+    /**\brief Move the graph to the input pointer
+    * \param : Other graph, where the current graph will be moved*/
     void GraftGraphByMove(Self * other)
     {
         m_Nodes = std::move(other->m_Nodes);
         CopyAttributes(other);
     }
-
+    /**\brief Copy a graph
+     * \param : Input graph*/
     void CopyGraph(ConstPointer other)
     {
         m_Nodes = other->m_Nodes;
         CopyAttributes(other);
     }
 
+    /**\brief Removes all nodes*/
     void Reset()
     {
         m_Nodes.clear();
@@ -340,13 +353,16 @@ protected:
     uint32_t m_ImageWidth;
     uint32_t m_ImageHeight;
     uint32_t m_NumberOfSpectralBands;
-    uint32_t m_OriginX;
-    uint32_t m_OriginY;
+    double m_OriginX;
+    double m_OriginY;
     std::string m_ProjectionRef;
 
 
 private:
 
+    /**\brief Merge edge between 2 nodes by updating contour, boundary, edges, etc ...
+     * \param: Node in
+     * \param: Node Out*/
     void MergeEdge(NodeType* nodeIn, NodeType* nodeOut);
 };
 

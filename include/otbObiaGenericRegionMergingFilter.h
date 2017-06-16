@@ -2,12 +2,25 @@
 #define __otbObiaGenericRegionMergingFilter_h
 #include "otbObiaGraphToGraphFilter.h"
 
+/**
+\file otbObiaGenericRegionMergingFilter.h
+\brief This file define the generic filter used to compute a segmentation using Baatz & Schäpe or to merge small regions
+*/
+
 namespace otb
 {
 
 namespace obia
 {
 
+/**\class GenericRegionMergingFilter otbObiaGenericRegionMergingFilter.h
+ * \brief Class defining the generic filter.
+ * It is templated by:
+ * - An input graph type (like Baatz graph)
+ * - An output graph type (generally same as input)
+ * - A merging cost func, used to describe the cost between nodes in order to decide when to merge
+ * - An heuristic func use to decide which node is the best adjacent node in a graph
+ * - An update attribute func used to update meta data of merged node (like area, mean, etc ...)\n*/
 template< typename TInputGraph,
           typename TOutputGraph,
           typename TMergingCostFunc,
@@ -37,7 +50,7 @@ public:
     using UpdateAttributeFuncType = TUpdateAttributeFunc;
 
 
-    /** Method for creation through the object factory. */
+    /**\brief Method for creation through the object factory. */
     itkNewMacro(Self);
 
     /** Run-time type information (and related methods). */
@@ -53,11 +66,19 @@ public:
 
     itkGetMacro(UpdateAttributeFunc, UpdateAttributeFuncType *);
 
+    /**\brief Set the merging cost func
+     * \param Merging cost function*/
     void SetMergingCostFunc(MergingCostFunctionType * mergingCost){m_MergingCostFunc = mergingCost;};
+
+    /**\brief Set the heuristic cost func
+     * \param Heuristic function*/
     void SetHeuristicFunc(HeuristicType * heuristicFunc){m_HeuristicFunc = heuristicFunc;};
+
+    /**\brief Set the update attribute func
+     * \param Update attribute func*/
     void SetUpdateAttributeFunc(UpdateAttributeFuncType * updateAttribute){m_UpdateAttributeFunc = updateAttribute;};
 
-    /**Check validity of the object*/
+    /**\brief Check validity of the object, it checks if the 3 required functions are set (not nullptr)*/
     virtual void CheckValidity();
 protected:
 
@@ -68,19 +89,18 @@ protected:
 
     void GenerateData();
 
-    /** 
-        Generic method applying one iteration of a region merging procedure
+    /** \briefGeneric method applying one iteration of a region merging procedure
         Can be override by inherited classes for very specific cases.
     */
     virtual bool DoOneIteration();
 
-    /**
-        Generic method that merges two adjacent nodes.
+    /**\brief Generic method that merges two adjacent nodes.
+     * \param: Node in
+     * \param: Node out which will merge with node in
     */
     virtual void Merge(NodeType* nodeIn, NodeType * nodeOut);
 
-    /**
-        Generic method computing the merging cost between pair of adjacent
+    /**\brief Generic method computing the merging cost between pair of adjacent
         nodes in an adjacent graph.
         Can be override by inherited classes for specific cases.
     */
@@ -89,13 +109,13 @@ protected:
 
 private:
 
-    /** For a region merging process, there will be always a maximum number of iterations. */
+    /**\brief For a region merging process, there will be always a maximum number of iterations. */
     unsigned int m_MaxNumberOfIterations;
 
-    /** Real number of iterations done. */
+    /**\brief Real number of iterations done. */
     unsigned int m_AppliedNumberOfIterations;
 
-    /** It will be always necessary to know if there has been merges during the last iteration. */
+    /*\brief It will be always necessary to know if there has been merges during the last iteration. */
     bool m_MergingOver;
 
     /** Pointers to functions that needs to be specialized */

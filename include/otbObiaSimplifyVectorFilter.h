@@ -77,7 +77,16 @@ public:
 
 	void GenerateInputRequestedRegion() ITK_OVERRIDE;
 
-	/** Generate Data method*/
+	/**\brief Generate Data method. Steps are following:
+	 * - Initialize output dataset (setting layers definition , fields, etc ...)
+	 * - Compute bounding box (to check if polygon is in the tile or not)
+	 * - For each feature
+	 * 		-# Get all adjacent features
+	 * 		-# Compute intersection with the current feature and all adjacents and set fields to the current feature
+	 * 	- Reconstruct each polygon from the edges list
+	 * 	- Clean invalid polygon (for example self intersecting)
+	 * 	- Remove polygons outside the tile
+	 * 		*/
 	void GenerateData() ITK_OVERRIDE;
 
 	/** DataObject pointer */
@@ -100,31 +109,53 @@ public:
 	/**Intersect with bounding box and nodata layer*/
 	std::vector<OGRGeometry*> IntersectWithBoundaries(OGRFeatureType feature);
 
-	/**Convert feature to edge
+	/**\brief Convert feature to edge. This method loop over all adjacents features.
+	 * Then, it checks if current feature or adjacent feature is a parallelogram.
+	 * If one of features is parallelogram, then we do not simplify the intersection.
+	 * It also check if current feature is englobed or englobing. If it is the case, we do nothing, we just simply keep
+	 * the unismplified polygon
+	 * If none of the previous case, then compute intersection and simplify (if activated) the intersected line
 	 * @param : Current feature
 	 * @param: adjacent features
 	 * @param: Layer to store englobed polygons, will be processed later*/
 	void ConvertToEdges(OGRFeatureType feature, std::vector<OGRFeatureType> adjFeatures,
 						OGRLayerType& insidePolygons);
 
-	/**Create an edge*/
+	/**Create an edge
+	 * This method create and add edge to map m_PolygonEdges. It calls the simplify method to simplify the intersected
+	 * geometry. It is added twice: one for refFeature, and one for adjFeature (using startCoord as key)
+	 * \param: Intersected geometry
+	 * \param: Reference feature
+	 * \param: Adjacent feature
+	 * \param: Flag indicating if geometry will be simplified*/
 	void AddEdge(OGRGeometry* intersectedGeometry,
 				 OGRFeatureType refFeature, OGRFeatureType adjFeature,
 				 bool isSimplify = true);
 
-	/**Create interior edge*/
+	/**\brief Create interior edge using englobing and englobed feature
+	 * This method will allows to reconstruct interior ring when reconstructing polygon
+	 * \param: Englobing feature
+	 * \param: Englobed feature
+	 * \param: Flag to activate simplification*/
 	void CreateInteriorEdge(OGRFeatureType englobingFeature, OGRFeatureType englobedFeature, bool isSimplify = true);
 
 	/**Compute interected features*/
 	void IntersectFeatures(OGRFeatureType refFeature, OGRFeatureType adjFeature, bool isSimplify = true);
 
-	/**Compute Edge*/
+	/**\brief Convert a geometry collection to edge. All geometries inside the geometry collection are converted
+	 * to edge by using AddEdge method.
+	 * \param: Intersected geometry
+	 * \param: Ref Feature used for AddEdge
+	 * \param: Adjacent feature used for addEdge*/
 	void ConvertGeometryCollectionToEdge(OGRGeometry* intersectedLine, OGRFeatureType refFeature, OGRFeatureType adjFeature, bool isSimplify = true);
 
-	/**Reconstruct all polygons from lines geometry*/
+	/**\brief Reconstruct all polygons from lines geometry. A loop over all key inside the map m_PolygonEdges is done.
+	 * All edges for a given key are extracted and rebuilt as a polygon by calling ReconstructPolygon*/
 	void ReconstructAllPolygons();
 
-	/** Reconstruct polygon
+	/** Reconstruct polygon. It first creates all linestring (made wtih 2 points), and then sort the vector containing
+	 * these linestring. Once it is sorted, it creates a new geometry taking all linestring from the sorted vector as
+	 * exterior rings.
 	 * @param Coord of polygon
 	 * @param : Vector for adjcent coords
 	 * @return : created feature*/
@@ -150,10 +181,14 @@ public:
 	 * @param: New geometry with "holes" (removed englobed polygons)*/
 	OGRGeometry* AddInteriorRings(OGRGeometry* fixedPolygon,double startCoords);
 
-	/** Clean OGR Layer*/
+	/** Clean OGR Layer. This method will repear invalid polygon (like self-intersecting).*/
 	void CleanLayer();
 
-	/** Remove overlapping after fixing features*/
+	/** Remove overlapping after fixing features.
+	 *  Fixed polygons are inserted at the end of the dataset (because processed at the end), so we use
+	 *  nbFixedFeatures to loop over fixed polygons in order to remove overlapping (fixed polygons tends to overlap)
+	 * \param: Reconstructed layer
+	 * \param: Number of fixed features*/
 	void RemoveOverlappingFeatures(OGRLayerType& reconstructedLayer, unsigned int nbFixedFeatures);
 
 	/** Remove border polygons*/
@@ -166,7 +201,9 @@ public:
 	void operator =(const Self&);      //purposely not implemented
 
 	std::string m_FieldName;
+
 	SimplifyFunc* m_simplifyFunc;
+
 	std::string m_LayerName;
 
 	/**BB Features*/

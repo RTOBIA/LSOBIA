@@ -1,17 +1,17 @@
-#include "otbObiaComputeAttributsFilter.h"
+#include <otbObiaComputeAttributesFilter.h>
+#include <otbObiaComputeAttributesFilter.h>
+#include <otbObiaGenericAttribute.h>
+#include <otbObiaMeanAttribute.h>
 #include "otbWrapperApplication.h"
 #include "otbWrapperApplicationFactory.h"
-#include "otbObiaComputeAttributsFilter.h"
 #include "otbObiaConstExpr.h"
 #include "otbImageFileReader.h"
-#include "otbObiaGenericAttribut.h"
-#include "otbObiaMeanAttribut.h"
 
 #define NUM_ELEMENT 4
 
 using InputImageType = otb::VectorImage<float, 2>;
 using PixelType      = InputImageType::PixelType;
-std::vector<otb::obia::GenericAttribut<InputImageType>*> CreateAttributs();
+std::vector<otb::obia::GenericAttribute<InputImageType>*> CreateAttributs();
 
 bool isOn(const std::string & str)
 {
@@ -53,8 +53,8 @@ int otbLSOBIAComputeAttributsTest(int argc, char *argv[])
 
 	//Compute attributs
 	using OGRDataSourceType = otb::ogr::DataSource;
-	using ComputeAttributsFilterType = otb::obia::ComputeAttributsFilter<InputImageType>;
-	auto computeAttributs = ComputeAttributsFilterType::New();
+	using ComputeAttributesFilterType = otb::obia::ComputeAttributesFilter<InputImageType>;
+	auto computeAttributs = ComputeAttributesFilterType::New();
 
 	OGRDataSourceType::Pointer outputDs = otb::ogr::DataSource::New(vectorFile, OGRDataSourceType::Modes::Read); //default 2nd argument is read
 	std::cout << "Number of layers = " << outputDs->GetLayersCount() << std::endl;
@@ -74,12 +74,12 @@ int otbLSOBIAComputeAttributsTest(int argc, char *argv[])
     return EXIT_SUCCESS;
 }
 
-std::vector<otb::obia::GenericAttribut<InputImageType>*> CreateAttributs()
+std::vector<otb::obia::GenericAttribute<InputImageType>*> CreateAttributs()
 {
-	using GenericAttributType = otb::obia::GenericAttribut<InputImageType>;
-	using MeanAttributType = otb::obia::MeanAttribut<InputImageType>;
-	std::vector<otb::obia::GenericAttribut<InputImageType>*> attributs;
-	GenericAttributType* meanAttribut = new MeanAttributType();
+	using GenericAttributeType = otb::obia::GenericAttribute<InputImageType>;
+	using MeanAttributeType = otb::obia::MeanAttribute<InputImageType>;
+	std::vector<otb::obia::GenericAttribute<InputImageType>*> attributs;
+	GenericAttributeType* meanAttribut = new MeanAttributeType();
 	attributs.push_back(meanAttribut);
 
 	return attributs;

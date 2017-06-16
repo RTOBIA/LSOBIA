@@ -4,8 +4,11 @@
 #include <limits>
 
 #include "otbObiaGraphToGraphFilter.h"
-//#include "otbObiaSmallRegionsMergingGraph.h"
 
+/**
+\file otbObiaSmallRegionsMergingFilter.h
+\brief This file define all classes required for  small regions merging (merging cost, heuristic, update attributes)
+*/
 namespace otb
 {
 namespace obia
@@ -80,25 +83,13 @@ public:
     ~SRMHeuristic();
 
     NodeType* GetBestAdjacentNode(NodeType* curNode);
-    NodeType* GetNodeOut(NodeType* nodeIn);
-    void ValidateNodeIn(NodeType* nodeIn);
-    void SortEdges(NodeType* node);
 
     /** Get/Set methods */
     void SetGraph(GraphPointerType graph){ m_Graph = graph;};
-    void SetThreshold(float threshold){m_Threshold = threshold;};
     void SetMinimalSurface(uint32_t minimalSurface){m_MinimalSurface = minimalSurface;};
-    //itkSetMacro(Graph, GraphPointerType);
-    //itkSetMacro(Threshold, float);
-
-    //itkGetConstMacro(Graph, GraphPointerType);
-    //itkGetConstMacro(Threshold, float);
 
 protected:
 
-    /**Constructor*/
-    /*BaatzHeuristic();
-    ~BaatzHeuristic();*/
 
     /**Compute spectral distance*/
     float ComputeSpectralDistance(NodeType* node1, NodeType* node2);

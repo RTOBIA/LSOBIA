@@ -9,7 +9,7 @@ int otbObiaLSSmallRegionsMerging(int argc, char * argv[])
 	{
 
 	  std::cerr << "Usage " << argv[0] << ": \n"
-			<< "Argument 1: " << "[path to the input image]\n"
+			<< "Argument 1: " << "[path to the input graph]\n"
 			<< "Argument 2: " << "[max tile size with respect to x axis]\n"
 			<< "Argument 3: " << "[max tile size with respect to y axis]\n"
 			<< "Argument 4: " << "[number of iterations for the first partial segmentation]\n"
@@ -68,9 +68,9 @@ int otbObiaLSSmallRegionsMerging(int argc, char * argv[])
 	lsBaatzFilter->SetOutputDir(outDir);
 	lsBaatzFilter->SetAggregateGraphs(false);
 	lsBaatzFilter->Update();
-
 	std::cout << "------------ SMALL REGION MERGING " << std::endl;// mpiConfig->GetMyRank() << std::endl;
 
+	std::cout << "Number of tile = " << lsBaatzFilter->GetNumberOfTilesX() << std::endl;
 	//Filtre post-processing
 	using LSSmallRegionsMergingType = otb::obia::LSSmallRegionsMergingScheduler<LSBaatzSegmentationSchedulerType::OutputGraphType>;
 	auto lsSMR = LSSmallRegionsMergingType::New();
@@ -92,9 +92,10 @@ int otbObiaLSSmallRegionsMerging(int argc, char * argv[])
 	lsSMR->SetNumberOfTilesY(lsBaatzFilter->GetNumberOfTilesY());
 
 	lsSMR->SetMaxNumberOfTilesPerProcessor(lsBaatzFilter->GetMaxNumberOfTilesPerProcessor());
-	lsSMR->SetMinimalSurface(200);
-	lsSMR->SetNumberOfIterations(2);
-	lsSMR->SetAggregateGraph(true);
+	lsSMR->SetMinimalSurface(400);
+	lsSMR->SetNumberOfIterations(1);
+	lsSMR->SetAggregateGraph(false);
+	lsSMR->SetWriteImage(true);
 	if(lsBaatzFilter->GetTileMap().size() <= 1)
 	{
 		std::cout << "Adding Graph" << std::endl;

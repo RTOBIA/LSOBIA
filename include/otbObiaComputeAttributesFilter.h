@@ -1,9 +1,14 @@
-#ifndef otbObiaComputeAttributsFilter_h
-#define otbObiaComputeAttributsFilter_h
+#ifndef otbObiaComputeAttributesFilter_h
+#define otbObiaComputeAttributesFilter_h
 
+#include <otbObiaGenericAttribute.h>
 #include <otbPersistentSamplingFilterBase.h>
-#include "otbObiaGenericAttribut.h"
 
+/**
+\file otbObiaComputeAttributsFilter.h
+\brief This file define the filter used to compute attributs. It extracts samples from a ROI and compute
+all the attributes given
+*/
 namespace otb
 {
 namespace obia
@@ -11,12 +16,12 @@ namespace obia
 
 /**Class specializing the merging cost function required by the generic filter*/
 template <class TInputImage, class TMaskImage = otb::Image<unsigned char,2> >
-class ComputeAttributsFilter : public PersistentSamplingFilterBase<TInputImage, TMaskImage>
+class ComputeAttributesFilter : public PersistentSamplingFilterBase<TInputImage, TMaskImage>
 {
 	public:
 
 		/** Standard typedefs */
-	  using Self 				= ComputeAttributsFilter<TInputImage, TMaskImage>;
+	  using Self 				= ComputeAttributesFilter<TInputImage, TMaskImage>;
 	  using Superclass   		= PersistentSamplingFilterBase<TInputImage, TMaskImage>;
 	  using Pointer 			= itk::SmartPointer<Self>;
 	  using ConstPointer	    = itk::SmartPointer<const Self>;
@@ -28,15 +33,15 @@ class ComputeAttributsFilter : public PersistentSamplingFilterBase<TInputImage, 
 	  /** Creation through object factory macro */
 	  itkNewMacro(Self);
 
-	  itkTypeMacro(ComputeAttributsFilter, PersistentSamplingFilterBase);
+	  itkTypeMacro(ComputeAttributesFilter, PersistentSamplingFilterBase);
 
 
 	  /** Template parameters typedefs */
-	  using InputImageType 	    = TInputImage;
-	  using MaskImageType 	    = TMaskImage;
-	  using InputPixelType	    = typename InputImageType::InternalPixelType;
-	  using RegionType 	  	    = typename InputImageType::RegionType;
-	  using GenericAttributType = GenericAttribut<InputImageType>;
+	  using InputImageType 	     = TInputImage;
+	  using MaskImageType 	     = TMaskImage;
+	  using InputPixelType	     = typename InputImageType::InternalPixelType;
+	  using RegionType 	  	     = typename InputImageType::RegionType;
+	  using GenericAttributeType = GenericAttribute<InputImageType>;
 
 
 	  /** Set/Get macro for the field name containing class names
@@ -60,13 +65,13 @@ class ComputeAttributsFilter : public PersistentSamplingFilterBase<TInputImage, 
 	   virtual void Synthetize(void);
 
 	  /**Set all computing attributs method*/
-	   void SetAttributs(std::vector<GenericAttributType*> attributs){ m_Attributs = attributs;};
+	   void SetAttributs(std::vector<GenericAttributeType*> attributs){ m_Attributs = attributs;};
 
 	protected:
 	  /** Constructor */
-	  ComputeAttributsFilter();
+	  ComputeAttributesFilter();
 	  /** Destructor */
-	  ~ComputeAttributsFilter() ITK_OVERRIDE {};
+	  ~ComputeAttributesFilter() ITK_OVERRIDE {};
 
 	  /** Generate data should thread over */
 	  void GenerateData(void) ITK_OVERRIDE;
@@ -93,7 +98,7 @@ class ComputeAttributsFilter : public PersistentSamplingFilterBase<TInputImage, 
 	  std::string m_InputLayerName;
 
 	  //Vector of GenericAttributs
-	  std::vector<GenericAttributType*> m_Attributs;
+	  std::vector<GenericAttributeType*> m_Attributs;
 
 	  //Vector containing samples
 	  std::map<unsigned int, std::vector<InputPixelType> > m_Samples;
@@ -119,6 +124,6 @@ class ComputeAttributsFilter : public PersistentSamplingFilterBase<TInputImage, 
 
 } // end of namespace obia
 } // end of namespace otb
-#include "otbObiaComputeAttributsFilter.txx"
+#include <otbObiaComputeAttributesFilter.txx>
 #endif
 

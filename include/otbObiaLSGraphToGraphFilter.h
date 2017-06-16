@@ -6,12 +6,20 @@
 #include "itkLightObject.h"
 #include "otbObiaGraphOperations.h"
 
-
+/**
+\file otbObiaLSGraphToGraphFilter.h
+\brief This file define the class which will be used for filter processing graph in a multiprocess environnment
+*/
 namespace otb
 {
 namespace obia
 {
 
+/**\class LSGraphToGraphFilter otbObiaLSGraphToGraphFilter.h
+ * \brief Class handling multi-processing of a graph
+ * Templated by:
+ * - an input graph type
+ * - an output graph type*/
 template< typename TInputGraph, typename TOutputGraph>
 class LSGraphToGraphFilter : public itk::LightObject
 {

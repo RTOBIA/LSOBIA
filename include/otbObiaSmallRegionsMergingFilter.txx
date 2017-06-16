@@ -11,7 +11,7 @@ namespace obia
 
 template< typename TCost, typename TGraph >
 SRMMergingCost<TCost, TGraph>
-::SRMMergingCost()
+::SRMMergingCost() : m_MinimalSurface(0)
 {
     std::cout << "New SMR Cost" << std::endl;
 }
@@ -111,28 +111,7 @@ SRMHeuristic<TGraph>
 				}
 			}
 		}
-
-		//Check mutuality
-
-		//auto cost = node->m_Edges.front().m_Attributes.m_MergingCost;
-/*
-		if(bestAdjNode->GetFirstPixelCoords() == 478346)
-		{
-			std::cout << "Best 478346 = " << bestAdjNode->m_Attributes.m_Area << std::endl;
-		}
-		if(node->GetFirstPixelCoords() == 478346)
-		{
-			std::cout << "Node 478346 = " << bestAdjNode->m_Attributes.m_Area << std::endl;
-		}
-		if(bestAdjNode->GetFirstPixelCoords() == 477336)
-		{
-			std::cout << "Node Best 477336 = " << bestAdjNode->m_Attributes.m_Area << std::endl;
-			std::cout << "Node " << node->GetFirstPixelCoords() << " = " << node->m_Attributes.m_Area << std::endl;
-		}*/
-
-
 	}
-
 
 	return nullptr;
 
@@ -242,35 +221,6 @@ SRMHeuristic<TGraph>
 	{
 		return false;
 	}
-	/*
-	for(auto edgeIt = node_2->Begin(); edgeIt != node_2->End(); edgeIt++)
-	{
-		//get node targeted by the edge
-		auto adjNode = outputGraph->GetNodeAt(edgeIt->m_TargetId);
-
-		if(adjNode->m_Attributes.m_Area <= m_MinimalSurface)
-		{
-			//Compute distance
-			float curDistance = ComputeSpectralDistance(node_2, adjNode);
-
-			//Update minDistance if required
-			if(curDistance < minDistance)
-			{
-				//std::cout << "Update distance" << std::endl;
-				//Update min distance
-				minDistance = curDistance;
-				bestNode = adjNode;
-			}else if(minDistance == curDistance)
-			{
-				//Get the node with the lowest ID
-				if(adjNode->GetFirstPixelCoords() < bestNode->GetFirstPixelCoords())
-				{
-					//Update bestNode
-					bestNode = adjNode;
-				}
-			}
-		}
-	}*/
 
 	if(bestNode->m_Id == node_1->m_Id)
 	{
@@ -280,29 +230,6 @@ SRMHeuristic<TGraph>
 	{
 		return false;
 	}
-
-}
-
-template< typename TGraph >
-typename SRMHeuristic<TGraph>::NodeType*
-SRMHeuristic<TGraph>
-::GetNodeOut(NodeType* nodeIn)
-{
-	auto bestAdjNode = GetMostSimilarNode(nodeIn);
-
-	if(bestAdjNode != nullptr)
-	{
-		if(bestAdjNode->m_Valid)
-		{
-			if(CheckMutuality(nodeIn, bestAdjNode))
-			{
-				return bestAdjNode;
-
-			}
-		}
-	}
-
-	return nullptr;
 
 }
 
@@ -328,79 +255,6 @@ SRMHeuristic<TGraph>
     }
 
     return spec_distance;
-}
-
-
-template< typename TGraph >
-void
-SRMHeuristic<TGraph>
-::ValidateNodeIn(NodeType* nodeIn)
-{
-
-    /*auto outputGraph = this->m_Graph;
-
-
-    //nodeIn->m_Valid = true;
-    //Compute new cost
-    //Loop over edge
-    for(auto edgeIt = nodeIn->Begin(); edgeIt != nodeIn->End(); edgeIt++)
-    {
-        auto adjNode = outputGraph->GetNodeAt(edgeIt->m_TargetId);
-
-        //Update merging cost for both node
-        auto cost =  ComputeSpectralDistance(nodeIn, adjNode);
-        edgeIt->m_Attributes.m_MergingCost = cost;
-        adjNode->FindEdge(nodeIn->m_Id)->m_Attributes.m_MergingCost = cost;
-
-		//SortEdges(adjNode);
-	}*/
-	//nodeIn->m_Valid = true;
-	//SortEdges(nodeIn);
-}
-
-template< typename TGraph >
-void
-SRMHeuristic<TGraph>
-::SortEdges(NodeType* node)
-{
-    auto outputGraph = this->m_Graph;
-    double maxCost = std::numeric_limits<double>::max();
-    //Loop edge
-    int idx =0 ;
-    int minIdx = 0;
-    int minCoord = 0;
-    for(auto edgeIt = node->Begin(); edgeIt != node->End(); edgeIt++)
-    {
-        auto cost = edgeIt->m_Attributes.m_MergingCost;
-        if(cost < maxCost)
-        {
-            //Update index
-            minIdx = idx;
-
-            //Update coord
-            minCoord = outputGraph->GetNodeAt(node->m_Edges[minIdx].m_TargetId)->GetFirstPixelCoords();
-            //Update max cost
-            maxCost = cost;
-
-
-        }else if(cost == maxCost){
-            //Get Id of the current idx
-            auto adjNode_2 = outputGraph->GetNodeAt(edgeIt->m_TargetId);
-            if(adjNode_2->GetFirstPixelCoords() < minCoord){
-
-                //Update index
-                minIdx = idx;
-
-                //Update coord
-                minCoord = adjNode_2->GetFirstPixelCoords();
-            }
-        }
-        idx++;
-    }
-
-    //SWAP
-    std::swap(node->m_Edges[0], node->m_Edges[minIdx]);
-
 }
 template< typename TGraph >
 SRMUpdateAttribute<TGraph>

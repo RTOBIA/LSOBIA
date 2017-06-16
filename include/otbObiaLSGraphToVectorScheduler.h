@@ -6,11 +6,20 @@
 #include "otbObiaGraphOperations.h"
 #include <otbOGRDataSourceWrapper.h>
 
+/**
+\file otbObiaLSGraphToVectorScheduler.h
+\brief This file define the class which will be used for filter processing graph into a vector
+ 	 	in a multiprocess environnment
+*/
 namespace otb
 {
 namespace obia
 {
 
+/**\class LSGraphToVectorScheduler otbObiaLSGraphToGraphFilter.h
+ * \brief Class handling multi-processing of a graph into a vector
+ * Templated by:
+ * - an input graph type*/
 template< typename TInputGraph>
 class LSGraphToVectorScheduler : public itk::LightObject
 {
@@ -28,7 +37,7 @@ public:
     /** Some convenient class alias */
     using InputGraphType = TInputGraph;
     using InputGraphPointerType = typename InputGraphType::Pointer;
-    using OGRLayerType			= typename otb::ogr::Layer;
+    using OGRLayerType			= otb::ogr::Layer;
     using GraphOperationsType = GraphOperations<InputGraphType>;
     using OGRDataSourceType = otb::ogr::DataSource;
     using OGRDataSourcePointerType = otb::ogr::DataSource::Pointer;

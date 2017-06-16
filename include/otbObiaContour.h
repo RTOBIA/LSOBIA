@@ -9,18 +9,19 @@
 #include "otbObiaConstExpr.h"
 #include "otbObiaSpatialTools.h"
 
+
+/**
+\file otbObiaContour.h
+\brief This file define a contour used in graph
+*/
 namespace otb
 {
 
 namespace obia
 {
 
-/*
-*    Contour
-*
-*    Optimized representation of the contour of
-*    a region in an image using the freeman chain
-*    code.
+/**\class Contour otbObiaContour.h
+/*	\brief Optimized representation of the contour of a region in an image using the freeman chain code.
 **/
 class Contour
 {    

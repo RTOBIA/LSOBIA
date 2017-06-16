@@ -18,7 +18,7 @@ DouglasPeukerFunc
 ::~DouglasPeukerFunc()
 {
 	/**This class do not delete output geom.
-	 * Pay attentio nwith m_outputGeom to delete it after...*/
+	 * Pay attention with m_outputGeom to delete it after...*/
 }
 
 
@@ -27,32 +27,23 @@ DouglasPeukerFunc
 ::SimplifyLine()
 {
 	/**Call GDAL Simplify for this geometry*/
-	/**TODO*/
-	//Check GDAL version, because the simplify preserve topology is undefined...
-	//std::cout <<" SIMPLIFY ==> " << m_inputGeom->exportToKML() << std::endl;
 	if(m_inputGeom->getGeometryType() == wkbMultiLineString)
 	{
 		//Force to linestring (clone the input. The memory is managed outside this class)
-		//forceToLineString consumes the passed geometry, so by cloning we nesure to keep inputgeom
+		//forceToLineString consumes the passed geometry, so by cloning we ensure to keep inputgeom
 		m_outputGeom = OGRGeometryFactory::forceToLineString(m_inputGeom->clone(), false);
 
 		//Care: forcetolinestring can still produce a multilinestring which cannot be simplified
-		//TODO: maybe add so robustness to that
-
-		//std::cout << "Line string : " << m_outputGeom->exportToKML() << std::endl;
 		m_outputGeom = m_outputGeom->SimplifyPreserveTopology(this->m_tolerance);
 
-		//Check if the output line if vertical or horizontal
-		if(VectorOperations::IsVerticalOrHorizontal((OGRLineString*) m_outputGeom))
-		{
-			//Do not use this geometry, clone the entry one
-			delete m_outputGeom;
-			m_outputGeom = m_inputGeom->clone();
-		}
-
-		//std::cout << "AFTER OUTPUT GEOM = " << m_outputGeom->exportToGML() << std::endl;
-
-		//exit(1);
+		//NO MORE USEFULL SINCE WE CAN HANDLE INVALID GEOMETRIES
+		//		//Check if the output line if vertical or horizontal
+//		if(VectorOperations::IsVerticalOrHorizontal((OGRLineString*) m_outputGeom))
+//		{
+//			//Do not use this geometry, clone the entry one
+//			delete m_outputGeom;
+//			m_outputGeom = m_inputGeom->clone();
+//		}
 	}
 	else if(m_inputGeom->getGeometryType() == wkbLineString ||
 			m_inputGeom->getGeometryType() == wkbPoint		||
@@ -68,8 +59,6 @@ DouglasPeukerFunc
 		std::cout << "Geometry not valid :: " << m_inputGeom->exportToGML() << std::endl;
 		//std::cout << m_inputGeom->exportToKML() << std::endl;
 		m_outputGeom = nullptr;
-
-		exit(EXIT_FAILURE);
 	}
 
 	//std::cout <<" SIMPLIFIED ==> " << m_outputGeom->exportToKML() << std::endl;

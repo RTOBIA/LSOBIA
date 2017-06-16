@@ -1,7 +1,7 @@
-#ifndef otbObiaMeanAttribut_txx
-#define otbObiaMeanAttribut_txx
+#ifndef otbObiaMeanAttribute_txx
+#define otbObiaMeanAttribute_txx
 
-#include "otbObiaMeanAttribut.h"
+#include <otbObiaMeanAttribute.h>
 
 namespace otb
 {
@@ -9,25 +9,25 @@ namespace obia
 {
 
 template< class TInputImage >
-MeanAttribut<TInputImage>
-::MeanAttribut()
+MeanAttribute<TInputImage>
+::MeanAttribute()
 {
 	this->m_FieldName 	 = "Mean";
-	this->m_AttributName = "Mean Attribut";
+	this->m_AttributName = "Mean Attribute";
 	this->m_FieldType	 = OFTReal;
 }
 
 template< class TInputImage >
-MeanAttribut<TInputImage>
-::~MeanAttribut()
+MeanAttribute<TInputImage>
+::~MeanAttribute()
 {
 
 }
 
 /**Generate the required feature (for example instead of full polygon, we could only need exterior ring)*/
 template< class TInputImage >
-typename MeanAttribut<TInputImage>::OGRFeatureType
-MeanAttribut<TInputImage>
+typename MeanAttribute<TInputImage>::OGRFeatureType
+MeanAttribute<TInputImage>
 ::GenerateFeature(const OGRFeatureType inputFeature)
 {
 	//Create a new feature (clone of input feature because for the mean, we need the full geometry)
@@ -39,7 +39,7 @@ MeanAttribut<TInputImage>
 /**Compute the attribut*/
 template< class TInputImage >
 double
-MeanAttribut<TInputImage>
+MeanAttribute<TInputImage>
 ::ComputeAttribut(std::vector<PixelType> samples)
 {
 	double meanValue = 0.0;

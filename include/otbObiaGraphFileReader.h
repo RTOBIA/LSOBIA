@@ -10,6 +10,10 @@
 #include <string>
 #include <ostream>
 
+/**
+\file otbObiaGraphFileReader.h
+\brief This file define the class to read a graph from a file
+*/
 namespace otb
 {
 namespace obia
@@ -86,7 +90,7 @@ protected:
 
     virtual void UpdateOutputInformation();
 private:
-    /** Test whether the given filename exist and it is readable,
+    /**\brief Test whether the given filename exist and it is readable,
         this is intended to be called before attempting to use
         ImageIO classes for actually reading the file. If the file
         doesn't exist or it is not readable, and exception with an

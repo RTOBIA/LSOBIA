@@ -6,6 +6,10 @@
 #include "otbObiaGraph.h"
 #include "otbObiaImageToGraphFilter.h"
 
+/**
+\file otbObiaImageToBaatzGraphFilter.h
+\brief This file define classes and structure used to describe a Baatz graph
+*/
 namespace otb
 {
 namespace obia

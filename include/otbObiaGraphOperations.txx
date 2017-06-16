@@ -1004,6 +1004,7 @@ GraphOperations<TGraph>::DetectNewAdjacentNodes(std::unordered_map<CoordValueTyp
           // Retrieve the node that contains this pixel
           auto currBorderNode = kv.second.front();
 
+
           // Loop over the neigbhoring pixels.
           for(unsigned short n = 0; n < 4; n++)
         {

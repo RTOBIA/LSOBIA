@@ -18,7 +18,18 @@ m_LabelImageName("labelOutput"),
  m_SplittedGraph(false),
  m_WriteGraph(false),
  m_PaddingValue(0),
- m_Graph(nullptr)
+ m_Graph(nullptr),
+ m_MaxTileSizeX(0),
+ m_MaxTileSizeY(0),
+ m_ImageHeight(0),
+ m_ImageWidth(0),
+ m_NumberOfTilesX(0),
+ m_NumberOfTilesY(0),
+ m_MaxNumberOfTilesPerProcessor(0),
+ m_OriginX(0),
+ m_OriginY(0),
+ m_NumberOfSpectralBands(0),
+ m_AvailableMemory(0)
  {
  }
 

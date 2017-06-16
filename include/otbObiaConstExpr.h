@@ -23,9 +23,9 @@ constexpr uint64_t IdSize         = sizeof(IdType);
 constexpr uint64_t CoordValueSize = sizeof(CoordValueType);
 
 //Layer name
-const std::string originalLayerName		= "original";
-const std::string cleanedLayerName		= "cleaned";
-const std::string nodataLayerName		= "nodata";
+const std::string originalLayerName				= "original";
+const std::string cleanedLayerName				= "cleaned";
+const std::string nodataLayerName				= "nodata";
 //Field for vector
 const std::string labelFieldName		  	 	= "Label";
 const std::string startingCoordsFieldName 		= "StartingCoords";

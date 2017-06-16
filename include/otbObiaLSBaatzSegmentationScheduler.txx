@@ -21,7 +21,11 @@ m_MaxNumberOfIterations(75),
 m_CurrentNumberOfIterations(0),
 m_Threshold(1600), 
 m_SpectralWeight(0.5), 
-m_ShapeWeight(0.5)
+m_ShapeWeight(0.5),
+m_StartingNumberOfIterations(1),
+m_AggregateGraphs(false),
+m_MaxNumberOfBytes(0),
+m_PartialNumberOfIterations(1)
 {
     m_BandWeights.clear();
 }
@@ -67,6 +71,7 @@ LSBaatzSegmentationScheduler<TInputImage>
         imgToBaatzFilter->SetInput(imgReader->GetOutput());
         baatzFilter->SetInput(imgToBaatzFilter->GetOutput());
         baatzFilter->Update();
+
         this->m_Graph = baatzFilter->GetOutput();
 
     }
@@ -389,58 +394,6 @@ LSBaatzSegmentationScheduler<TInputImage>
 template< class TInputImage >
 void
 LSBaatzSegmentationScheduler<TInputImage>
-::PartialSegmentation(uint32_t numberIterations)
-{
-    int fusionSum = 1;
-    unsigned long int accumulatedMemory = this->m_AvailableMemory + 1;
-
-    auto mpiConfig = MPIConfig::Instance();
-    auto mpiTools = MPITools::Instance();
-
-    //Initialize Stability Margins
-    ExtractStabilityMargins();
-
-    while( m_CurrentNumberOfIterations <= m_MaxNumberOfIterations &&
-           accumulatedMemory > this->m_AvailableMemory &&
-           fusionSum > 0)
-    {
-       //TODO Previous: ExtractStabilityMargins();
-
-        AggregateStabilityMargins();
-
-        RunPartialSegmentation(accumulatedMemory, fusionSum);
-
-        m_CurrentNumberOfIterations += m_PartialNumberOfIterations;
-
-        ExtractStabilityMargins();
-
-    } // end while( accumulatedMemory > this->m_AvailableMemory && fusionSum > 0)
-
-    if(accumulatedMemory < this->m_AvailableMemory)
-    {
-        std::cout << "Aggregation" << std::endl;
-        FinalGraphAgregation();
-        this->m_SplittedGraph = false;
-
-        if(m_CurrentNumberOfIterations < m_MaxNumberOfIterations && fusionSum > 0)
-        {
-            std::cout << "Ending segmentation " << std::endl;
-            AchieveSegmentation();
-        }
-    }
-    else
-    {
-        // For now, we do not write the label image in this situation.
-        this->m_WriteLabelImage = false;
-
-        // Since we cannot aggregate the graph is splitted
-        this->m_SplittedGraph = true;
-    }
-
-}
-template< class TInputImage >
-void
-LSBaatzSegmentationScheduler<TInputImage>
 ::ExtractStabilityMargins()
 {
     auto mpiConfig = MPIConfig::Instance();
@@ -642,6 +595,9 @@ LSBaatzSegmentationScheduler<TInputImage>
                     // Deserialize the graph
                     auto subGraph = GraphOperationsType::DeSerializeGraph(otherSerializedMargin);
                     GraphOperationsType::AggregateGraphs(this->m_Graph, subGraph);
+
+                    //Reset subgraph
+            		subGraph->Reset();
                 }
 
                 // Retrieve the tile
@@ -709,21 +665,10 @@ LSBaatzSegmentationScheduler<TInputImage>
 
                 // Segmentation filter
                 auto baatzFilter = CreateFilter();
-                std::cout<<"Max Number of it : "<<m_MaxNumberOfIterations<<std::endl;
-                std::cout<<"PartialNumberOfIterations : "<<m_PartialNumberOfIterations<<std::endl;
-                
                 baatzFilter->SetMaxNumberOfIterations(std::min(m_PartialNumberOfIterations, m_MaxNumberOfIterations - m_CurrentNumberOfIterations + 1));
 
                 // Pipeline branching
                 baatzFilter->SetInput(this->m_Graph);
-
-                // Partial segmentation
-                //auto baatzFilter = BaatzSegmentationFilterType::New();
-                //baatzFilter->SetMaxNumberOfIterations(std::min(m_PartialNumberOfIterations, m_MaxNumberOfIterations - m_CurrentNumberOfIterations + 1));
-                //baatzFilter->SetThreshold(m_Threshold);
-                //baatzFilter->SetSpectralWeight(m_SpectralWeight);
-                //baatzFilter->SetShapeWeight(m_ShapeWeight);
-                //baatzFilter->SetBandWeights(m_BandWeights);
                 baatzFilter->Update();
                 this->m_Graph = baatzFilter->GetOutput();
 
@@ -1055,6 +1000,7 @@ LSBaatzSegmentationScheduler<TInputImage>
     while(m_CurrentNumberOfIterations <= m_MaxNumberOfIterations &&
           fusionSum > 0)
     {
+    	std::cout << "Current iteration = " << m_CurrentNumberOfIterations << std::endl;
        // ExtractStabilityMargins();
 
         AggregateStabilityMargins();

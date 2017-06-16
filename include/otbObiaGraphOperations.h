@@ -7,6 +7,10 @@
 #include "otbObiaGraph.h"
 #include <unordered_set>
 
+/**
+\file otbObiaGraphOperations.h
+\brief This file define the class used for several operations in graph like extracting staiblity margins, serializing ...
+*/
 namespace otb
 {
 namespace obia
@@ -19,8 +23,8 @@ namespace obia
         int m_height;
         int m_nbBands;
         std::string m_projectionRef;
-        int m_originX;
-        int m_originY;
+        double m_originX;
+        double m_originY;
 
         GraphImageInfo():
             m_width(0),
@@ -51,62 +55,90 @@ namespace obia
       using NodeType = typename GraphType::NodeType;
       using EdgeType = typename GraphType::EdgeType;
 
-      // This method removes the nodes which are fully within the margin area. Those nodes
-      // might be instable. Therefore, in order to avoid propagating errors in the obia
-      // chains, those nodes have to be removed from the adjacent graph. The referential
-      // used to detect the unstable segment is the large scale input image referential.
-      // It is assumed that the starting coordinates and the bounding boxes of the nodes
-      // are in this referential. Otherwise, the resulting graph is unstable.
-      //
-      // @param graph: adjacent graph
-      //    @param imageWidth: input large scale image width
-
+      /**\brief  This method removes the nodes which are fully within the margin area.
+       *  Those nodesmight be instable. Therefore, in order to avoid propagating errors in the obia
+       *  chains, those nodes have to be removed from the adjacent graph. The referential
+       *  used to detect the unstable segment is the large scale input image referential.
+       *  It is assumed that the starting coordinates and the bounding boxes of the nodes
+       *  are in this referential. Otherwise, the resulting graph is unstable.\n
+       *  \param graph: adjacent graph
+       *  \param imageWidth: input large scale image width*/
       static void RemoveUnstableNodes(GraphPointerType graph,
                       const ProcessingTile& tile,
                       const uint32_t imageWidth);
 
-      // This method serializes an extracted stability margin into a sequence of bits that
-      // can be either sent via MPI requests or written in a binary file.
+      /**\brief This method serializes an extracted stability margin into a sequence of bits that
+       can be either sent via MPI requests or written in a binary file.
+       \param: Stability margin
+       \param: Graph used to check if a node contains a target which is not in the stability margins*/
       static std::vector<char> SerializeStabilityMargin(std::unordered_map< NodeType*, uint32_t >& stabilityMargin,
                             const GraphPointerType graph);
 
-      // This method serializes an adjacent graph into a sequence of bits that
-      // can be either sent via MPI requests or written in a binary file.
+      /**\brief This method serializes an adjacent graph into a sequence of bits that
+       *  can be either sent via MPI requests or written in a binary file.
+       * \param: Graph to serialize*/
       static std::vector<char> SerializeGraph(const GraphPointerType graph);
 
-      // This methods builds a graph from a bit stream. It is generic if all the needed
-      // serialization methods of the specific attributes are provided by the user.
+       /**\brief This methods builds a graph from a bit stream. It is generic if all the needed
+        * serialization methods of the specific attributes are provided by the user.
+        * \param: Deserialized graph
+        * \return: Pointer to reconstruced graph*/
       static GraphPointerType DeSerializeGraph(const std::vector<char>& serializedGraph);
 
-      // This methods serialize and write the serialized stability margin to disk.
+      /**\brief This methods serialize and write the margin graph margin to disk
+       * \param : Stability margin
+       * \param : Graph pointer used to serialize stability margins
+       * \param : File path for output file*/
       static void WriteMarginGraphToDisk(std::unordered_map< NodeType*, uint32_t >& stabilityMargin,
                      const GraphPointerType graph,
                      const std::string& outputPath);
 
-      // This methods writes the serialized stability margin to disk.
+      /**\brief This methods writes the serialized stability margin to disk.
+       * \param: Stability margin
+       * \param: File path for output file*/
       static void WriteSerializedMarginToDisk(const std::vector<char>& serializedStabilityMargin,
                           const std::string& outputPath);
 
-      // This methods simply writes the bit stream to a file stored on the disk.
+      /**\brief This methods simply writes the bit stream to a file stored on the disk.
+       * \param: Graph pointer
+       * \param: Output file path */
       static void WriteGraphToDisk(const GraphPointerType graph,
                    const std::string& outputPath);
 
-      // This methods loads a graph from its storage file on the disk.
+      /**\brief This methods loads a graph from its storage file on the disk.
+       * \param: Input file path
+       * \return: Pointer graph*/
       static GraphPointerType ReadGraphFromDisk(const std::string & inputPath);
 
+      /**\brief This methods loads a serialized margin from its storage file on the disk.
+      * \param: Input file path
+      * \return: Vector of char corresponding to the serialized margin*/
       static std::vector<char> ReadSerializedMarginFromDisk(const std::string& inputPath);
 
-      // Give the tile information (dimension and location in the input image), this method
-      // returns a list of nodes located at the borders of the tiles.
+      /**\brief Give the tile information (dimension and location in the input image), this method
+       * returns a list of nodes located at the borders of the tiles.
+       * \param: Graph which border nodes will be extracted
+       * \param: Current tile processed
+       * \param: Number of tiles X
+       * \param: Number of tiles Y
+       * \param: Width of the image (used to check if a node is border)
+       * \return: A list of border nodes*/
+      //
       static std::vector< NodeType* > GetListOfBorderNodes(const GraphPointerType graph,
                                                            const ProcessingTile& tile,
                                                            const uint32_t nbTilesX,
                                                            const uint32_t nbTilesY,
                                                            const uint32_t inputLSImageWidth);
 
-      // This methods extracts a subgraph corresponding to the stability margin for graphs of
-      // adjacent tiles. The stability margin value corresponds to the maximum number of adjacency
-      // layers.
+      /**\brief This methods extracts a subgraph corresponding to the stability margin for graphs of
+       * adjacent tiles. The stability margin value corresponds to the maximum number of adjacency layers.
+       * \param: Graph used to extract stability margin
+       * \param: Number of adjacency layers
+       * \param: Processed tile
+       * \param: Number of tiles X
+       * \param: Number of tiles Y
+       * \param: Width of the image
+       * \return: A list of nodes corresponding to the stability margin*/
       static std::unordered_map< NodeType*, uint32_t > ExtractStabilityMargin(const GraphPointerType graph,
                                           const uint32_t numMaxAdjacencyLayers,
                                           const ProcessingTile& tile,
@@ -114,57 +146,94 @@ namespace obia
                                           const uint32_t nbTilesY,
                                           const uint32_t inputLSImageWidth);
 
-      // This methods consists of a depth-bread first exploration of the edges of node given
-      // the map of the visited nodes so far with their exploration depth, the current exploration
-      // depth and the maximum exploration depth.
+      /**\brief This methods consists of a depth-bread first exploration of the edges of node given
+       * the map of the visited nodes so far with their exploration depth, the current exploration
+       * depth and the maximum exploration depth.
+       * \param: Node to explore
+       * \param: List of visited nodes
+       * \param: Graph to get nodes
+       * \param: Current number of adjacency layers
+       * \param: Max adjacency layers number*/
+
       static void RecursiveDepthBreadFirstExploration(NodeType * node,
                               std::unordered_map< NodeType*, uint32_t >& visitedNodes,
                               const GraphPointerType graph,
                               const uint32_t currentNumberOfAdjacencyLayers,
                               const uint32_t numMaxAdjacencyLayers);
 
-      // This methods consists of a depth-bread first exploration of the edges of node given
-      // the map of the visited nodes so far with their exploration depth, the current exploration
-      // depth and the maximum exploration depth.
+      /**\brief This methods consists of a depth-bread first exploration of the edges of node given
+       * the map of the visited nodes so far with their exploration depth, the current exploration
+       * depth and the maximum exploration depth.
+       * \param: Node to explore
+       * \param: List of visited nodes
+       * \param: Graph to get nodes
+       * \param: Current number of adjacency layers
+       * \param: Lambda function*/
       template<typename LambdaFunc>
       static void RecursiveDepthBreadFirstExploration(NodeType * node,
-                                                                          std::unordered_map< NodeType*, uint32_t >& visitedNodes,
+                                                      std::unordered_map< NodeType*, uint32_t >& visitedNodes,
                                                       const GraphPointerType graph,
                                                       const uint32_t currentNumberOfAdjacencyLayers,
                                                       LambdaFunc &lambda);
 
-      // This methods aggregates two graphs while preserving the property of the node ids.
+      /**\brief This methods aggregates two graphs while preserving the property of the node ids.
+       * \param: Graph
+       * \param: Graph to insert*/
       static void AggregateGraphs(GraphPointerType graph, 
                   GraphPointerType otherGraph);
 
 
-      // This method builds a map that assigns for each pixel located on the common borders
-      // of the tile with the adjacent tiles a node
+      /**\brief This method builds a map that assigns for each pixel located on the common borders
+       * of the tile with the adjacent tiles a node
+       * \param: Graph
+       * \param: Processed tile
+       * \param: Number of tiles X
+       * \param: Number of tiles Y
+       * \param: image width
+       * \return map of borders coordinates and vector of node associated to coordinate
+       * */
       static std::unordered_map<CoordValueType, std::vector<NodeType*> > BuildBorderNodesMap(const GraphPointerType graph,
                                                  const ProcessingTile& tile,
                                                  const uint32_t nbTilesX,
                                                  const uint32_t nbTilesY,
                                                  const uint32_t inputLSImageWidth);
 
-      // This methods does the same thing than the method BuildBorderNodesMap. The only difference 
-      // is that boundaries are given as parameters. This may be be factorized for a cleaner code.
+      /**\brief This methods does the same thing than the method BuildBorderNodesMap. The only difference
+       * is that boundaries are given as parameters. This may be be factorized for a cleaner code.
+       * \param: Graph
+       * \param: row boundaries
+       * \parma: col boundaries
+       * \param: image width
+       * \return map of borders coordinates and vector of node associated to coordinate
+       * */
       static std::unordered_map<CoordValueType, std::vector<NodeType*> > BuildBorderNodesMapForFinalAggregation(const GraphPointerType graph,
                                                         std::unordered_set<uint32_t>& rowBounds,
                                                         std::unordered_set<uint32_t>& colBounds,
                                                         const uint32_t inputLSImageWidth);
 
-      // This methods removes the duplicated nodes from the graph.
+      /**\brief This methods removes the duplicated nodes from the graph.
+       * \param: Map of border node (only border node can be duplicated)
+       * \param: Graph containing nodes to remove
+       * \param: Image width*/
       static void RemoveDuplicatedNodes(std::unordered_map<CoordValueType, std::vector< NodeType*> >& borderNodeMap,
                     GraphPointerType graph,
                     const uint32_t inputLSImageWidth);
 
 
-      // This method detects the new pair of adjacent nodes on the common tile borders.
+      /**\brief This method detects the new pair of adjacent nodes on the common tile borders.
+       * \param: Border nodes map
+       * \param: Graph
+       * \param: Image width
+       * \param: Image height*/
       static void DetectNewAdjacentNodes(std::unordered_map<CoordValueType, std::vector< NodeType*> >& borderNodeMap,
                      GraphPointerType graph,
                      const uint32_t inputLSImageWidth,
                      const uint32_t inputLSImageHeight);
 
+      /**\brief This method write a graph header containing meta data used for process like image width
+       * \param: File path
+       * \param: Graph containing metadata
+       */
       static void WriteGraphHeader(const std::string & outputPath, GraphPointerType graph)
       {
             // Write header file (contains metadata)
@@ -186,6 +255,11 @@ namespace obia
       }
 
 
+
+      /**\brief This method read a graph header containing meta data used for process like image width
+      * \param: File path
+      * \return: Graph information
+      */
     static GraphImageInfo ReadGraphHeader(const std::string & inputPath)
     {
         std::string inputPathHeader = inputPath + ".hdr";
@@ -233,6 +307,10 @@ namespace obia
         }
     }
 
+    /**\brief This method display node and its information (used for debug)
+     * \param: Graph
+     * \param: coordinate of node to display
+     */
     static void DisplayNode(const GraphPointerType graph, unsigned int coordNode);
 
 };
