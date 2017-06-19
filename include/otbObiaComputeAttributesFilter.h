@@ -88,10 +88,6 @@ class ComputeAttributesFilter : public PersistentSamplingFilterBase<TInputImage,
 	                             typename TInputImage::PointType& imgPoint,
 	                             itk::ThreadIdType& threadid) ITK_OVERRIDE;
 
-	  /**Update the layer **/
-	  void UpdateLayer(OGRLayer* layer, ogr::Feature& feature,
-			  	  	   std::string fieldName, double fieldValue);
-
 	private:
 
 	  //Input layer name used for computing attributs

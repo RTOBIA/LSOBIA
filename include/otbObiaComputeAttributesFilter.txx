@@ -143,6 +143,10 @@ ComputeAttributesFilter<TInputImage,TMaskImage>
 		//Copy the feature to the outputlayer
 		OGRLayer* outputLayer = m_OutputDs->ogr().GetLayerByName(this->GetOutLayerName().c_str());
 
+		//Generate feature to add fields
+		OGRFeatureType updatedFeature(*(outputLayer->GetLayerDefn()));
+		updatedFeature.SetFrom(currentFeature, true);
+
 		//Loop attributs
 		for(unsigned int k = 0; k < m_Attributs.size(); k++)
 		{
@@ -174,9 +178,16 @@ ComputeAttributesFilter<TInputImage,TMaskImage>
 				//Compute the mean over all the bands
 				tmp /= m_NumberOfBands;
 
-				//Update layer
-				UpdateLayer(outputLayer, currentFeature, currentAttribut->GetFieldName(), tmp);
+				//Update feature
+				updatedFeature.ogr().SetField(currentAttribut->GetFieldName().c_str(), tmp);
 			}
+		}
+
+		//Update layer
+		OGRErr errCreate = outputLayer->CreateFeature(&(updatedFeature.ogr()));
+		if(errCreate != 0)
+		{
+			std::cerr << "Error when creating feature " << updatedFeature.ogr().GetFID() << " in " << __func__ << std::endl;
 		}
 	}
 
@@ -203,26 +214,6 @@ ComputeAttributesFilter<TInputImage,TMaskImage>
 	{
 		//std::cout << "Pixel " << i << " = "<< pixel[b] << std::endl;
 		m_Samples[b].push_back(pixel[b]);
-	}
-}
-
-template <class TInputImage, class TMaskImage>
-void
-ComputeAttributesFilter<TInputImage,TMaskImage>
-::UpdateLayer(OGRLayer* layer, ogr::Feature& feature,
-			  std::string fieldName, double fieldValue)
-{
-	OGRFeatureType updatedFeature(*(layer->GetLayerDefn()));
-	updatedFeature.SetFrom(feature, true);
-
-	//Set field
-	updatedFeature.ogr().SetField(fieldName.c_str(), fieldValue);
-
-	//Update layer
-	OGRErr errCreate = layer->CreateFeature(&(updatedFeature.ogr()));
-	if(errCreate != 0)
-	{
-		std::cerr << "Error when creating feature " << updatedFeature.ogr().GetFID() << " in " << __func__ << std::endl;
 	}
 }
 
