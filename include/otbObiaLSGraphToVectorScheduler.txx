@@ -19,20 +19,10 @@ LSGraphToVectorScheduler<TInputGraph>
  m_Graph(nullptr),
  m_OutputDS(nullptr),
  m_NumberOfTilesX(0),
- m_NumberOfTilesY(0)
+ m_NumberOfTilesY(0),
+ m_ImageHeight(0),
+ m_ImageWidth(0)
  {
-	/**TODO Temporaire, a mettre en paramètre*/
-    m_NumberOfTilesX = 2;
-    m_NumberOfTilesY = 2;
-    m_MaxTileSizeX = 500;
-    m_MaxTileSizeY = 500;
-    m_ImageHeight = 1000;
-    m_ImageWidth = 1000;
-//    m_NumberOfTilesX = 1;
-//    m_NumberOfTilesY = 1;
-//    m_MaxTileSizeX = 1000;
-//    m_MaxTileSizeY = 1000;
-
 
  }
 

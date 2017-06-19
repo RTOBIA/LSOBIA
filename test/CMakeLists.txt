@@ -359,6 +359,12 @@ otb_add_test_mpi(NAME otbObiaLSPolygonizeMPI COMMAND otbLSOBIALSPolygonizeTestDr
              ${LSOBIA_SOURCE_DIR}/data/
              ${TEMP_DIR}
              ${TEMP_DIR}
+             1000
+             1000
+             2
+             2
+             500
+             500
 	     )
 	     
 #---------------------------------------------------------------------------------------------------

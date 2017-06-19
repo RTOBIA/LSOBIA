@@ -1,7 +1,8 @@
-#include <otbObiaComputeAttributesFilter.h>
-#include <otbObiaComputeAttributesFilter.h>
-#include <otbObiaGenericAttribute.h>
-#include <otbObiaMeanAttribute.h>
+#include "otbObiaComputeAttributesFilter.h"
+#include "otbObiaComputeAttributesFilter.h"
+#include "otbObiaGenericAttribute.h"
+#include "otbObiaMeanAttribute.h"
+#include "otbObiaBorderAttribute.h"
 #include "otbWrapperApplication.h"
 #include "otbWrapperApplicationFactory.h"
 #include "otbObiaConstExpr.h"
@@ -76,11 +77,21 @@ int otbLSOBIAComputeAttributsTest(int argc, char *argv[])
 
 std::vector<otb::obia::GenericAttribute<InputImageType>*> CreateAttributs()
 {
-	using GenericAttributeType = otb::obia::GenericAttribute<InputImageType>;
-	using MeanAttributeType = otb::obia::MeanAttribute<InputImageType>;
-	std::vector<otb::obia::GenericAttribute<InputImageType>*> attributs;
-	GenericAttributeType* meanAttribut = new MeanAttributeType();
-	attributs.push_back(meanAttribut);
+	using GenericAttributeType 	= otb::obia::GenericAttribute<InputImageType>;
+	using MeanAttributeType 	= otb::obia::MeanAttribute<InputImageType>;
+	using BorderAttributeType 	= otb::obia::BorderAttribute<InputImageType>;
 
-	return attributs;
+	//Vector of attributes
+	std::vector<otb::obia::GenericAttribute<InputImageType>*> attributes;
+
+	//Create first attribute
+	GenericAttributeType* meanAttribute = new MeanAttributeType();
+	attributes.push_back(meanAttribute);
+
+	//Create second attribute
+	GenericAttributeType* borderAttribute = new BorderAttributeType(2.0);
+	attributes.push_back(borderAttribute);
+
+
+	return attributes;
 }

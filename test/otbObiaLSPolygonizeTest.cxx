@@ -16,13 +16,21 @@ bool isOn(const std::string & str)
 
 int otbObiaLSPolygonize(int argc, char *argv[])
 {
-    if(argc < 3)
+    if(argc < 9)
     {
 
         std::cerr << "Usage " << argv[0] << ": \n"
             << "Argument 1: " << "[input graph directory]\n"
             << "Argument 2: " << "[temporary directory to store intermediate files for a node]\n"
-            << "Argument 3: " << "[output directory path (must me already created)]\n" << std::endl;
+            << "Argument 3: " << "[output directory path (must me already created)]\n"
+			<< "Argument 4: " << "[Image width]"
+			<< "Argument 5: " << "[Image height]"
+			<< "Argument 6: " << "[Number of tiles X]"
+			<< "Argument 7: " << "[Number of tiles Y]"
+			<< "Argument 8: " << "[Max tile size X]"
+			<< "Argument 9: " << "[Max tile size Y]"
+			<< std::endl;
+
         return 1;
     }
 
@@ -34,6 +42,12 @@ int otbObiaLSPolygonize(int argc, char *argv[])
     const std::string inDir  = argv[1];
     const std::string tmpDir = argv[2];
     const std::string outDir = argv[3];
+    uint32_t imageWidth 	 = atoi(argv[4]);
+    uint32_t imageHeight	 = atoi(argv[5]);
+    uint32_t nbX			 = atoi(argv[6]);
+    uint32_t nbY 			 = atoi(argv[7]);
+    uint32_t maxSizeX		 = atoi(argv[8]);
+    uint32_t maxSizeY 		 = atoi(argv[9]);
 
     std::cout << "Input directory = " << inDir << std::endl;
 	// Polygonize
@@ -59,6 +73,13 @@ int otbObiaLSPolygonize(int argc, char *argv[])
 //	tilesPerProcessor[1].insert(0);
 
     //LSPolygonizeScheduler->SetTilesPerProcessor(tilesPerProcessor);
+	LSPolygonizeScheduler->SetImageHeight(imageWidth);
+	LSPolygonizeScheduler->SetImageWidth(imageHeight);
+	LSPolygonizeScheduler->SetNumberOfTilesX(nbX);
+	LSPolygonizeScheduler->SetNumberOfTilesY(nbY);
+	LSPolygonizeScheduler->SetMaxTileSizeX(maxSizeX);
+	LSPolygonizeScheduler->SetMaxTileSizeY(maxSizeY);
+
     LSPolygonizeScheduler->SetSimplifyFunc(simplifyFunc);
     LSPolygonizeScheduler->SetWriteVector(true);
     LSPolygonizeScheduler->SetIsSimplify(true);

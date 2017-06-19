@@ -75,6 +75,12 @@ public:
     void SetTileMap(const std::map< uint32_t, ProcessingTile > & tileMap){ m_TileMap = tileMap;};
     void SetTilesPerProcessor(std::map< int, std::set<uint32_t> > tilesPerProcessor){ m_TilesPerProcessor = tilesPerProcessor;};
     void SetGraph(InputGraphPointerType graph){m_Graph = graph;};
+
+    void SetImageWidth(uint32_t imageWidth){m_ImageWidth = imageWidth;};
+    void SetImageHeight(uint32_t imageHeight){m_ImageHeight = imageHeight;};
+    void SetNumberOfTilesX(int nbX){ m_NumberOfTilesX = nbX;};
+    void SetNumberOfTilesY(int nbY){ m_NumberOfTilesY = nbY;};
+
 protected:
 
     LSGraphToVectorScheduler();

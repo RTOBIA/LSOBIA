@@ -486,18 +486,6 @@ LSPolygonizeScheduler<TInputGraph, TSimplifyFunc>
 
 			GraphOperationsType::AggregateGraphs(this->m_Graph, subGraph);
 
-			for(unsigned int i = 0; i < this->m_Graph->GetNumberOfNodes(); i++)
-			{
-				auto node = this->m_Graph->GetNodeAt(i);
-				if(node->GetFirstPixelCoords() == 517731 && mpiConfig->GetMyRank() == 0)
-				{
-					for(auto& edge : node->m_Edges)
-					{
-						std::cout << "ADJACENT TO 517731 " << this->m_Graph->GetNodeAt(edge.m_TargetId)->GetFirstPixelCoords() << std::endl;
-					}
-				}
-			}
-
 		}
 
 		// Remove duplicated nodes
@@ -512,18 +500,6 @@ LSPolygonizeScheduler<TInputGraph, TSimplifyFunc>
 
 		// Update edges
 		GraphOperationsType::DetectNewAdjacentNodes(borderNodeMap, this->m_Graph, this->m_ImageWidth, this->m_ImageHeight);
-
-		for(unsigned int i = 0; i < this->m_Graph->GetNumberOfNodes(); i++)
-		{
-			auto node = this->m_Graph->GetNodeAt(i);
-			if(node->GetFirstPixelCoords() == 517731 && mpiConfig->GetMyRank() == 0)
-			{
-				for(auto& edge : node->m_Edges)
-				{
-					std::cout << "ADJACENT AFTER  TO 517731 " << this->m_Graph->GetNodeAt(edge.m_TargetId)->GetFirstPixelCoords() << std::endl;
-				}
-			}
-		}
 
 		this->WriteGraphIfNecessary(ty, tx, this->m_TemporaryDirectory, "Graph_With_Marge");
 

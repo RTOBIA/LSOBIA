@@ -50,6 +50,21 @@ private:
 		AddParameter(ParameterType_String,  "io.gr",   "Input graph path");
 		SetParameterDescription("io.gr", "Graph");
 
+		AddParameter(ParameterType_Int,  "io.im.width",   "Image width");
+		SetParameterDescription( "io.im.width", "Image width");
+		AddParameter(ParameterType_Int,  "io.im.height",   "Image height");
+		SetParameterDescription( "io.im.height", "height width");
+
+		AddParameter(ParameterType_Int,  "io.im.nbTilesX",   "Number of tiles X");
+		SetParameterDescription( "io.im.nbTilesX", "Number of tiles X");
+		AddParameter(ParameterType_Int,  "io.im.nbTilesY",   "Number of tiles Y");
+		SetParameterDescription( "io.im.nbTilesY", "Number of tiles Y");
+
+		AddParameter(ParameterType_Int,  "io.im.maxTileSizeX",   "Max tile size X");
+		SetParameterDescription( "io.im.maxTileSizeX",   "Max tile size X");
+		AddParameter(ParameterType_Int,  "io.im.maxTileSizeY",   "Max tile size Y");
+		SetParameterDescription( "io.im.maxTileSizeY",   "Max tile size Y");
+
 		AddParameter(ParameterType_Group, "io.out",  "Output directory");
 		AddParameter(ParameterType_Directory, "io.out.dir",  "Output directory");
 		SetParameterDescription("io.out.dir", "Output Directory");
@@ -88,6 +103,13 @@ private:
 		std::string gmlFile = GetParameterString("io.out.gmlfile");
 		std::string tmpDir = GetParameterString("io.temp");
 
+		uint32_t imageWidth = GetParameterInt("io.im.width");
+		uint32_t imageHeight = GetParameterInt("io.im.height");
+		uint32_t nbX = GetParameterInt("io.im.nbTilesX");
+		uint32_t nbY = GetParameterInt("io.im.nbTilesY");
+		uint32_t maxSizeX = GetParameterInt("io.im.maxTileSizeX");
+		uint32_t maxSizeY = GetParameterInt("io.im.maxTileSizeY");
+
 		// Polygonize
 		using InputGraphType = otb::obia::Graph< otb::obia::Node<
 												 otb::obia::BaatzNodeAttribute,
@@ -110,11 +132,19 @@ private:
 		tilesPerProcessor[0].insert(0);
 		tilesPerProcessor[1].insert(0);
 
+		LSPolygonizeScheduler->SetImageHeight(imageWidth);
+		LSPolygonizeScheduler->SetImageWidth(imageHeight);
+		LSPolygonizeScheduler->SetNumberOfTilesX(nbX);
+		LSPolygonizeScheduler->SetNumberOfTilesY(nbY);
+		LSPolygonizeScheduler->SetMaxTileSizeX(maxSizeX);
+		LSPolygonizeScheduler->SetMaxTileSizeY(maxSizeY);
+
 	    LSPolygonizeScheduler->SetTilesPerProcessor(tilesPerProcessor);
 	    LSPolygonizeScheduler->SetSimplifyFunc(simplifyFunc);
 	    LSPolygonizeScheduler->SetWriteVector(true);
 	    LSPolygonizeScheduler->SetOutputDir(outDir);
 	    LSPolygonizeScheduler->SetTemporaryDirectory(tmpDir);
+
 	    LSPolygonizeScheduler->SetGraphPrefixName("Graph_Vector");
 	    LSPolygonizeScheduler->SetGraph(graph);
 	    LSPolygonizeScheduler->Update();

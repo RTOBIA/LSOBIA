@@ -148,20 +148,20 @@ GraphToVectorFilter<TInputGraph>
 
 	/***********************DEBUG : LABEL IMAGE IN RGB ************************/
 
-	using RGBPixelType = itk::RGBPixel<unsigned char>;
-	using RGBImageType = otb::Image<RGBPixelType, 2>;
-	using LabelToRGBFilterType = itk::LabelToRGBImageFilter<LabelImageType, RGBImageType>;
-	using RGBWriterType = otb::ImageFileWriter< RGBImageType >;
-
-	auto labelToRGBFilter = LabelToRGBFilterType::New();
-	auto rgbWriter = RGBWriterType::New();
-	std::stringstream os;
-	os.clear();
-	os << this->m_OutputDir << "RGB_IMAGE_" << MPIConfig::Instance()->GetMyRank() << ".tif";
-	rgbWriter->SetFileName(os.str());
-	labelToRGBFilter->SetInput(fillHoleFilter->GetOutput());
-	rgbWriter->SetInput(labelToRGBFilter->GetOutput());
-	rgbWriter->Update();
+//	using RGBPixelType = itk::RGBPixel<unsigned char>;
+//	using RGBImageType = otb::Image<RGBPixelType, 2>;
+//	using LabelToRGBFilterType = itk::LabelToRGBImageFilter<LabelImageType, RGBImageType>;
+//	using RGBWriterType = otb::ImageFileWriter< RGBImageType >;
+//
+//	auto labelToRGBFilter = LabelToRGBFilterType::New();
+//	auto rgbWriter = RGBWriterType::New();
+//	std::stringstream os;
+//	os.clear();
+//	os << this->m_OutputDir << "RGB_IMAGE_" << MPIConfig::Instance()->GetMyRank() << ".tif";
+//	rgbWriter->SetFileName(os.str());
+//	labelToRGBFilter->SetInput(fillHoleFilter->GetOutput());
+//	rgbWriter->SetInput(labelToRGBFilter->GetOutput());
+//	rgbWriter->Update();
 
 	/***********************END DEBUG : LABEL IMAGE IN RGB ************************/
 
