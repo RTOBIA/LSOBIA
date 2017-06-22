@@ -21,7 +21,7 @@ namespace obia
 {
 
 /**\class Contour otbObiaContour.h
-/*	\brief Optimized representation of the contour of a region in an image using the freeman chain code.
+ * \brief Optimized representation of the contour of a region in an image using the freeman chain code.
 **/
 class Contour
 {    
