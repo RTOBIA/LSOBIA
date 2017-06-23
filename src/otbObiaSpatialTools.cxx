@@ -16,8 +16,8 @@ namespace obia
   std::array<int64_t, 4> 
   SpatialTools
   ::FourConnectivity(const uint64_t vecCoords,
-		     const uint32_t imgWidth, 
-		     const uint32_t imgHeight)
+             const uint32_t imgWidth, 
+             const uint32_t imgHeight)
   {
     const uint32_t x = vecCoords % imgWidth;
     const uint32_t y = vecCoords / imgWidth;
@@ -48,8 +48,8 @@ namespace obia
   std::array<int64_t, 8>
   SpatialTools
   ::EightConnectivity(const uint64_t vecCoords,
-		      const uint32_t imgWidth, 
-		      const uint32_t imgHeight)
+              const uint32_t imgWidth, 
+              const uint32_t imgHeight)
   {
     const uint32_t x = vecCoords % imgWidth;
     const uint32_t y = vecCoords / imgWidth;
@@ -85,7 +85,7 @@ namespace obia
   void 
   SpatialTools
   ::MergeBoundingBox(std::array<uint32_t,4>& bboxIn, 
-		     const std::array<uint32_t, 4>& bboxOut)
+             const std::array<uint32_t, 4>& bboxOut)
   {
     const uint32_t minUX = std::min(bboxIn[0], bboxOut[0]);
     const uint32_t minUY = std::min(bboxIn[1], bboxOut[1]);
@@ -101,7 +101,7 @@ namespace obia
   std::array<uint32_t, 4> 
   SpatialTools
   ::GetMergedBoundingBox(const std::array<uint32_t,4>& bboxIn,
-			 const std::array<uint32_t, 4>& bboxOut)
+             const std::array<uint32_t, 4>& bboxOut)
   {
     const uint32_t minUX = std::min(bboxIn[0], bboxOut[0]);
     const uint32_t minUY = std::min(bboxIn[1], bboxOut[1]);
@@ -208,9 +208,9 @@ namespace obia
     const uint32_t x = pixCoords % imageWidth;
     const uint32_t y = pixCoords / imageWidth;
     bool isBorder = ( (tx > 0 && x == lowerCol) ||
-    				(tx < nbTilesX - 1 && x == upperCol) ||
-					(ty > 0 && y == lowerRow) ||
-					(ty < nbTilesY - 1 && y == upperRow));
+                    (tx < nbTilesX - 1 && x == upperCol) ||
+                    (ty > 0 && y == lowerRow) ||
+                    (ty < nbTilesY - 1 && y == upperRow));
 
     return isBorder;
   }

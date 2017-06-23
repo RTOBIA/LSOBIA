@@ -22,250 +22,250 @@ class LSSegmentation : public Application
 {
 public:
 
-	typedef LSSegmentation Self;
-        typedef Application SuperClass;
-	typedef itk::SmartPointer<Self> Pointer;
+    typedef LSSegmentation Self;
+    typedef Application SuperClass;
+    typedef itk::SmartPointer<Self> Pointer;
 
-	itkNewMacro(Self);
-	itkTypeMacro(LSSegmentation, Application);
+    itkNewMacro(Self);
+    itkTypeMacro(LSSegmentation, Application);
 
 private:
-	
-	// Available algorithms
-	enum Algorithm
-	{
-		ALG_BAATZ,
-		ALG_MEANSHIFT
-	};
+    
+    // Available algorithms
+    enum Algorithm
+    {
+        ALG_BAATZ,
+        ALG_MEANSHIFT
+    };
 
-	// Available search modes
-	enum Modes
-	{
-		ON,
-		OFF
-	};
-	
-	// Init App
-	void DoInit()
-	{
-	
-		//General description
-		SetName("LSSegmentation");
-		SetDescription("Large Scale Image Segmentation Application");
+    // Available search modes
+    enum Modes
+    {
+        ON,
+        OFF
+    };
+    
+    // Init App
+    void DoInit()
+    {
+    
+        //General description
+        SetName("LSSegmentation");
+        SetDescription("Large Scale Image Segmentation Application");
 
-		//Documentation
-		SetDocName("Large Scale Segmentation");
-		SetDocLongDescription("This application provides several methods to perform segmentation of very high resolution images");
-		SetDocLimitations("None");
-		SetDocAuthors("OBIA-Team");
-		SetDocSeeAlso(" ");
+        //Documentation
+        SetDocName("Large Scale Segmentation");
+        SetDocLongDescription("This application provides several methods to perform segmentation of very high resolution images");
+        SetDocLimitations("None");
+        SetDocAuthors("OBIA-Team");
+        SetDocSeeAlso(" ");
 
-		// IO Parameters
-		AddParameter(ParameterType_Group,"io","Set of parameters related to input/output");
-		AddParameter(ParameterType_String,  "io.im",   "Input image path");
-		SetParameterDescription("io.im", "Image");
-		AddParameter(ParameterType_Group, "io.out",  "Output directory");
-		AddParameter(ParameterType_Directory, "io.out.dir",  "Output directory");
-		SetParameterDescription("io.out.dir", "Output Directory");
-		AddParameter(ParameterType_String, "io.out.labelimage",  "Label Image Name");
-		SetParameterDescription("io.out.labelimage", "Label Image Name");
+        // IO Parameters
+        AddParameter(ParameterType_Group,"io","Set of parameters related to input/output");
+        AddParameter(ParameterType_String,  "io.im",   "Input image path");
+        SetParameterDescription("io.im", "Image");
+        AddParameter(ParameterType_Group, "io.out",  "Output directory");
+        AddParameter(ParameterType_Directory, "io.out.dir",  "Output directory");
+        SetParameterDescription("io.out.dir", "Output Directory");
+        AddParameter(ParameterType_String, "io.out.labelimage",  "Label Image Name");
+        SetParameterDescription("io.out.labelimage", "Label Image Name");
         MandatoryOff("io.out.labelimage");
 
-		AddParameter(ParameterType_Directory, "io.temp",  "Directory used for temporary data");
-		SetParameterDescription("io.temp", "Temporary directory");
+        AddParameter(ParameterType_Directory, "io.temp",  "Directory used for temporary data");
+        SetParameterDescription("io.temp", "Temporary directory");
 
-		// Algorithm Parameters
-		AddParameter(ParameterType_Choice,"algorithm","Segmentation algorithm name");
-		AddChoice("algorithm.baatz", "Baatz and Shape algorithm" );
-		AddChoice("algorithm.meanshift", "Mean-shift algorithm" );
+        // Algorithm Parameters
+        AddParameter(ParameterType_Choice,"algorithm","Segmentation algorithm name");
+        AddChoice("algorithm.baatz", "Baatz and Shape algorithm" );
+        AddChoice("algorithm.meanshift", "Mean-shift algorithm" );
 
-		AddParameter(ParameterType_Int,"algorithm.baatz.numitfirstpartial","Number of iterations for first partial segmentation");
-		SetDefaultParameterInt("algorithm.baatz.numitfirstpartial",  1);
+        AddParameter(ParameterType_Int,"algorithm.baatz.numitfirstpartial","Number of iterations for first partial segmentation");
+        SetDefaultParameterInt("algorithm.baatz.numitfirstpartial",  1);
         MandatoryOff("algorithm.baatz.numitfirstpartial");
-		AddParameter(ParameterType_Int,"algorithm.baatz.numitpartial","Number of iterations for partial segmentation");
+        AddParameter(ParameterType_Int,"algorithm.baatz.numitpartial","Number of iterations for partial segmentation");
         MandatoryOff("algorithm.baatz.numitpartial");
-		SetDefaultParameterInt("algorithm.baatz.numitpartial",  1);
-		AddParameter(ParameterType_Float,"algorithm.baatz.stopping","Value for stopping criterion");
+        SetDefaultParameterInt("algorithm.baatz.numitpartial",  1);
+        AddParameter(ParameterType_Float,"algorithm.baatz.stopping","Value for stopping criterion");
         MandatoryOff("algorithm.baatz.stopping");
-		SetDefaultParameterFloat("algorithm.baatz.stopping",  40.);
-		AddParameter(ParameterType_Float,"algorithm.baatz.spectralweight","Value for spectral weight");
-		SetDefaultParameterFloat("algorithm.baatz.spectralweight",  0.05);
+        SetDefaultParameterFloat("algorithm.baatz.stopping",  40.);
+        AddParameter(ParameterType_Float,"algorithm.baatz.spectralweight","Value for spectral weight");
+        SetDefaultParameterFloat("algorithm.baatz.spectralweight",  0.05);
         MandatoryOff("algorithm.baatz.spectralweight");
-		AddParameter(ParameterType_Float,"algorithm.baatz.geomweight","Value for geometric (shape) weight");
+        AddParameter(ParameterType_Float,"algorithm.baatz.geomweight","Value for geometric (shape) weight");
         MandatoryOff("algorithm.baatz.geomweight");
-		SetDefaultParameterFloat("algorithm.baatz.geomweight",  0.95);
+        SetDefaultParameterFloat("algorithm.baatz.geomweight",  0.95);
 
-		//AddParameter(ParameterType_InputVectorData,"algorithm.baatz.bandweights", "optional band weights");
-		//MandatoryOff("algorithm.baatz.bandweights");
+        //AddParameter(ParameterType_InputVectorData,"algorithm.baatz.bandweights", "optional band weights");
+        //MandatoryOff("algorithm.baatz.bandweights");
 
-		AddParameter(ParameterType_Int,"algorithm.meanshift.maxiter","max number of iterations");
-		AddParameter(ParameterType_Float,"algorithm.meanshift.spatialr","Spatial bandwidth");
+        AddParameter(ParameterType_Int,"algorithm.meanshift.maxiter","max number of iterations");
+        AddParameter(ParameterType_Float,"algorithm.meanshift.spatialr","Spatial bandwidth");
         MandatoryOff("algorithm.meanshift.spatialr");
-		AddParameter(ParameterType_Float,"algorithm.meanshift.spectralr","Spectral bandwidth");
+        AddParameter(ParameterType_Float,"algorithm.meanshift.spectralr","Spectral bandwidth");
         MandatoryOff("algorithm.meanshift.spectralr");
-		AddParameter(ParameterType_Float,"algorithm.meanshift.threshold","Threshold");
+        AddParameter(ParameterType_Float,"algorithm.meanshift.threshold","Threshold");
         MandatoryOff("algorithm.meanshift.threshold");
-		AddParameter(ParameterType_Float,"algorithm.meanshift.ranger","Spectral range ramp");
+        AddParameter(ParameterType_Float,"algorithm.meanshift.ranger","Spectral range ramp");
         MandatoryOff("algorithm.meanshift.ranger");
-		AddParameter(ParameterType_Choice,"algorithm.meanshift.modesearch","Activation of search mode");
+        AddParameter(ParameterType_Choice,"algorithm.meanshift.modesearch","Activation of search mode");
         MandatoryOff("algorithm.meanshift.modesearch");
-		AddChoice("algorithm.meanshift.modesearch.on","Activated");
-		AddChoice("algorithm.meanshift.modesearch.off","Deactivated");
+        AddChoice("algorithm.meanshift.modesearch.on","Activated");
+        AddChoice("algorithm.meanshift.modesearch.off","Deactivated");
 
-		// Processing Parameters
-		AddParameter(ParameterType_Group,"processing","Set of parameters related to parallel processing options");
-		AddParameter(ParameterType_Int,"processing.memory","Maximum memory to be used on the main node");
-		AddParameter(ParameterType_Int,"processing.maxtilesizex","Maximum size of tiles along x axis");
-		AddParameter(ParameterType_Int,"processing.maxtilesizey","Maximum size of tiles along x axis");
-		AddParameter(ParameterType_Choice,"processing.writeimages","Activation of image traces");
-		AddChoice("processing.writeimages.on","Activated");
-		AddChoice("processing.writeimages.off","Deactivated");
-		AddParameter(ParameterType_Choice,"processing.writegraphs","Activation of graph traces");
-		AddChoice("processing.writegraphs.on","Activated");
-		AddChoice("processing.writegraphs.off","Deactivated");
-		AddParameter(ParameterType_Choice,"algorithm.baatz.aggregategraphs","Aggregation of graph traces");
+        // Processing Parameters
+        AddParameter(ParameterType_Group,"processing","Set of parameters related to parallel processing options");
+        AddParameter(ParameterType_Int,"processing.memory","Maximum memory to be used on the main node");
+        AddParameter(ParameterType_Int,"processing.maxtilesizex","Maximum size of tiles along x axis");
+        AddParameter(ParameterType_Int,"processing.maxtilesizey","Maximum size of tiles along x axis");
+        AddParameter(ParameterType_Choice,"processing.writeimages","Activation of image traces");
+        AddChoice("processing.writeimages.on","Activated");
+        AddChoice("processing.writeimages.off","Deactivated");
+        AddParameter(ParameterType_Choice,"processing.writegraphs","Activation of graph traces");
+        AddChoice("processing.writegraphs.on","Activated");
+        AddChoice("processing.writegraphs.off","Deactivated");
+        AddParameter(ParameterType_Choice,"algorithm.baatz.aggregategraphs","Aggregation of graph traces");
         MandatoryOff("algorithm.baatz.aggregategraphs");
-		AddChoice("algorithm.baatz.aggregategraphs.on","Activated");
-		AddChoice("algorithm.baatz.aggregategraphs.off","Deactivated");
+        AddChoice("algorithm.baatz.aggregategraphs.on","Activated");
+        AddChoice("algorithm.baatz.aggregategraphs.off","Deactivated");
 
 
-		/* TODO : remove this when the default values and choices have been implemented
-		MandatoryOff("fusion.sylvester.linearcombination.image");
-		AddParameter(ParameterType_Float,"fusion.glp.ratio","Resolutions ratio between the Panchromatic and the multispectral inputs");
-		SetDefaultParameterFloat("",  4.);
-		SetMinimumParameterFloatValue("", 0);	
-		SetDocExampleParameterValue("boolean", "true"); 
-		SetDocExampleParameterValue("in", "QB_Suburb.png"); 
-		SetDocExampleParameterValue("out", "Application_Example.png");
-		*/
-	}
+        /* TODO : remove this when the default values and choices have been implemented
+        MandatoryOff("fusion.sylvester.linearcombination.image");
+        AddParameter(ParameterType_Float,"fusion.glp.ratio","Resolutions ratio between the Panchromatic and the multispectral inputs");
+        SetDefaultParameterFloat("",  4.);
+        SetMinimumParameterFloatValue("", 0);    
+        SetDocExampleParameterValue("boolean", "true"); 
+        SetDocExampleParameterValue("in", "QB_Suburb.png"); 
+        SetDocExampleParameterValue("out", "Application_Example.png");
+        */
+    }
 
-	// TODO : parameter update should go there
-	void DoUpdateParameters()
-	{
-	}
+    // TODO : parameter update should go there
+    void DoUpdateParameters()
+    {
+    }
 
-	// Execute App
-	void DoExecute()
-	{
-		
-		/* Global parameters */
-		std::string filename = GetParameterString("io.im");
-		std::string outDir = GetParameterString("io.out.dir");
-		std::string labelImage = GetParameterString("io.out.labelimage");
-		std::string tmpDir = GetParameterString("io.temp");
-		
-		uint32_t maxTileWidth = GetParameterInt("processing.maxtilesizex");
-		uint32_t maxTileHeight = GetParameterInt("processing.maxtilesizey");
-		unsigned long int memory = GetParameterInt("processing.memory");
-		bool writeImages = false;
-		bool writeGraphs = false;
+    // Execute App
+    void DoExecute()
+    {
+        
+        /* Global parameters */
+        std::string filename = GetParameterString("io.im");
+        std::string outDir = GetParameterString("io.out.dir");
+        std::string labelImage = GetParameterString("io.out.labelimage");
+        std::string tmpDir = GetParameterString("io.temp");
+        
+        uint32_t maxTileWidth = GetParameterInt("processing.maxtilesizex");
+        uint32_t maxTileHeight = GetParameterInt("processing.maxtilesizey");
+        unsigned long int memory = GetParameterInt("processing.memory");
+        bool writeImages = false;
+        bool writeGraphs = false;
 
-		switch (GetParameterInt("processing.writeimages")) {
-			case ON:
-				writeImages = true;
-				break;
-			case OFF:
-				writeImages = false;
-				break;
-		}
-		switch (GetParameterInt("processing.writegraphs")) {
-			case ON:
-				writeGraphs = true;
-				break;
-			case OFF:
-				writeGraphs = false;
-				break;
-		}
-		
-		// BAATZ
-		using InputImageType = otb::VectorImage<float, 2>;
-		using LSBaatzSegmentationSchedulerType = otb::obia::LSBaatzSegmentationScheduler<InputImageType>;
+        switch (GetParameterInt("processing.writeimages")) {
+            case ON:
+                writeImages = true;
+                break;
+            case OFF:
+                writeImages = false;
+                break;
+        }
+        switch (GetParameterInt("processing.writegraphs")) {
+            case ON:
+                writeGraphs = true;
+                break;
+            case OFF:
+                writeGraphs = false;
+                break;
+        }
+        
+        // BAATZ
+        using InputImageType = otb::VectorImage<float, 2>;
+        using LSBaatzSegmentationSchedulerType = otb::obia::LSBaatzSegmentationScheduler<InputImageType>;
 
-		// MEANSHIFT
-		using LabelPixelType              = unsigned int;
-		using LSMeanShiftSchedulerType       = otb::obia::LSMeanShiftScheduler<InputImageType, LabelPixelType>;
+        // MEANSHIFT
+        using LabelPixelType              = unsigned int;
+        using LSMeanShiftSchedulerType       = otb::obia::LSMeanShiftScheduler<InputImageType, LabelPixelType>;
 
-		switch(GetParameterInt("algorithm"))
-		{
-			case ALG_BAATZ :
-			{
-				bool aggregateGraphs = false;
-				switch (GetParameterInt("algorithm.baatz.aggregategraphs"))
-						{
-				case ON:
-					aggregateGraphs = true;
-				break;
-				case OFF:
-					aggregateGraphs = false;
-				break;
-			}
-                                uint32_t nbStartingIterations = GetParameterInt("algorithm.baatz.numitfirstpartial");
-				uint32_t nbPartialIterations = GetParameterInt("algorithm.baatz.numitpartial");
-				float threshold = GetParameterFloat("algorithm.baatz.stopping");
-				threshold = threshold * threshold;
-				float spectralW = GetParameterFloat("algorithm.baatz.spectralweight");
-				float shapeW = GetParameterFloat("algorithm.baatz.geomweight");
+        switch(GetParameterInt("algorithm"))
+        {
+            case ALG_BAATZ :
+            {
+                bool aggregateGraphs = false;
+                switch (GetParameterInt("algorithm.baatz.aggregategraphs"))
+                {
+                    case ON:
+                        aggregateGraphs = true;
+                        break;
+                    case OFF:
+                        aggregateGraphs = false;
+                        break;
+                }
+                uint32_t nbStartingIterations = GetParameterInt("algorithm.baatz.numitfirstpartial");
+                uint32_t nbPartialIterations = GetParameterInt("algorithm.baatz.numitpartial");
+                float threshold = GetParameterFloat("algorithm.baatz.stopping");
+                threshold = threshold * threshold;
+                float spectralW = GetParameterFloat("algorithm.baatz.spectralweight");
+                float shapeW = GetParameterFloat("algorithm.baatz.geomweight");
 
                 auto lsBaatzFilter = LSBaatzSegmentationSchedulerType::New();
-				lsBaatzFilter->SetFileName(filename);
-				lsBaatzFilter->SetMaxTileSizeX(maxTileWidth);
-				lsBaatzFilter->SetMaxTileSizeY(maxTileHeight);
-				lsBaatzFilter->SetStartingNumberOfIterations(nbStartingIterations);
-				lsBaatzFilter->SetPartialNumberOfIterations(nbPartialIterations);
-				lsBaatzFilter->SetTemporaryDirectory(tmpDir);
-				lsBaatzFilter->SetAvailableMemory(memory);
-				lsBaatzFilter->SetThreshold(threshold);
-				lsBaatzFilter->SetSpectralWeight(spectralW);
-				lsBaatzFilter->SetShapeWeight(shapeW);
-				lsBaatzFilter->SetWriteLabelImage(writeImages);
-				lsBaatzFilter->SetWriteGraph(writeGraphs);
-				lsBaatzFilter->SetAggregateGraphs(aggregateGraphs);
-				lsBaatzFilter->SetOutputDir(outDir);
-				lsBaatzFilter->SetLabelImageName(labelImage);
-				lsBaatzFilter->Update();
+                lsBaatzFilter->SetFileName(filename);
+                lsBaatzFilter->SetMaxTileSizeX(maxTileWidth);
+                lsBaatzFilter->SetMaxTileSizeY(maxTileHeight);
+                lsBaatzFilter->SetStartingNumberOfIterations(nbStartingIterations);
+                lsBaatzFilter->SetPartialNumberOfIterations(nbPartialIterations);
+                lsBaatzFilter->SetTemporaryDirectory(tmpDir);
+                lsBaatzFilter->SetAvailableMemory(memory);
+                lsBaatzFilter->SetThreshold(threshold);
+                lsBaatzFilter->SetSpectralWeight(spectralW);
+                lsBaatzFilter->SetShapeWeight(shapeW);
+                lsBaatzFilter->SetWriteLabelImage(writeImages);
+                lsBaatzFilter->SetWriteGraph(writeGraphs);
+                lsBaatzFilter->SetAggregateGraphs(aggregateGraphs);
+                lsBaatzFilter->SetOutputDir(outDir);
+                lsBaatzFilter->SetLabelImageName(labelImage);
+                lsBaatzFilter->Update();
 
-				break;
-			}
-			case ALG_MEANSHIFT : 
-			{
-				unsigned int maxIter = GetParameterInt("algorithm.meanshift.maxiter");
-				unsigned int spatialr = GetParameterFloat("algorithm.meanshift.spatialr");
-				float spectralr = GetParameterFloat("algorithm.meanshift.spectralr");
-				float threshold = GetParameterFloat("algorithm.meanshift.threshold");
-				float ranger = GetParameterFloat("algorithm.meanshift.ranger");
+                break;
+            }
+            case ALG_MEANSHIFT : 
+            {
+                unsigned int maxIter = GetParameterInt("algorithm.meanshift.maxiter");
+                unsigned int spatialr = GetParameterFloat("algorithm.meanshift.spatialr");
+                float spectralr = GetParameterFloat("algorithm.meanshift.spectralr");
+                float threshold = GetParameterFloat("algorithm.meanshift.threshold");
+                float ranger = GetParameterFloat("algorithm.meanshift.ranger");
                                 bool modeSearch = false;
-				switch (GetParameterInt("algorithm.meanshift.modesearch")) {
-					case ON:
-						modeSearch = true;
+                switch (GetParameterInt("algorithm.meanshift.modesearch")) {
+                    case ON:
+                        modeSearch = true;
                                         default:
                                                 modeSearch = false;
-				}
+                }
                                 auto lsMSFilter = LSMeanShiftSchedulerType::New();
-				lsMSFilter->SetFileName(filename);
-				lsMSFilter->SetMaxTileSizeX(maxTileWidth);
-				lsMSFilter->SetMaxTileSizeY(maxTileHeight);
-				lsMSFilter->SetAvailableMemory(memory);
-				lsMSFilter->SetTemporaryDirectory(tmpDir);
-				lsMSFilter->SetMaxNumberOfIterations(maxIter);
-				lsMSFilter->SetSpatialBandWidth(spatialr);
-				lsMSFilter->SetSpectralRangeBandWidth(spectralr);
-				lsMSFilter->SetThreshold(threshold);
-				lsMSFilter->SetSpectralRangeRamp(ranger);
-				lsMSFilter->SetModeSearch(modeSearch);
-				lsMSFilter->SetOutputDir(outDir);
-				lsMSFilter->SetLabelImageName(labelImage);
-				lsMSFilter->SetWriteLabelImage(writeImages);
-				lsMSFilter->SetWriteGraph(writeGraphs);
-				lsMSFilter->Update();
-				break;
-			}
-			default:
-			{
-				break;
-			}
-		}
-	}
+                lsMSFilter->SetFileName(filename);
+                lsMSFilter->SetMaxTileSizeX(maxTileWidth);
+                lsMSFilter->SetMaxTileSizeY(maxTileHeight);
+                lsMSFilter->SetAvailableMemory(memory);
+                lsMSFilter->SetTemporaryDirectory(tmpDir);
+                lsMSFilter->SetMaxNumberOfIterations(maxIter);
+                lsMSFilter->SetSpatialBandWidth(spatialr);
+                lsMSFilter->SetSpectralRangeBandWidth(spectralr);
+                lsMSFilter->SetThreshold(threshold);
+                lsMSFilter->SetSpectralRangeRamp(ranger);
+                lsMSFilter->SetModeSearch(modeSearch);
+                lsMSFilter->SetOutputDir(outDir);
+                lsMSFilter->SetLabelImageName(labelImage);
+                lsMSFilter->SetWriteLabelImage(writeImages);
+                lsMSFilter->SetWriteGraph(writeGraphs);
+                lsMSFilter->Update();
+                break;
+            }
+            default:
+            {
+                break;
+            }
+        }
+    }
 };
 
 OTB_APPLICATION_EXPORT(LSSegmentation)
