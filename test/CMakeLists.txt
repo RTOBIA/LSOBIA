@@ -105,7 +105,7 @@ otb_test_application(NAME apLSOBIA_GraphPolygonizeOneProc
 	
 otb_test_application(NAME apLSOBIA_LSPolygonizeOneProc
 	APP LSPolygonize
-	OPTIONS -io.gr ${LSOBIA_SOURCE_DIR}/data/Graph_little.dat
+	OPTIONS -io.gr ${LSOBIA_SOURCE_DIR}/data/Graph_0_0.dat
 	-io.out.dir ${TEMP_DIR}
 	-io.out.gmlfile "PolygonsFile.gml"
 	-io.temp ${TEMP_DIR}
@@ -368,23 +368,23 @@ otb_add_test_mpi(NAME otbObiaLSPolygonizeMPI COMMAND otbLSOBIALSPolygonizeTestDr
 	     )
 	     
 #---------------------------------------------------------------------------------------------------
-# Compute Attributs Test	  
+# Compute Attributes Test	  
 
 # Compute attribute test driver
-set(${otb-module}ComputeAttributsTests
-  	otbLSOBIAComputeAttributsTestDriver.cxx
-    otbLSOBIAComputeAttributsTest.cxx
+set(${otb-module}ComputeAttributesTests
+  	otbLSOBIAComputeAttributesTestDriver.cxx
+    otbLSOBIAComputeAttributesTest.cxx
     )
     
-add_executable(otbLSOBIAComputeAttributsTestDriver ${${otb-module}ComputeAttributsTests})
-target_link_libraries(otbLSOBIAComputeAttributsTestDriver ${${otb-module}-Test_LIBRARIES})
-otb_module_target_label(otbLSOBIAComputeAttributsTestDriver)
+add_executable(otbLSOBIAComputeAttributesTestDriver ${${otb-module}ComputeAttributesTests})
+target_link_libraries(otbLSOBIAComputeAttributesTestDriver ${${otb-module}-Test_LIBRARIES})
+otb_module_target_label(otbLSOBIAComputeAttributesTestDriver)
 
-otb_add_test(NAME otbLSOBIAComputeAttributsTest COMMAND otbLSOBIAComputeAttributsTestDriver
-             otbLSOBIAComputeAttributsTest
+otb_add_test(NAME otbLSOBIAComputeAttributesTest COMMAND otbLSOBIAComputeAttributesTestDriver
+             otbLSOBIAComputeAttributesTest
              ${LSOBIA_SOURCE_DIR}/data/Vector_0_0.gml
              ${LSOBIA_SOURCE_DIR}/data/pleiades_1000_1000.tif
              ${TEMP_DIR}
              ${TEMP_DIR}
-             ${TEMP_DIR}/Vector_with_attributs_0_0.gml
+             ${TEMP_DIR}/Vector_with_attributes_0_0.gml
 )
