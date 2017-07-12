@@ -175,7 +175,7 @@ GraphToVectorFilter<TInputGraph>
 
 	//Initialize driver
 //	std::stringstream ss1;
-//	ss1 << "/home/isnard/workspace/RTs/LSOBIA/Testing/Temporary/Label_image_" << MPIConfig::Instance()->GetMyRank() << ".tif";
+//	ss1 << "Label_image_" << MPIConfig::Instance()->GetMyRank() << ".tif";
 //	GDALDriver*  poDriver1 = VectorOperations::InitializeGDALDriver("GTiff");
 //	GDALDataset* poDataset1 = poDriver1->Create(ss1.str().c_str(),nX, nY,
 //											   1, GDT_UInt32 , nullptr);
@@ -255,6 +255,7 @@ GraphToVectorFilter<TInputGraph>
 
 	//Clean the OGR Layer
 	OGRLayerType cleanedLayer = ogrDS->CreateLayer(cleanedLayerName, ITK_NULLPTR, wkbUnknown);
+        std::cout<<"DEBUG : adding nodatalayer to ogrDS"<<std::endl;
 	OGRLayerType nodataLayer = ogrDS->CreateLayer(nodataLayerName , ITK_NULLPTR, wkbUnknown);
 
 	//Initialize required fields
@@ -266,6 +267,15 @@ GraphToVectorFilter<TInputGraph>
 
 	//Remove old layer
 	ogrDS->DeleteLayer(0);
+	
+	//Remove empty layers to avoid getting errors
+	for (int i = 0; i < ogrDS->GetLayersCount(); i++)
+	{
+                if (ogrDS->GetLayer(i).GetFeatureCount(true) == 0)
+                {
+                    ogrDS->DeleteLayer(i);
+                }
+	}
 
 	//Add all features
 	CreateAllFeatures(cleanedLayer);
@@ -274,15 +284,15 @@ GraphToVectorFilter<TInputGraph>
 	//this->SetNthOutput(0, ogrDS);
 	this->SetPrimaryOutput(ogrDS);
 
-	/**DEEBUG**/
+	/**DEBUG**/
 	std::stringstream ss;
-	ss << "/space/USERS/isnard/tmp/mypolygons_" << MPIConfig::Instance()->GetMyRank() << ".gml";
+	ss << "mypolygons_" << MPIConfig::Instance()->GetMyRank() << ".gml";
 	std::string  output_gml = ss.str();
 	VectorOperations::WriteOGRDataSource(ogrDS, output_gml, -1);
 
 	//Validate layer?
 	std::cout << "Check layer = " << ogrDS->GetLayerChecked(cleanedLayerName).GetFeatureCount(true) << std::endl;
-
+	
 	//Clear memory
 	GDALClose(poDataset);
 }
@@ -485,6 +495,7 @@ void GraphToVectorFilter<TInputGraph>
 		}
 		else
 		{
+                        std::cout<<"labelValue == 0 : nodata"<<std::endl;
 			//We need to add the nodata value feature in order to keep the boundaries
 			//std::cout << "Nodata value GEOMETRY for " << MPIConfig::Instance()->GetMyRank()<< std::endl;
 			//std::cout << curFeature->GetGeometryRef()->exportToGML() << std::endl;
