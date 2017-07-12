@@ -117,8 +117,8 @@ SimplifyVectorFilter<TSimplifyFunc>
 
 	std::cout << "Nb features = " << nbFeatures << std::endl;
 
-	//Creater bounding feature (bouding all the features)
-	m_BBFeature = CreateBoundingBoxFeature();
+	//Creater bounding feature (bounding all the features)
+	m_BBFeature = CreateBoundingBoxFeature(true);
 
 	//add all features to a layer, and write it
 	m_EdgeLayer = ogrDS->CreateLayer("Edges"  , ITK_NULLPTR, wkbUnknown);
@@ -135,11 +135,10 @@ SimplifyVectorFilter<TSimplifyFunc>
 		std::cout << "Feature id " << fId << "/" << nbFeatures - 1 << std::endl;
 		//Current feature
 		OGRFeatureType curFeature = layer.GetFeature(fId);
-
+		std::cout<<"Feature : "<<fId<<std::endl;
 		//Compute intersection with BB
 		m_CurrentCoords = curFeature.ogr().GetFieldAsInteger64(startingCoordsFieldName.c_str());
 		m_bbEdges[m_CurrentCoords] = IntersectWithBoundaries(curFeature);
-
 		if(m_CurrentCoords == 517731 && MPIConfig::Instance()->GetMyRank() == 0)
 		{
 			std::cout << "PROBLEM WITH " << curFeature.GetGeometry()->exportToGML() << std::endl;
@@ -209,13 +208,12 @@ SimplifyVectorFilter<TSimplifyFunc>
 template <class TSimplifyFunc>
 typename SimplifyVectorFilter<TSimplifyFunc>::OGRFeatureType*
 SimplifyVectorFilter<TSimplifyFunc>
-::CreateBoundingBoxFeature()
+::CreateBoundingBoxFeature(bool force)
 {
-	std::cout << "Create Bounding Box Polygon" << std::endl;
 	OGRDataSourceType::Pointer ogrDS = const_cast< OGRDataSourceType * >( this->GetInput() );
 	double ulx, uly, lrx, lry;
 	//Maybe set false for bounding box
-	ogrDS->GetGlobalExtent(ulx, uly, lrx, lry, true) ;
+	ogrDS->GetGlobalExtent(ulx, uly, lrx, lry, force) ;
 
 	//Create a feature
 	OGRFeatureDefn* bbDef = new OGRFeatureDefn();
@@ -232,7 +230,6 @@ SimplifyVectorFilter<TSimplifyFunc>
 	bbGeom->addPoint(ulx, uly);
 	//Add geomtry to feature
 	bbFeature->SetGeometry(bbGeom);
-	std::cout << bbGeom->exportToGML() << std::endl;
 	//Remove bbPoly because internal copy is made
 	delete bbGeom;
 
@@ -257,15 +254,19 @@ SimplifyVectorFilter<TSimplifyFunc>
 	//Add geometries to vector
 	allEdges.insert(allEdges.end(), bbEdges.begin(), bbEdges.end());
 
-	//Intersect with nodata features
-	for(unsigned int fId = 0; fId < m_NodataLayer.GetFeatureCount(true); ++fId)
+	if (m_NodataLayer)
 	{
-		OGRFeatureType curFeature = m_NodataLayer.GetFeature(fId);
-		OGRGeometry* nodataGeom = curFeature.ogr().GetGeometryRef();
+		int nbFeatures = m_NodataLayer.GetFeatureCount(true);
+		//Intersect with nodata features
+		for(unsigned int fId = 0; fId < m_NodataLayer.GetFeatureCount(true); ++fId)
+		{
+			OGRFeatureType curFeature = m_NodataLayer.GetFeature(fId);
+			OGRGeometry* nodataGeom = curFeature.ogr().GetGeometryRef();
 
-		std::vector<OGRGeometry*> edges =  VectorOperations::IntersectGeoms(geomRef, nodataGeom);
-		allEdges.insert(allEdges.end(), edges.begin(), edges.end());
-	}
+			std::vector<OGRGeometry*> edges =  VectorOperations::IntersectGeoms(geomRef, nodataGeom);
+			allEdges.insert(allEdges.end(), edges.begin(), edges.end());
+		}
+        }
 
 	return allEdges;
 }
@@ -1005,18 +1006,21 @@ void SimplifyVectorFilter<TSimplifyFunc>
 {
 	std::cout << "REMOVE TILE BORDER POLYGONS FOR " << layer.GetName() << std::endl;
 	OGRDataSourceType::Pointer ogrDS = const_cast< OGRDataSourceType * >( this->GetOutput() );
-
+        std::cout << "get output ok"<<std::endl;
 	//Create tile geom
 	OGRPolygon* tileGeom = CreateTilePolygon();
-
+        std::cout << "create tile polygon OK"<<std::endl;
 	std::vector<unsigned int> outsideFeaturesId;
 
 	//Loop each features and check if it touches tile polygon
+	
+        std::cout << "go through layer"<<std::endl;
 	for(unsigned int fid = 0; fid < layer.GetFeatureCount(true); ++fid)
 	{
 		OGRFeatureType currentFeature = layer.GetFeature(fid);
 
 		const OGRGeometry* curGeom = currentFeature.GetGeometry();
+                 std::cout << "intersect geometry"<<std::endl;
 		if(!curGeom->Intersects(tileGeom))
 		{
 			//If there is no intersection, then the feature is outside the tile
@@ -1030,7 +1034,6 @@ void SimplifyVectorFilter<TSimplifyFunc>
 	{
 		layer.DeleteFeature(outsideFeaturesId[fid]);
 	}
-
 	delete tileGeom;
 }
 
@@ -1039,28 +1042,53 @@ OGRPolygon* SimplifyVectorFilter<TSimplifyFunc>
 ::CreateTilePolygon()
 {
 	OGRDataSourceType::Pointer ogrDS = const_cast< OGRDataSourceType * >( this->GetInput() );
-	int originX = std::stoi(ogrDS->ogr().GetMetadataItem("OriginTileX"));
-	int originY = std::stoi(ogrDS->ogr().GetMetadataItem("OriginTileY"));
-	int sizeX = std::stoi(ogrDS->ogr().GetMetadataItem("TileSizeX"));
-	int sizeY = std::stoi(ogrDS->ogr().GetMetadataItem("TileSizeY"));
 
-	//Create a feature
-	OGRFeatureDefn* bbDef = new OGRFeatureDefn();
-	bbDef->AddFieldDefn(new OGRFieldDefn(startingCoordsFieldName.c_str(), OFTInteger64));
-	OGRFeatureType* bbFeature = new OGRFeatureType(*bbDef);
-	bbFeature->ogr().SetField(startingCoordsFieldName.c_str(), -1);
+	int originX =0, originY=0, sizeX=0, sizeY=0;
+	
+	std::string tmp = ogrDS->ogr().GetMetadataItem("OriginTileX");
+	if (!tmp.empty())
+	{
+		originX = std::stoi(tmp);
+	}
+	tmp = ogrDS->ogr().GetMetadataItem("OriginTileY");
+	if (!tmp.empty())
+	{
+		originY = std::stoi(tmp);
+	}
+	tmp = ogrDS->ogr().GetMetadataItem("TileSizeX");
+	if (!tmp.empty())
+	{
+		sizeX = std::stoi(tmp);
+	}
+	tmp = ogrDS->ogr().GetMetadataItem("TileSizeY");
+	if (!tmp.empty())
+	{
+		sizeY = std::stoi(tmp);
+	}
 
-	//Create polygon
-	OGRLinearRing* bbGeom = new OGRLinearRing();
-	bbGeom->addPoint(originX, originY);
-	bbGeom->addPoint(originX, originY + sizeY);
-	bbGeom->addPoint(originX + sizeX, originY + sizeY);
-	bbGeom->addPoint(originX + sizeX, originY);
-	bbGeom->addPoint(originX, originY);
+	OGRPolygon* tilePolygon = NULL;
 
-	OGRPolygon* tilePolygon = new OGRPolygon();
-	tilePolygon->addRingDirectly(bbGeom);
+	if (! (originX == 0 && originY == 0 && sizeX == 0 && sizeY == 0) )
+        {
+	    //Create a feature
+	    OGRFeatureDefn* bbDef = new OGRFeatureDefn();
+            std::cout<<"startingCoordsFieldName.c_str() : "<< startingCoordsFieldName.c_str()<<std::endl;
+	    bbDef->AddFieldDefn(new OGRFieldDefn(startingCoordsFieldName.c_str(), OFTInteger64));
+	    OGRFeatureType* bbFeature = new OGRFeatureType(*bbDef);
+	    bbFeature->ogr().SetField(startingCoordsFieldName.c_str(), -1);
+            std::cout<<"apres -1"<<std::endl;
 
+	    //Create polygon
+	    OGRLinearRing* bbGeom = new OGRLinearRing();
+	    bbGeom->addPoint(originX, originY);
+	    bbGeom->addPoint(originX, originY + sizeY);
+	    bbGeom->addPoint(originX + sizeX, originY + sizeY);
+	    bbGeom->addPoint(originX + sizeX, originY);
+	    bbGeom->addPoint(originX, originY);
+
+	    tilePolygon = new OGRPolygon();
+	    tilePolygon->addRingDirectly(bbGeom);
+        }
 	return tilePolygon;
 }
 

@@ -101,7 +101,7 @@ public:
 	void InitializeOutputDS();
 
 	/**Create bounding feature to manage border*/
-	OGRFeatureType* CreateBoundingBoxFeature();
+	OGRFeatureType* CreateBoundingBoxFeature(bool force = false);
 
 	/**Create Tile polygon*/
 	OGRPolygon* CreateTilePolygon();
