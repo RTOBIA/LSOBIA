@@ -2,5 +2,5 @@
 void RegisterTests()
 {
 	std::cout<<"Test registering"<<std::endl;
-	REGISTER_TEST(otbLSOBIAComputeAttributsTest);
+	REGISTER_TEST(otbLSOBIAComputeAttributesTest);
 }

@@ -21,7 +21,7 @@ OTB_CREATE_APPLICATION(NAME LSPolygonize
 	LINK_LIBRARIES ${${otb-module}_LIBRARIES} ${OTBMathParser_LIBRARIES}  ${OTBGdalAdapters_LIBRARIES}
 )
 
-OTB_CREATE_APPLICATION(NAME ComputeAttributs
-	SOURCES otbObiaComputeAttributs.cxx
+OTB_CREATE_APPLICATION(NAME ComputeAttributes
+	SOURCES otbObiaComputeAttributes.cxx
 	LINK_LIBRARIES ${${otb-module}_LIBRARIES} ${OTBMathParser_LIBRARIES}  ${OTBGdalAdapters_LIBRARIES}
 )

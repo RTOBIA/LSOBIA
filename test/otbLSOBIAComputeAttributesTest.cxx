@@ -12,7 +12,7 @@
 
 using InputImageType = otb::VectorImage<float, 2>;
 using PixelType      = InputImageType::PixelType;
-std::vector<otb::obia::GenericAttribute<InputImageType>*> CreateAttributs();
+std::vector<otb::obia::GenericAttribute<InputImageType>*> CreateAttributes();
 
 bool isOn(const std::string & str)
 {
@@ -23,7 +23,7 @@ bool isOn(const std::string & str)
 	return false;
 }
 
-int otbLSOBIAComputeAttributsTest(int argc, char *argv[])
+int otbLSOBIAComputeAttributesTest(int argc, char *argv[])
 {
     if(argc < 3)
     {
@@ -50,32 +50,32 @@ int otbLSOBIAComputeAttributsTest(int argc, char *argv[])
 	//Image reader
 	auto imgReader = otb::ImageFileReader<InputImageType>::New();
 	imgReader->SetFileName(imagePath);
-	imgReader->Update();//TODO/ Fix the fact to do update twice...
+	imgReader->Update();
 
-	//Compute attributs
+	//Compute attributes
 	using OGRDataSourceType = otb::ogr::DataSource;
 	using ComputeAttributesFilterType = otb::obia::ComputeAttributesFilter<InputImageType>;
-	auto computeAttributs = ComputeAttributesFilterType::New();
+	auto computeAttributes = ComputeAttributesFilterType::New();
 
 	OGRDataSourceType::Pointer outputDs = otb::ogr::DataSource::New(vectorFile, OGRDataSourceType::Modes::Read); //default 2nd argument is read
 	std::cout << "Number of layers = " << outputDs->GetLayersCount() << std::endl;
 	std::cout << "Layer = " << outputDs->GetLayer(0).GetName() << std::endl;
-	computeAttributs->SetOGRData(outputDs);
-	computeAttributs->SetInput(imgReader->GetOutput());
-	computeAttributs->SetInputLayerName(otb::obia::reconstructedLayerName);
-	computeAttributs->SetLayerIndex(0);
-	computeAttributs->SetOutLayerName(otb::obia::attributsLayerName);
-	computeAttributs->SetFieldName(otb::obia::startingCoordsFieldName);
-	computeAttributs->SetAttributs(CreateAttributs());
-	computeAttributs->SetOutputDir(outDir);
-	computeAttributs->SetOutputFilename(gmlFile);
-	computeAttributs->Update();
+	computeAttributes->SetOGRData(outputDs);
+	computeAttributes->SetInput(imgReader->GetOutput());
+	computeAttributes->SetInputLayerName(otb::obia::reconstructedLayerName);
+	computeAttributes->SetLayerIndex(0);
+	computeAttributes->SetOutLayerName(otb::obia::attributesLayerName);
+	computeAttributes->SetFieldName(otb::obia::startingCoordsFieldName);
+	computeAttributes->SetAttributes(CreateAttributes());
+	computeAttributes->SetOutputDir(outDir);
+	computeAttributes->SetOutputFilename(gmlFile);
+	computeAttributes->Update();
 
     std::cout << "SUCCESS" << std::endl;
     return EXIT_SUCCESS;
 }
 
-std::vector<otb::obia::GenericAttribute<InputImageType>*> CreateAttributs()
+std::vector<otb::obia::GenericAttribute<InputImageType>*> CreateAttributes()
 {
 	using GenericAttributeType 	= otb::obia::GenericAttribute<InputImageType>;
 	using MeanAttributeType 	= otb::obia::MeanAttribute<InputImageType>;

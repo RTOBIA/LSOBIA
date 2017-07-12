@@ -1,5 +1,5 @@
-#ifndef otbObiaComputeAttributsFilter_txx
-#define otbObiaComputeAttributsFilter_txx
+#ifndef otbObiaComputeAttributesFilter_txx
+#define otbObiaComputeAttributesFilter_txx
 
 #include <otbObiaComputeAttributesFilter.h>
 #include "itkDefaultConvertPixelTraits.h"
@@ -61,7 +61,7 @@ ComputeAttributesFilter<TInputImage,TMaskImage>
 	//this->DispatchInputVectors();
 
 	//Compute all attributs
-	this->ComputeAllAttributs();
+	this->ComputeAllAttributes();
 
 	//Write feature
 	std::cout << "------------------- WRITING OUTPUT FILE -----------------" << std::endl;
@@ -84,9 +84,9 @@ ComputeAttributesFilter<TInputImage,TMaskImage>
 	m_OutputDs = OGRDataSourceType::New();
 
 	//Create all new fields
-	for(unsigned int k = 0; k < m_Attributs.size(); ++k)
+	for(unsigned int k = 0; k < m_Attributes.size(); ++k)
 	{
-		GenericAttributeType* currentAttribut = m_Attributs[k];
+		GenericAttributeType* currentAttribut = m_Attributes[k];
 		this->CreateAdditionalField(currentAttribut->GetFieldName(), currentAttribut->GetFieldType());
 	}
 
@@ -100,7 +100,7 @@ ComputeAttributesFilter<TInputImage,TMaskImage>
 template <class TInputImage, class TMaskImage>
 void
 ComputeAttributesFilter<TInputImage,TMaskImage>
-::ComputeAllAttributs()
+::ComputeAllAttributes()
 {
 	std::cout << "-------- COMPUTING ALL ATTRIBUTS -------------------------" << std::endl;
 
@@ -148,13 +148,13 @@ ComputeAttributesFilter<TInputImage,TMaskImage>
 		updatedFeature.SetFrom(currentFeature, true);
 
 		//Loop attributs
-		for(unsigned int k = 0; k < m_Attributs.size(); k++)
+		for(unsigned int k = 0; k < m_Attributes.size(); k++)
 		{
 			//Clear m_Samples
 			m_Samples.clear();
 
 			//Get current attribut class
-			GenericAttributeType* currentAttribut = m_Attributs[k];
+			GenericAttributeType* currentAttribut = m_Attributes[k];
 
 			//Use extract shape from the attribut method
 			OGRFeatureType requiredFeature = currentAttribut->GenerateFeature(currentFeature);

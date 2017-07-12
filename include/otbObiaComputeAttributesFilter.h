@@ -5,7 +5,7 @@
 #include <otbPersistentSamplingFilterBase.h>
 
 /**
-\file otbObiaComputeAttributsFilter.h
+\file otbObiaComputeAttributesFilter.h
 \brief This file define the filter used to compute attributs. It extracts samples from a ROI and compute
 all the attributes given
 */
@@ -65,7 +65,7 @@ class ComputeAttributesFilter : public PersistentSamplingFilterBase<TInputImage,
 	   virtual void Synthetize(void);
 
 	  /**Set all computing attributs method*/
-	   void SetAttributs(std::vector<GenericAttributeType*> attributs){ m_Attributs = attributs;};
+	   void SetAttributes(std::vector<GenericAttributeType*> attributes){ m_Attributes = attributes;};
 
 	protected:
 	  /** Constructor */
@@ -77,7 +77,7 @@ class ComputeAttributesFilter : public PersistentSamplingFilterBase<TInputImage,
 	  void GenerateData(void) ITK_OVERRIDE;
 
 	  /** Compute all attributs*/
-	  void ComputeAllAttributs();
+	  void ComputeAllAttributes();
 
 	  /**Initialize output */
 	  void InitializeOutput();
@@ -93,8 +93,8 @@ class ComputeAttributesFilter : public PersistentSamplingFilterBase<TInputImage,
 	  //Input layer name used for computing attributs
 	  std::string m_InputLayerName;
 
-	  //Vector of GenericAttributs
-	  std::vector<GenericAttributeType*> m_Attributs;
+	  //Vector of GenericAttributes
+	  std::vector<GenericAttributeType*> m_Attributes;
 
 	  //Vector containing samples
 	  std::map<unsigned int, std::vector<InputPixelType> > m_Samples;

@@ -37,12 +37,12 @@ private:
     {
 
         //General description
-        SetName("ComputeAttributs");
-        SetDescription("Compute vector attributs Application");
+        SetName("ComputeAttributes");
+        SetDescription("Vector Attributes Computation Application");
 
         //Documentation
-        SetDocName("Compute attributs");
-        SetDocLongDescription("This application computes several attributs of a vector file");
+        SetDocName("Compute attributes");
+        SetDocLongDescription("This application computes several attributes of a vector file");
         SetDocLimitations("None");
         SetDocAuthors("OBIA-Team");
         SetDocSeeAlso(" ");
@@ -62,20 +62,8 @@ private:
         AddParameter(ParameterType_Directory, "io.temp",  "Directory used for temporary data");
         SetParameterDescription("io.temp", "Temporary directory");
 
-
-
-        /* TODO : remove this when the default values and choices have been implemented
-        MandatoryOff("fusion.sylvester.linearcombination.image");
-        AddParameter(ParameterType_Float,"fusion.glp.ratio","Resolutions ratio between the Panchromatic and the multispectral inputs");
-        SetDefaultParameterFloat("",  4.);
-        SetMinimumParameterFloatValue("", 0);
-        SetDocExampleParameterValue("boolean", "true");
-        SetDocExampleParameterValue("in", "QB_Suburb.png");
-        SetDocExampleParameterValue("out", "Application_Example.png");
-        */
     }
 
-    // TODO : parameter update should go there
     void DoUpdateParameters()
     {
     }
@@ -97,27 +85,15 @@ private:
         auto imgReader = otb::ImageFileReader<InputImageType>::New();
         imgReader->SetFileName(imagePath);
 
-        //Compute attributs
-        using ComputeAttributsFilterType = otb::obia::ComputeAttributesFilter<InputImageType>;
-        auto computeAttributs = ComputeAttributsFilterType::New();
+        //Compute attributes
+        using ComputeAttributesFilterType = otb::obia::ComputeAttributesFilter<InputImageType>;
+        auto computeAttributes = ComputeAttributesFilterType::New();
 
         const ogr::DataSource* outputDs =ogr::DataSource::New(vectorFile); //default 2nd argument is read
-        computeAttributs->SetOGRData(outputDs);
-        computeAttributs->SetInput(imgReader->GetOutput());
-        computeAttributs->Update();
-        //Read vector file
-
-        //Create filter
-
-
-//        std::cout << "Nombre layer = " << graphToVectorFilter->GetOutput()->GetLayersCount() << std::endl;
-//        otb::ogr::Layer layer = graphToVectorFilter->GetOutput()->GetLayer(otb::obia::cleanedLayerName);
-//        std::cout << "Get layer  cleaned = " << layer.GetFeatureCount(true) << std::endl;
-        //graphToVectorFilter->Update();
+        computeAttributes->SetOGRData(outputDs);
+        computeAttributes->SetInput(imgReader->GetOutput());
+        computeAttributes->Update();
         std::cout << "End application" << std::endl;
-
-        //Get outut in order to write OGRDS into a file
-
     }
 };
 
