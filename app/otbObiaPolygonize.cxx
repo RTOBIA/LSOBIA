@@ -61,20 +61,8 @@ private:
         AddParameter(ParameterType_Directory, "io.temp",  "Directory used for temporary data");
         SetParameterDescription("io.temp", "Temporary directory");
 
-
-
-        /* TODO : remove this when the default values and choices have been implemented
-        MandatoryOff("fusion.sylvester.linearcombination.image");
-        AddParameter(ParameterType_Float,"fusion.glp.ratio","Resolutions ratio between the Panchromatic and the multispectral inputs");
-        SetDefaultParameterFloat("",  4.);
-        SetMinimumParameterFloatValue("", 0);
-        SetDocExampleParameterValue("boolean", "true");
-        SetDocExampleParameterValue("in", "QB_Suburb.png");
-        SetDocExampleParameterValue("out", "Application_Example.png");
-        */
     }
 
-    // TODO : parameter update should go there
     void DoUpdateParameters()
     {
     }
@@ -110,7 +98,6 @@ private:
 
         std::cout << "After graph filter" <<std::endl;
 
-        //std::cout << "Nombre layer = " << graphToVectorFilter->GetOutput()->GetLayersCount() << std::endl;
         //Create filter to simplify
         using SimplifyVectorFilterType = otb::obia::SimplifyVectorFilter<otb::obia::DouglasPeukerFunc>;
         auto simplifyVectorFilter = SimplifyVectorFilterType::New();
@@ -123,16 +110,7 @@ private:
         //Check why we have to update for each filter?
         simplifyVectorFilter->Update();
 
-        std::cout << "After simplify update" <<std::endl;
-
-//        std::cout << "Nombre layer = " << graphToVectorFilter->GetOutput()->GetLayersCount() << std::endl;
-//        otb::ogr::Layer layer = graphToVectorFilter->GetOutput()->GetLayer(otb::obia::cleanedLayerName);
-//        std::cout << "Get layer  cleaned = " << layer.GetFeatureCount(true) << std::endl;
-        //graphToVectorFilter->Update();
         std::cout << "End application" << std::endl;
-
-        //Get outut in order to write OGRDS into a file
-
     }
 };
 
