@@ -556,16 +556,6 @@ LSPolygonizeScheduler<TInputGraph, TSimplifyFunc>
 	this->m_OutputDS->ogr().SetMetadataItem("TileSizeY" 	, tileSizeY.c_str());
 	this->m_OutputDS->ogr().SetMetadataItem("ImageOriginX"  , imageOriginX.c_str());
 	this->m_OutputDS->ogr().SetMetadataItem("ImageOriginY"  , imageOriginY.c_str());
-//	char* metaDataArgs[] = { "-OriginTileX", const_cast<char*>(originX.c_str()),
-//							 "-OriginTileY", const_cast<char*>(originY.c_str()),
-//							 "-TileSizeX"  , const_cast<char*>(tileSizeX.c_str()),
-//							 "-TileSizeY"  , const_cast<char*>(tileSizeY.c_str())};
-//
-//	CPLErr errMeta = this->m_OutputDS->ogr().SetMetadata(metaDataArgs);
-//	if(errMeta != 0)
-//	{
-//		std::cout << "Error setting metadata" << std::endl;
-//	}
 }
 
 template< class TInputGraph, class TSimplifyFunc >
