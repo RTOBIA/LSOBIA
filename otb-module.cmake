@@ -10,6 +10,7 @@ otb_module(LSOBIA
     OTBMathParser
     OTBMPI
     OTBGdalAdapters
+    OTBGDAL
     OTBSampling
   TEST_DEPENDS
     OTBImageBase
@@ -18,6 +19,7 @@ otb_module(LSOBIA
     OTBCommandLine
     OTBMathParser
     OTBGdalAdapters
+    OTBGDAL
     OTBSampling
   DESCRIPTION
     "Large Scale Object Based Image Analysis algorithms"
