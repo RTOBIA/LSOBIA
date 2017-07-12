@@ -95,9 +95,6 @@ private:
         MandatoryOff("algorithm.baatz.geomweight");
         SetDefaultParameterFloat("algorithm.baatz.geomweight",  0.95);
 
-        //AddParameter(ParameterType_InputVectorData,"algorithm.baatz.bandweights", "optional band weights");
-        //MandatoryOff("algorithm.baatz.bandweights");
-
         AddParameter(ParameterType_Int,"algorithm.meanshift.maxiter","max number of iterations");
         AddParameter(ParameterType_Float,"algorithm.meanshift.spatialr","Spatial bandwidth");
         MandatoryOff("algorithm.meanshift.spatialr");
@@ -127,20 +124,8 @@ private:
         MandatoryOff("algorithm.baatz.aggregategraphs");
         AddChoice("algorithm.baatz.aggregategraphs.on","Activated");
         AddChoice("algorithm.baatz.aggregategraphs.off","Deactivated");
-
-
-        /* TODO : remove this when the default values and choices have been implemented
-        MandatoryOff("fusion.sylvester.linearcombination.image");
-        AddParameter(ParameterType_Float,"fusion.glp.ratio","Resolutions ratio between the Panchromatic and the multispectral inputs");
-        SetDefaultParameterFloat("",  4.);
-        SetMinimumParameterFloatValue("", 0);    
-        SetDocExampleParameterValue("boolean", "true"); 
-        SetDocExampleParameterValue("in", "QB_Suburb.png"); 
-        SetDocExampleParameterValue("out", "Application_Example.png");
-        */
     }
 
-    // TODO : parameter update should go there
     void DoUpdateParameters()
     {
     }
