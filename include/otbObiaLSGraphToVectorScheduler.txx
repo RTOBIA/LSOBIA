@@ -270,6 +270,7 @@ LSGraphToVectorScheduler<TInputGraph>
         std::stringstream in;
         in << graph_dir << prefix_name << "_" << ty << "_" << tx << ".dat";
         std::cout << "Read graph : "  << in.str() << std::endl;
+        std::cout << "graph_dir : "  << graph_dir << std::endl;
         m_Graph = GraphOperationsType::ReadGraphFromDisk(in.str());
     //}
 }
