@@ -34,9 +34,10 @@ private:
     void DoInit()
     {
 
+	std::cout<<"Init"<<std::endl;
         //General description
         SetName("LSPolygonize");
-        SetDescription("Large Scale Image Polygonize Application");
+        SetDescription("Large Scale Image Polygonization Application");
 
         //Documentation
         SetDocName("Large Scale Polygonization");
@@ -45,25 +46,12 @@ private:
         SetDocAuthors("OBIA-Team");
         SetDocSeeAlso(" ");
 
+	std::cout<<"IO"<<std::endl;
         // IO Parameters
         AddParameter(ParameterType_Group,"io","Set of parameters related to input/output");
         AddParameter(ParameterType_String,  "io.gr",   "Input graph path");
         SetParameterDescription("io.gr", "Graph");
 
-        AddParameter(ParameterType_Int,  "io.im.width",   "Image width");
-        SetParameterDescription( "io.im.width", "Image width");
-        AddParameter(ParameterType_Int,  "io.im.height",   "Image height");
-        SetParameterDescription( "io.im.height", "height width");
-
-        AddParameter(ParameterType_Int,  "io.im.nbTilesX",   "Number of tiles X");
-        SetParameterDescription( "io.im.nbTilesX", "Number of tiles X");
-        AddParameter(ParameterType_Int,  "io.im.nbTilesY",   "Number of tiles Y");
-        SetParameterDescription( "io.im.nbTilesY", "Number of tiles Y");
-
-        AddParameter(ParameterType_Int,  "io.im.maxTileSizeX",   "Max tile size X");
-        SetParameterDescription( "io.im.maxTileSizeX",   "Max tile size X");
-        AddParameter(ParameterType_Int,  "io.im.maxTileSizeY",   "Max tile size Y");
-        SetParameterDescription( "io.im.maxTileSizeY",   "Max tile size Y");
 
         AddParameter(ParameterType_Group, "io.out",  "Output directory");
         AddParameter(ParameterType_Directory, "io.out.dir",  "Output directory");
@@ -76,19 +64,26 @@ private:
         SetParameterDescription("io.temp", "Temporary directory");
 
 
+	// Processing parameters
+	std::cout<<"Processing"<<std::endl;
+        AddParameter(ParameterType_Group,"processing","Set of parameters related to processing");
+	MandatoryOff("processing");
+        AddParameter(ParameterType_Int,  "processing.nbtilesx",   "Number of tiles X");
+        SetParameterDescription( "processing.nbtilesx", "Number of tiles X");
+	SetDefaultParameterInt("processing.nbtilesx",1);
+        AddParameter(ParameterType_Int,  "processing.nbtilesy",   "Number of tiles Y");
+        SetParameterDescription( "processing.nbtilesy", "Number of tiles Y");
+	SetDefaultParameterInt("processing.nbtilesy",1);
 
-        /* TODO : remove this when the default values and choices have been implemented
-        MandatoryOff("fusion.sylvester.linearcombination.image");
-        AddParameter(ParameterType_Float,"fusion.glp.ratio","Resolutions ratio between the Panchromatic and the multispectral inputs");
-        SetDefaultParameterFloat("",  4.);
-        SetMinimumParameterFloatValue("", 0);
-        SetDocExampleParameterValue("boolean", "true");
-        SetDocExampleParameterValue("in", "QB_Suburb.png");
-        SetDocExampleParameterValue("out", "Application_Example.png");
-        */
+        AddParameter(ParameterType_Int,  "processing.maxtilesizex",   "Max tile size X");
+        SetParameterDescription( "processing.maxtilesizex",   "Max tile size X");
+	SetDefaultParameterInt("processing.maxtilesizex",250);
+        AddParameter(ParameterType_Int,  "processing.maxtilesizey",   "Max tile size Y");
+        SetParameterDescription( "processing.maxtilesizey",   "Max tile size Y");
+	SetDefaultParameterInt("processing.maxtilesizey",250);
+
     }
 
-    // TODO : parameter update should go there
     void DoUpdateParameters()
     {
     }
@@ -103,13 +98,11 @@ private:
         std::string gmlFile = GetParameterString("io.out.gmlfile");
         std::string tmpDir = GetParameterString("io.temp");
 
-        uint32_t imageWidth = GetParameterInt("io.im.width");
-        uint32_t imageHeight = GetParameterInt("io.im.height");
-        uint32_t nbX = GetParameterInt("io.im.nbTilesX");
-        uint32_t nbY = GetParameterInt("io.im.nbTilesY");
-        uint32_t maxSizeX = GetParameterInt("io.im.maxTileSizeX");
-        uint32_t maxSizeY = GetParameterInt("io.im.maxTileSizeY");
-
+        uint32_t nbX = GetParameterInt("processing.nbtilesx");
+        uint32_t nbY = GetParameterInt("processing.nbtilesy");
+        uint32_t maxSizeX = GetParameterInt("processing.maxtilesizex");
+        uint32_t maxSizeY = GetParameterInt("processing.maxtilesizey");
+	std::cout<<"Parametres recuperes"<<std::endl;
         // Polygonize
         using InputGraphType = otb::obia::Graph< otb::obia::Node<
                                                  otb::obia::BaatzNodeAttribute,
@@ -118,6 +111,8 @@ private:
         using SimplifyFuncType =  otb::obia::DouglasPeukerFunc;
         using LSPolygonizeSchedulerType = otb::obia::LSPolygonizeScheduler<InputGraphType, SimplifyFuncType>;
 
+	std::cout<<"Filtres declares"<<std::endl;
+	std::cout<<"Graph to be used"<<filename<<std::endl;
         //Read graph from disk
         auto graph = otb::obia::GraphOperations<InputGraphType>::ReadGraphFromDisk(filename);
 
@@ -127,13 +122,17 @@ private:
         auto simplifyFunc = new SimplifyFuncType;
         simplifyFunc->SetTolerance(1.0);
 
+	size_t found;
+	std::cout << "Splitting: " << filename << std::endl;
+	found=filename.find_last_of("/\\");
+
         //Number of tiles per processor
         TilesMapType tilesPerProcessor;
         tilesPerProcessor[0].insert(0);
         tilesPerProcessor[1].insert(0);
-
-        LSPolygonizeScheduler->SetImageHeight(imageWidth);
-        LSPolygonizeScheduler->SetImageWidth(imageHeight);
+	std::cout<<"Large scale processing parameters"<<std::endl;
+        LSPolygonizeScheduler->SetImageHeight(graph->GetImageWidth());
+        LSPolygonizeScheduler->SetImageWidth(graph->GetImageWidth());
         LSPolygonizeScheduler->SetNumberOfTilesX(nbX);
         LSPolygonizeScheduler->SetNumberOfTilesY(nbY);
         LSPolygonizeScheduler->SetMaxTileSizeX(maxSizeX);
@@ -142,20 +141,18 @@ private:
         LSPolygonizeScheduler->SetTilesPerProcessor(tilesPerProcessor);
         LSPolygonizeScheduler->SetSimplifyFunc(simplifyFunc);
         LSPolygonizeScheduler->SetWriteVector(true);
+	LSPolygonizeScheduler->SetInputDirectory(filename.substr(0,found));
         LSPolygonizeScheduler->SetOutputDir(outDir);
         LSPolygonizeScheduler->SetTemporaryDirectory(tmpDir);
 
         LSPolygonizeScheduler->SetGraphPrefixName("Graph_Vector");
         LSPolygonizeScheduler->SetGraph(graph);
+	std::cout<<"Update"<<std::endl;
         LSPolygonizeScheduler->Update();
 
-//        std::cout << "Nombre layer = " << graphToVectorFilter->GetOutput()->GetLayersCount() << std::endl;
-//        otb::ogr::Layer layer = graphToVectorFilter->GetOutput()->GetLayer(otb::obia::cleanedLayerName);
-//        std::cout << "Get layer  cleaned = " << layer.GetFeatureCount(true) << std::endl;
-        //graphToVectorFilter->Update();
         std::cout << "End application" << std::endl;
 
-        //Get outut in order to write OGRDS into a file
+        //Get output in order to write OGRDS into a file?
 
     }
 };

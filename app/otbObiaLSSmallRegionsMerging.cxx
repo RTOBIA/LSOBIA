@@ -84,8 +84,6 @@ private:
         AddParameter(ParameterType_Float,"algorithm.baatz.stopping","Value for stopping criterion");
         AddParameter(ParameterType_Float,"algorithm.baatz.spectralweight","Value for spectral weight");
         AddParameter(ParameterType_Float,"algorithm.baatz.geomweight","Value for geometric (shape) weight");
-        //AddParameter(ParameterType_InputVectorData,"baatz.bandweights", "optional band weights");
-        //MandatoryOff("baatz.bandweights");
 
         AddParameter(ParameterType_Int,"algorithm.meanshift.maxiter","max number of iterations");
         AddParameter(ParameterType_Float,"algorithm.meanshift.spatialr","Spatial bandwidth");
@@ -105,7 +103,6 @@ private:
 
     }
 
-    // TODO : parameter update should go there
     void DoUpdateParameters()
     {
     }
