@@ -1,5 +1,6 @@
 #include "otbObiaContour.h"
-
+#include "otbObiaStreamUtils.h"
+#include "otbMPIConfig.h"
 namespace otb{
 
     namespace obia{
@@ -19,10 +20,9 @@ namespace otb{
 
         uint64_t Contour::GetNumberOfBytesToSerialize() const
         {
-            return (CoordValueSize +  
-                    UInt64Size + // the starting coordinates and the number of packets
-                    UInt8Size +
-                    m_Moves.size() * UInt8Size);
+	  return stream_offset(m_StartingCoords) 
+		  + stream_offset(m_Offset)
+		  + stream_offset(m_Moves);
         }
 
         void Contour::Serialize(std::vector<char>& serializedContour, uint64_t& position) const
@@ -37,21 +37,13 @@ namespace otb{
                 // 4) the list of packets => m_Moves.size() * UInt8Size bytes0
 
                 // Serialize the starting coordinates
-                std::memcpy(&(serializedContour[position]), &m_StartingCoords, CoordValueSize);
-                position += CoordValueSize;
+	        to_stream(serializedContour,m_StartingCoords,position);
 
                 // Serialize the final offset value
-                std::memcpy(&(serializedContour[position]), &m_Offset, UInt8Size);
-                position += UInt8Size;
+		to_stream(serializedContour,m_Offset,position);
 
                 // Serialize the number of packets
-                const uint64_t packetSize = m_Moves.size();
-                std::memcpy(&(serializedContour[position]), &packetSize, UInt64Size);
-                position += UInt64Size;
-
-                // Serialize the packet list
-                std::memcpy(&(serializedContour[position]), &(m_Moves[0]), packetSize * UInt8Size);
-                position += packetSize * UInt8Size;
+		to_stream(serializedContour,m_Moves,position);
             }
             else
             {
@@ -63,22 +55,13 @@ namespace otb{
         void Contour::DeSerialize(const std::vector<char>& serializedContour, uint64_t& position)
         {
             // Deserialize the starting coordinates
-            std::memcpy(&m_StartingCoords, &(serializedContour[position]), CoordValueSize);
-            position += CoordValueSize;
-
-            // Deserialize the final offset value
-            std::memcpy(&m_Offset, &(serializedContour[position]), UInt8Size);
-            position += UInt8Size;
+            from_stream(serializedContour,m_StartingCoords,position);
+           
+	    // Deserialize the final offset value
+	    from_stream(serializedContour,m_Offset,position);
 
             // Deserialize the number of packets
-            uint64_t numPackets = 0;
-            std::memcpy(&numPackets, &(serializedContour[position]), UInt64Size);
-            position += UInt64Size;
-
-            // Allocate the number of packets
-            m_Moves.assign(numPackets, Packet());
-            std::memcpy(&(m_Moves[0]), &(serializedContour[position]), numPackets * UInt8Size);
-            position += numPackets * UInt8Size;
+	    from_stream(serializedContour,m_Moves,position);
         }
 
         void Contour::MergeWith(Contour& other, 

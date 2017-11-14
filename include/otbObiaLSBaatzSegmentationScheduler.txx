@@ -2,6 +2,7 @@
 #define otbObiaLSBaatzSegmentationScheduler_txx
 #include "otbObiaLSBaatzSegmentationScheduler.h"
 #include "otbObiaGraphToLabelImageFilter.h"
+#include "otbObiaStreamUtils.h"
 #include "itkRGBPixel.h"
 #include "itkLabelToRGBImageFilter.h"
 #include "otbImage.h"
@@ -357,7 +358,6 @@ LSBaatzSegmentationScheduler<TInputImage>
         //TODO : ExtractStabilityMargins();
         
         AggregateStabilityMargins();
-        
         RunPartialSegmentation(accumulatedMemory, fusionSum);
 
         m_CurrentNumberOfIterations += m_PartialNumberOfIterations;
@@ -467,7 +467,7 @@ LSBaatzSegmentationScheduler<TInputImage>
 
 
     // Create the shared buffer which will be accessible by other processes.
-    uint64_t maxNumberOfElements = this->m_MaxNumberOfTilesPerProcessor * (IntSize + m_MaxNumberOfBytes);
+    uint64_t maxNumberOfElements = this->m_MaxNumberOfTilesPerProcessor * (sizeof(std::size_t) + m_MaxNumberOfBytes);
     std::vector< char > sharedBuffer(maxNumberOfElements);
 
     uint32_t tid = 0;
@@ -481,21 +481,21 @@ LSBaatzSegmentationScheduler<TInputImage>
 
                 if(this->m_TileMap.size() > 1)
                 {
+
                     std::stringstream os;
                     os << this->m_TemporaryDirectory << "MarginGraph_" << ty << "_" << tx << ".dat";
                     m_SerializedStabilityMargin = GraphOperationsType::ReadSerializedMarginFromDisk(os.str());
                 }
 
                 // Move at the right location in the shared buffer.
-                uint64_t offset = ntile * (IntSize + m_MaxNumberOfBytes);
-
-                // Write the number of bytes in the serialized margin.
-                const int numBytes = m_SerializedStabilityMargin.size();
-                std::memcpy(&sharedBuffer[offset], &numBytes, IntSize);
+                uint64_t offset = ntile * (sizeof(size_t) + m_MaxNumberOfBytes);
 
                 // Write the serialized stablity margin in the shared buffer
-                std::memcpy(&sharedBuffer[offset + IntSize], &m_SerializedStabilityMargin[0], numBytes);
-
+		to_stream(sharedBuffer,m_SerializedStabilityMargin,offset);
+		uint64_t numNodes;
+		// Write the number of bytes in the serialized margin.
+		from_stream(m_SerializedStabilityMargin,numNodes);
+		
                 // Can release this serialized stability margin
                 m_SerializedStabilityMargin.clear();
                 m_SerializedStabilityMargin.shrink_to_fit();
@@ -551,10 +551,10 @@ LSBaatzSegmentationScheduler<TInputImage>
                         }
 
                         // Compute the offset of displacement.
-                        uint64_t offset = pos * (IntSize + m_MaxNumberOfBytes);
+                        uint64_t offset = pos * (sizeof(size_t) + m_MaxNumberOfBytes);
 
                         // Allocate a new serialized stability margin.
-                        otherSerializedMargins.push_back( std::vector<char>(IntSize + m_MaxNumberOfBytes) );
+                        otherSerializedMargins.push_back( std::vector<char>(sizeof(size_t) + m_MaxNumberOfBytes) );
 
                         // Read rma operation
                         
@@ -562,11 +562,11 @@ LSBaatzSegmentationScheduler<TInputImage>
                         MPI_Win_lock(MPI_LOCK_SHARED, neighRank, 0, win);
 
                         MPI_Get(&(otherSerializedMargins[otherSerializedMargins.size()-1][0]), 
-                                IntSize + m_MaxNumberOfBytes,
+                                sizeof(size_t) + m_MaxNumberOfBytes,
                                 MPI_CHAR,
                                 neighRank,
                                 offset,
-                                IntSize + m_MaxNumberOfBytes,
+                                sizeof(size_t) + m_MaxNumberOfBytes,
                                 MPI_CHAR,
                                 win);
 
@@ -582,18 +582,20 @@ LSBaatzSegmentationScheduler<TInputImage>
                 // Agregate the stability margins to the graph
                 for(uint32_t i = 0; i < otherSerializedMargins.size(); i++)
                 {
-                    // Retrieve the real number of bytes
-                    int numBytes;
-                    std::memcpy(&numBytes, &otherSerializedMargins[i][0], IntSize);
+   		    std::vector<char> otherSerializedMargin;
+                    from_stream(otherSerializedMargins[i],otherSerializedMargin);
 
-                    // Retrieve the serialized margin
-                    std::vector< char > otherSerializedMargin(numBytes);
-                    std::memcpy(&otherSerializedMargin[0], &otherSerializedMargins[i][IntSize], numBytes);
                     otherSerializedMargins[i].clear();
                     otherSerializedMargins[i].shrink_to_fit();
+ 
+		    uint64_t numNodes;
+		    from_stream(otherSerializedMargin,numNodes);
 
                     // Deserialize the graph
+
+		    // TODO: This is the call that fails with the duplicated node error
                     auto subGraph = GraphOperationsType::DeSerializeGraph(otherSerializedMargin);
+
                     GraphOperationsType::AggregateGraphs(this->m_Graph, subGraph);
 
                     //Reset subgraph
@@ -797,18 +799,6 @@ LSBaatzSegmentationScheduler<TInputImage>
     if(mpiConfig->GetMyRank() == 0)
     {
         m_SerializedStabilityMargin.clear();
-
-//        for(auto nodeIt = this->m_Graph->Begin(); nodeIt != this->m_Graph->End(); nodeIt++)
-//		{
-//			if(nodeIt->GetFirstPixelCoords() == 1348)
-//			{
-//				std::cout << "RANK = " << mpiConfig->GetMyRank() << std::endl;
-//				for(auto edgeIt = nodeIt->m_Edges.begin(); edgeIt != nodeIt->m_Edges.end(); edgeIt++)
-//				{
-//					std::cout << "Edge = " << edgeIt->m_TargetId << std::endl;
-//				}
-//			}
-//		}
     }
     else
     {
@@ -886,6 +876,8 @@ LSBaatzSegmentationScheduler<TInputImage>
         std::vector< std::vector<char> > serializedOtherGraphs(mpiConfig->GetNbProcs() - 1, std::vector<char>(m_MaxNumberOfBytes, char()));
         std::vector< int > numberOfRecvBytesPerGraph(mpiConfig->GetNbProcs()-1, 0);
 
+	std::cout<<"[0] listening for "<<m_MaxNumberOfBytes<<std::endl;
+
         for(unsigned int r = 1; r < mpiConfig->GetNbProcs(); r++)
         {
             serializedOtherGraphs[r-1].assign(m_MaxNumberOfBytes, char());
@@ -910,6 +902,8 @@ LSBaatzSegmentationScheduler<TInputImage>
             {
                 MPI_Get_count( &(statuses[r-1]), MPI_CHAR, &(numberOfRecvBytesPerGraph[r-1]) );
                 serializedOtherGraphs[r-1].resize(numberOfRecvBytesPerGraph[r-1]);
+
+		std::cout<<"[0] Recieved "<<numberOfRecvBytesPerGraph[r-1]<<" from "<<r<<std::endl;
             }
         }
 
@@ -972,7 +966,8 @@ LSBaatzSegmentationScheduler<TInputImage>
 
         }
         else
-        {
+	  {
+	    std::cout<<"["<<mpiConfig->GetMyRank()<<"] sending "<<m_SerializedStabilityMargin.size()<<" bytes"<<std::endl;
             MPI_Send(&m_SerializedStabilityMargin[0],
                      m_SerializedStabilityMargin.size(),
                      MPI_CHAR,
