@@ -1,6 +1,7 @@
 #ifndef otbObiaLSMeanShiftScheduler_txx
 #define otbObiaLSMeanShiftScheduler_txx
 #include "otbObiaLSMeanShiftScheduler.h"
+#include "otbObiaStreamUtils.h"
 #include <unordered_set>
 
 namespace otb
@@ -277,12 +278,8 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
                   // Move at the right location in the shared buffer.
                   uint64_t offset = ntile * (IntSize + m_MaxNumberOfBytes);
 
-                  // Write the number of bytes in the serialized margin.
-                  const int numBytes = m_SerializedListOfBorderNodes.size();
-                  std::memcpy(&m_SharedBuffer[offset], &numBytes, IntSize);
-
                   // Write the serialized stablity margin in the shared buffer
-                  std::memcpy(&m_SharedBuffer[offset + IntSize], &m_SerializedListOfBorderNodes[0], numBytes);
+		  to_stream(m_SharedBuffer,m_SerializedListOfBorderNodes,offset);
 
                   // We can clean the serialized list of border nodes
                   m_SerializedListOfBorderNodes.clear();
@@ -381,13 +378,10 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
                 // Deserialize the adjacent subgraphs.
                 for(uint32_t i = 0; i < ajdSerializedListOfBorderNodes.size(); i++)
                 {
-                    // Retrieve the real number of bytes
-                    int numBytes;
-                    std::memcpy(&numBytes, &ajdSerializedListOfBorderNodes[i][0], IntSize);
-
                     // Retrieve the serialized margin
-                    std::vector< char > serializedListOfBorderNodes(numBytes);
-                    std::memcpy(&serializedListOfBorderNodes[0], &ajdSerializedListOfBorderNodes[i][IntSize], numBytes);
+                    std::vector< char > serializedListOfBorderNodes(0);
+		    from_stream(ajdSerializedListOfBorderNodes[i],serializedListOfBorderNodes);
+
                     ajdSerializedListOfBorderNodes[i].clear();
                     adjSubGraphs[i] = GraphOperationsType::DeSerializeGraph(serializedListOfBorderNodes);
                 }

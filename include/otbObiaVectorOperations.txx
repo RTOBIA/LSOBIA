@@ -458,7 +458,7 @@ VectorOperations
 	poDriver = (GDALDriver*) GDALGetDriverByName(driverName.c_str());
 	if( poDriver == NULL )
 	{
-		printf( "%s driver not available\n", driverName);
+		printf( "%s driver not available\n", driverName.c_str());
 		exit( 1 );
 	}
 
