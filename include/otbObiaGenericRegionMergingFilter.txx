@@ -55,6 +55,7 @@ public:
 
   /*
    * Compute merging costs of the nodes
+   * See "threadsafe.jpg" in the root directory for details.
    */
   void ComputeMergingCosts()
   {
