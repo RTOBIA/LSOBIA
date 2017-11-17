@@ -20,13 +20,10 @@ struct BaatzEdgeAttribute : GraphAttribute
     // Merging cost
     float m_MergingCost;
 
-    // Flag indicating if the merging cost has to be recomputed.
-    bool m_CostUpdated;
-
     BaatzEdgeAttribute(){}
 
     BaatzEdgeAttribute(const BaatzEdgeAttribute& other) 
-        : m_MergingCost(other.m_MergingCost), m_CostUpdated(other.m_CostUpdated)
+        : m_MergingCost(other.m_MergingCost)
     {}
 
     virtual uint64_t GetMemorySize() const;

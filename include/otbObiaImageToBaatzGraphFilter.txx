@@ -169,7 +169,6 @@ ImageToBaatzGraphFilter< TInputImage >
         for(auto edgeIt = newNode->m_Edges.begin(); edgeIt != newNode->m_Edges.end(); edgeIt++)
         {
             edgeIt->m_Attributes.m_MergingCost = std::numeric_limits<float>::max();
-            edgeIt->m_Attributes.m_CostUpdated = false;
         }
 
         // Increment the id
