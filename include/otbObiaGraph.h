@@ -137,7 +137,8 @@ struct Node
          m_HasToBeRemoved(other.m_HasToBeRemoved), m_Valid(other.m_Valid),
          m_Id(other.m_Id), m_BoundingBox(other.m_BoundingBox),
          m_Contour(other.m_Contour), m_Edges(other.m_Edges),
-         m_Attributes(other.m_Attributes)
+         m_Attributes(other.m_Attributes), m_ThreadSafe(other.m_ThreadSafe),
+         m_ThreadSafeForMerge(other.m_ThreadSafeForMerge)
     {}
 
     /**\brief Returns the vectorized coordinates (x,y) of the first pixel composing this node. */
