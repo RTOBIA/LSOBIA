@@ -80,7 +80,6 @@ GenerateData()
         for(auto& edg : nodeIt->m_Edges)
         {
             edg.m_Attributes.m_MergingCost = m_MergingCostFunc->GetMax();
-            edg.m_Attributes.m_CostUpdated = false;
         }
     }
 
@@ -166,15 +165,6 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
     // Fix : uninitialized variable
     uint64_t minNodeId = outputGraph->GetNumberOfNodes()+1, idx, minIdx;
 
-    // The nodes must have a boolean attribute called m_CostUpdated.
-    for(auto nodeIt =outputGraph->Begin(); nodeIt != outputGraph->End(); nodeIt++)
-    {
-        for(auto edgeIt = nodeIt->m_Edges.begin(); edgeIt != nodeIt->m_Edges.end(); edgeIt++)
-        {
-            edgeIt->m_Attributes.m_CostUpdated = false;
-        }
-    }
-
     // Loop over the nodes
     for(auto nodeIt = outputGraph->Begin(); nodeIt != outputGraph->End(); nodeIt++)
     {
@@ -198,18 +188,12 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
                 if(m_MergingCostFunc->ComputeMergingCostsForThisAdjNode(adjNode))
                 {
 
-                    // If the cost is not updated and if one of the adjacent nodes
+                    // If one of the adjacent nodes
                     // has merged at the previous iteration then we must compute the
                     // merging cost.
-                    if(!(edgeIt->m_Attributes.m_CostUpdated) && 
-                        (nodeIt->m_Attributes.m_HasPreviouslyMerged || 
-                           adjNode->m_Attributes.m_HasPreviouslyMerged))
+                    if (nodeIt->m_Attributes.m_HasPreviouslyMerged || adjNode->m_Attributes.m_HasPreviouslyMerged)
                     {
                         edgeIt->m_Attributes.m_MergingCost = m_MergingCostFunc->ComputeMergingCost(&(*nodeIt), adjNode);
-                        auto adjNodeToCurr = adjNode->FindEdge(nodeIt->m_Id);
-                        adjNodeToCurr->m_Attributes.m_MergingCost = edgeIt->m_Attributes.m_MergingCost;
-                        edgeIt->m_Attributes.m_CostUpdated = true;
-                        adjNodeToCurr->m_Attributes.m_CostUpdated = true;
                     }
 
 
