@@ -197,6 +197,10 @@ struct Node
     /**\brief Specific attributes related to the node*/
     NodeAttributeType m_Attributes;
 
+    /**\brief Thread safe properties of the node*/
+    bool m_ThreadSafe:1;
+    bool m_ThreadSafeForMerge:1;
+
     /**\brief Debug */
     EdgeIteratorType Begin(){return m_Edges.begin();}
     EdgeIteratorType End(){return m_Edges.end();}
@@ -329,6 +333,11 @@ public:
         m_Nodes.shrink_to_fit();
     }
 
+    /**\brief Merge edge between 2 nodes by updating contour, boundary, edges, etc ...
+     * \param: Node in
+     * \param: Node Out*/
+    void MergeEdge(NodeType* nodeIn, NodeType* nodeOut);
+
 protected:
 
     Graph(){}
@@ -357,13 +366,6 @@ protected:
     double m_OriginY;
     std::string m_ProjectionRef;
 
-
-private:
-
-    /**\brief Merge edge between 2 nodes by updating contour, boundary, edges, etc ...
-     * \param: Node in
-     * \param: Node Out*/
-    void MergeEdge(NodeType* nodeIn, NodeType* nodeOut);
 };
 
 } // end of namespace obia
