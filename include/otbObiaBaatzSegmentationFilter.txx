@@ -36,7 +36,7 @@ BaatzMergingCost<TCost, TGraph>::ComputeMergingCostsForThisAdjNode(const NodeTyp
 
 template< typename TCost, typename TGraph >
 typename BaatzMergingCost< TCost, TGraph>::ValueType
-BaatzMergingCost<TCost, TGraph>::ComputeMergingCost(NodeType* n1, NodeType* n2)
+BaatzMergingCost<TCost, TGraph>::ComputeMergingCost(NodeType* n1, NodeType* n2) // TODO: should be const
 {
     // Retrieve attributes
     const float aArea = n1->m_Attributes.m_Area;
@@ -45,7 +45,7 @@ BaatzMergingCost<TCost, TGraph>::ComputeMergingCost(NodeType* n1, NodeType* n2)
     
     float colorH = 0.0f;
 
-    // No. We should do this elsewhere!
+    // TODO: No. We should do this elsewhere!
 //    if(m_BandWeights.size() < 1)
 //    {
 //        m_BandWeights.assign(n1->m_Attributes.m_AvgSpec.size(), 1.0f);

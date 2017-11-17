@@ -5,6 +5,7 @@
 
 #include "otbObiaGraph.h"
 #include "otbObiaImageToGraphFilter.h"
+#include "otbNoDataHelper.h"
 
 /**
 \file otbObiaImageToBaatzGraphFilter.h

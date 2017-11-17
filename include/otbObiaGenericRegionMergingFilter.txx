@@ -16,6 +16,12 @@ namespace obia
  * This can process:
  * -nodes
  * -pairs of nodes
+ *
+ * TODO:
+ * * something cleaner :]
+ * * refactor the call to the worker, including the computation of chunkSize, ranges, ...
+ * * maybe use itk thread classes (don't know if useful?)
+ * * const stuff
  */
 template<typename TOutputGraph, typename TMergingCostFunc, typename TUpdateAttributeFunc>
 class ThreadWorker
@@ -88,7 +94,7 @@ public:
           if(m_MergingCostFunc->ComputeMergingCostsForThisAdjNode(adjNode))
             {
 
-            // If the cost is not updated and if one of the adjacent nodes
+            // If one of the adjacent nodes
             // has merged at the previous iteration then we must compute the
             // merging cost.
             if(nodeIt->m_Attributes.m_HasPreviouslyMerged || adjNode->m_Attributes.m_HasPreviouslyMerged)
@@ -128,7 +134,7 @@ public:
         } // end if(MergingCostFunctionType::ComputeMergingCostsForThisNode(&(*nodeIt)))
       } // end for loop over the nodes
 
-    // grow the thread-unsafe-for-merge region (we know that the merge operation requires to R/W adjacent nodes of
+    // Grow the thread-unsafe-for-merge region (we know that the merge operation requires to R/W adjacent nodes of
     // the pair of nodes to merge)
     for(auto nodeIt = m_OutputGraph->Begin() + m_RangeStart; nodeIt != m_OutputGraph->Begin() + m_RangeEnd; nodeIt++)
       {
@@ -160,7 +166,7 @@ public:
   } // ResetMergeFlags()
 
   /*
-   * Performs the merge of a pair of nodes
+   * Performs the merge of pairs in the range [m_RangeStart, m_RangeEnd[
    */
   void FusionOfPairs()
   {
@@ -272,50 +278,12 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
   // Output graph
   auto outputGraph = this->GetOutput();
 
-////////////////////////////////////////////////////////////////////////////////
-////            Check graph consistency.   TODO: remove this                 //
-//  for(auto nodeIt = outputGraph->Begin(); nodeIt != outputGraph->End(); nodeIt++)
-//    {
-//      assert(0 <= nodeIt->m_Id && nodeIt->m_Id < outputGraph->GetNumberOfNodes());
-//      for (auto& edgeIt : nodeIt->m_Edges)
-//        {
-//          assert(0 <= edgeIt.m_TargetId && edgeIt.m_TargetId < outputGraph->GetNumberOfNodes());
-//          auto adjacentNode = outputGraph->GetNodeAt(edgeIt.m_TargetId);
-//          auto edgeFromAdjacentNodeToCurrentNode = adjacentNode->FindEdge(nodeIt->m_Id);
-//          assert(edgeFromAdjacentNodeToCurrentNode != adjacentNode->m_Edges.end());
-//        }
-//    }
-////////////////////////////////////////////////////////////////////////////////
-
   // Measure iteration total time
   itk::TimeProbe titeration;  titeration.Start();
 
   // Compute the merging costs for all the pairs of adjacent nodes.
   itk::TimeProbe tcosts;  tcosts.Start();
   ComputeMergingCosts();
-
-//  //////////////////////////////////////////////////////////////////////////////
-//  //            Check graph consistency.   TODO: remove this                 //
-//  for(auto nodeIt = outputGraph->Begin(); nodeIt != outputGraph->End(); nodeIt++)
-//  {
-//	  if (nodeIt->m_ThreadSafeForMerge)
-//	  {
-//		  for (auto& edgeIt : nodeIt->m_Edges)
-//		  {
-//			  auto adjacentNodeToThreadSafeForMergeNode = outputGraph->GetNodeAt(edgeIt.m_TargetId);
-//			  assert(adjacentNodeToThreadSafeForMergeNode->m_ThreadSafe);
-//		  }
-//	  }
-//	  assert(0 <= nodeIt->m_Id && nodeIt->m_Id < outputGraph->GetNumberOfNodes());
-//	  for (auto& edgeIt : nodeIt->m_Edges)
-//	  {
-//		  assert(0 <= edgeIt.m_TargetId && edgeIt.m_TargetId < outputGraph->GetNumberOfNodes());
-//		  auto adjacentNode = outputGraph->GetNodeAt(edgeIt.m_TargetId);
-//		  auto edgeFromAdjacentNodeToCurrentNode = adjacentNode->FindEdge(nodeIt->m_Id);
-//		  assert(edgeFromAdjacentNodeToCurrentNode != adjacentNode->m_Edges.end());
-//	  }
-//  }
-//  //////////////////////////////////////////////////////////////////////////////
 
   tcosts.Stop(); timingsValues[1] += tcosts.GetTotal();
   std::cout << std::setprecision(3) << tcosts.GetTotal() << "\t";
@@ -327,6 +295,11 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
   itk::TimeProbe tmergePre;  tmergePre.Start();
 
   // First part is not multithreaded, we just identify pairs of nodes to merge
+  // TODO: this 3 std::vector of pairs of nodes pointers seems not the best option !
+  //       pairsOfNodesToProcess_all has to be kept, but maybe the following vectors
+  //       might just be vectors or pointers:
+  //        * pairsOfNodesToProcess_parallel
+  //        * pairsOfNodesToProcess_sequential
   typedef typename TInputGraph::NodeType NodeType;
   typedef std::pair<NodeType * ,NodeType * > PairOfNodes;
   std::vector<PairOfNodes> pairsOfNodesToProcess_parallel;
@@ -365,6 +338,8 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
       // Keep trace of all pairs of nodes to merge
       pairsOfNodesToProcess_all.push_back(newPair);
 
+      // TODO: push_back() seems to copy the input.
+      //       Maybe something smarted is required here (vector of pointers?).
       if (nodeIn->m_ThreadSafeForMerge && nodeOut->m_ThreadSafeForMerge)
         {
           // Add the pair of nodes to process in parallel
@@ -597,11 +572,11 @@ GenerateData()
 			break;
 		}
 
-		float progress = static_cast<float>(nbOfNodes);
-		progress /= static_cast<float>(initialNbOfNodes);
-		progress *= -1.0f;
-		progress += 1.0f;
-		this->UpdateProgress(progress);
+		// TODO: it should be possible to estimate the progress
+		// with a model (a,b) like n(k)=exp(-k.a)+b where n(k) is the number
+		// of nodes at each iteration k
+//		float progress = ...
+//		this->UpdateProgress(progress);
 
 	} // next iteration
 	this->UpdateProgress(1.0f);
@@ -617,7 +592,6 @@ GenerateData()
   for (unsigned int i = 0 ; i < timingsLabels.size() ; i++)
     std::cout << "\t" << std::setprecision(5) << timingsValues[i];
   std::cout << std::endl;
-  // Graph tming:
 
 }
 
