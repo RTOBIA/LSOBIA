@@ -491,10 +491,10 @@ LSBaatzSegmentationScheduler<TInputImage>
                 uint64_t offset = ntile * (sizeof(size_t) + m_MaxNumberOfBytes);
 
                 // Write the serialized stablity margin in the shared buffer
-		to_stream(sharedBuffer,m_SerializedStabilityMargin,offset);
-		uint64_t numNodes;
-		// Write the number of bytes in the serialized margin.
-		from_stream(m_SerializedStabilityMargin,numNodes);
+                to_stream(sharedBuffer,m_SerializedStabilityMargin,offset);
+                uint64_t numNodes;
+                // Write the number of bytes in the serialized margin.
+                from_stream(m_SerializedStabilityMargin,numNodes);
 		
                 // Can release this serialized stability margin
                 m_SerializedStabilityMargin.clear();
