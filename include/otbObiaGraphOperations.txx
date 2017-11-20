@@ -199,31 +199,6 @@ GraphOperations<TGraph>::SerializeStabilityMargin(std::unordered_map< NodeType*,
     // Running id.
     IdType i = 0;
 
-    bool zeroFound = false;
-
-    std::vector<NodeType *> invalidNodesToRemove();
-
-    for(const auto& kv : stabilityMargin)
-      {
-    	auto node = kv.first;
-
-    	if(node->GetFirstPixelCoords() == 0)
-    	  {
-    	    if(zeroFound)
-    	      {
-    		std::cerr<<"Duplicate null node"<<node<<std::endl;
-    		// invalidNodesToRemove.push_back(node);
-    	      }
-    	    else
-    	      {
-    		zeroFound = true;
-    	      }
-    	  }
-      }
-
-
-
-
     // Loop over the map: node pointer -> exploration depth (useless here)
     for(const auto& kv : stabilityMargin)
     {
