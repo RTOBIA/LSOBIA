@@ -27,29 +27,24 @@ namespace otb{
 
         void Contour::Serialize(std::vector<char>& serializedContour, uint64_t& position) const
         {
-            // If there is not at least one move then, there is no contour (it is impossible)
-            if(m_Moves.size() > 0)
-            {
-                // The serialized stream is composed of:
-                // 1) the starting coords => UInt64Size bytes
-                // 2) the offset value => UInt8Size bytes
-                // 3) the number of packets => UInt64Size bytes
-                // 4) the list of packets => m_Moves.size() * UInt8Size bytes0
+            // If there is not at least one move then, there is no
+            // contour (it is impossible)
+            assert(!m_Moves.empty());
 
-                // Serialize the starting coordinates
-	        to_stream(serializedContour,m_StartingCoords,position);
+            // The serialized stream is composed of:
+            // 1) the starting coords => UInt64Size bytes
+            // 2) the offset value => UInt8Size bytes
+            // 3) the number of packets => UInt64Size bytes
+            // 4) the list of packets => m_Moves.size() * UInt8Size bytes0
+            
+            // Serialize the starting coordinates
+            to_stream(serializedContour,m_StartingCoords,position);
 
-                // Serialize the final offset value
-		to_stream(serializedContour,m_Offset,position);
+            // Serialize the final offset value
+            to_stream(serializedContour,m_Offset,position);
 
-                // Serialize the number of packets
-		to_stream(serializedContour,m_Moves,position);
-            }
-            else
-            {
-                std::cerr << "Empty contour to be serialized" << std::endl;
-                exit(1);
-            }
+            // Serialize the number of packets
+            to_stream(serializedContour,m_Moves,position);
         }
 
         void Contour::DeSerialize(const std::vector<char>& serializedContour, uint64_t& position)
