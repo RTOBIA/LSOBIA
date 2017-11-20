@@ -515,7 +515,8 @@ LSBaatzSegmentationScheduler<TInputImage>
 
     // Creation of rma window: each processor will have its shared buffer accessible for other processors
     MPI_Win win;
-    MPI_Win_create(&sharedBuffer[0], maxNumberOfElements, CharSize, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+    int success = MPI_Win_create(&sharedBuffer[0], maxNumberOfElements, CharSize, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+    assert(success==0);
 
     tid = 0;
     for(uint32_t ty = 0; ty < this->m_NumberOfTilesY; ty++)
@@ -558,10 +559,11 @@ LSBaatzSegmentationScheduler<TInputImage>
 
                         // Read rma operation
                         
-                        //MPI_Win_fence(0, win);
-                        MPI_Win_lock(MPI_LOCK_SHARED, neighRank, 0, win);
+                        MPI_Win_fence(0, win);
+                        // int success = MPI_Win_lock(MPI_LOCK_SHARED, neighRank, 0, win);
+                        // assert(success==0);
 
-                        MPI_Get(&(otherSerializedMargins[otherSerializedMargins.size()-1][0]), 
+                        success = MPI_Get(&(otherSerializedMargins.back()[0]),
                                 sizeof(size_t) + m_MaxNumberOfBytes,
                                 MPI_CHAR,
                                 neighRank,
@@ -569,9 +571,10 @@ LSBaatzSegmentationScheduler<TInputImage>
                                 sizeof(size_t) + m_MaxNumberOfBytes,
                                 MPI_CHAR,
                                 win);
+                        assert(success==0);
 
-                        MPI_Win_unlock(neighRank, win);
-                        //MPI_Win_fence(0, win);
+                        // MPI_Win_unlock(neighRank, win);
+                        MPI_Win_fence(0, win);
 
                     } // end if(neighborTiles[n] > -1)
 
