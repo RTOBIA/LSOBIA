@@ -173,17 +173,7 @@ GraphOperations<TGraph>::DeSerializeGraph(const std::vector<char>& serializedGra
             auto isInStartPixIdMap = startPixIdMap.find(edg.m_TargetId);
 
 	    assert(isInStartPixIdMap != startPixIdMap.end());
-
-	    // TODO: assert here
-            // if(isInStartPixIdMap == startPixIdMap.end())
-            // {
-            //     std::cerr << "Error: the starting coordinates of the edge is not in the map." << std::endl;
-            //     exit(EXIT_FAILURE);
-            // }
-            // else
-            //{
 	    edg.m_TargetId = isInStartPixIdMap->second;
-		//}
 
         } // end for(auto& edg : nodeIt->m_Edges)
 
@@ -1074,11 +1064,7 @@ GraphOperations<TGraph>::DetectNewAdjacentNodes(std::unordered_map<CoordValueTyp
                             } // end for(const auto& pix : currBorderPixels)
 
                               // The boundary must not be null
-                              if(boundary < 1)
-                            {
-                                  std::cerr << "Error null boundary length between " << currBorderNode->m_Id << " and " << neighBorderNode->m_Id << std::endl;
-                                  exit(EXIT_FAILURE);
-                            }
+                              assert(boundary>=1);
 
                               // Step 2: Add edges
 
