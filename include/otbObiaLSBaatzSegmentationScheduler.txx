@@ -359,7 +359,6 @@ LSBaatzSegmentationScheduler<TInputImage>
         
         AggregateStabilityMargins();
         RunPartialSegmentation(accumulatedMemory, fusionSum);
-
         m_CurrentNumberOfIterations += m_PartialNumberOfIterations;
 
         //Extract for next iterations
@@ -511,12 +510,15 @@ LSBaatzSegmentationScheduler<TInputImage>
 
     } // end for(uint32_t ty = 0; ty < this->m_NumberOfTilesY; ty++)
 
-    mpiConfig->barrier();
+    // std::cout<<"Barrier"<<std::endl;
+    // mpiConfig->barrier();
+    // std::cout<<"Barrier passed"<<std::endl;
 
     // Creation of rma window: each processor will have its shared buffer accessible for other processors
     MPI_Win win;
     int success = MPI_Win_create(&sharedBuffer[0], maxNumberOfElements, CharSize, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
     assert(success==0);
+    
 
     tid = 0;
     for(uint32_t ty = 0; ty < this->m_NumberOfTilesY; ty++)
@@ -530,6 +532,8 @@ LSBaatzSegmentationScheduler<TInputImage>
 
                 // Retrieve the neighbor tiles
                 auto neighborTiles = SpatialTools::EightConnectivity(tid, this->m_NumberOfTilesX, this->m_NumberOfTilesY);
+
+                MPI_Win_fence((MPI_MODE_NOPUT | MPI_MODE_NOPRECEDE), win);
                 for(unsigned short n = 0; n < 8; n++)
                 {
                     if(neighborTiles[n] > -1)
@@ -557,12 +561,7 @@ LSBaatzSegmentationScheduler<TInputImage>
                         // Allocate a new serialized stability margin.
                         otherSerializedMargins.push_back( std::vector<char>(sizeof(size_t) + m_MaxNumberOfBytes) );
 
-                        // Read rma operation
                         
-                        MPI_Win_fence(0, win);
-                        // int success = MPI_Win_lock(MPI_LOCK_SHARED, neighRank, 0, win);
-                        // assert(success==0);
-
                         success = MPI_Get(&(otherSerializedMargins.back()[0]),
                                 sizeof(size_t) + m_MaxNumberOfBytes,
                                 MPI_CHAR,
@@ -572,13 +571,16 @@ LSBaatzSegmentationScheduler<TInputImage>
                                 MPI_CHAR,
                                 win);
                         assert(success==0);
+                        
 
-                        // MPI_Win_unlock(neighRank, win);
-                        MPI_Win_fence(0, win);
+                       
 
+                    
                     } // end if(neighborTiles[n] > -1)
 
                 } // end for(unsigned short n = 0; n < 8; n++)
+
+                 MPI_Win_fence(MPI_MODE_NOSUCCEED,win);
 
                 this->ReadGraphIfNecessary(ty, tx);
 
@@ -632,9 +634,8 @@ LSBaatzSegmentationScheduler<TInputImage>
         } // end for(uint32_t tx = 0; tx < this->m_NumberOfTilesX; tx++)
 
     } // end for(uint32_t ty = 0; ty < this->m_NumberOfTilesY; ty++)
-
-    mpiConfig->barrier();
-
+    
+    
     // Can release the rma window
     MPI_Win_free(&win);
 }
@@ -879,8 +880,6 @@ LSBaatzSegmentationScheduler<TInputImage>
         std::vector< std::vector<char> > serializedOtherGraphs(mpiConfig->GetNbProcs() - 1, std::vector<char>(m_MaxNumberOfBytes, char()));
         std::vector< int > numberOfRecvBytesPerGraph(mpiConfig->GetNbProcs()-1, 0);
 
-	std::cout<<"[0] listening for "<<m_MaxNumberOfBytes<<std::endl;
-
         for(unsigned int r = 1; r < mpiConfig->GetNbProcs(); r++)
         {
             serializedOtherGraphs[r-1].assign(m_MaxNumberOfBytes, char());
@@ -970,7 +969,6 @@ LSBaatzSegmentationScheduler<TInputImage>
         }
         else
 	  {
-	    std::cout<<"["<<mpiConfig->GetMyRank()<<"] sending "<<m_SerializedStabilityMargin.size()<<" bytes"<<std::endl;
             MPI_Send(&m_SerializedStabilityMargin[0],
                      m_SerializedStabilityMargin.size(),
                      MPI_CHAR,
@@ -1025,7 +1023,7 @@ LSBaatzSegmentationScheduler<TInputImage>
     std::cout<<"----------------------"<<std::endl;
     if(mpiConfig->GetMyRank() == 0 && m_AggregateGraphs)
     {
-        std::cout << "Baatz Filter avec " << m_MaxNumberOfIterations + 1 - m_CurrentNumberOfIterations << std::endl;
+        std::cout << "Baatz with " << m_MaxNumberOfIterations + 1 - m_CurrentNumberOfIterations << std::endl;
         auto baatzFilter = CreateFilter();
         //auto baatzFilter = BaatzSegmentationFilterType::New();
         baatzFilter->SetInput(this->m_Graph);
