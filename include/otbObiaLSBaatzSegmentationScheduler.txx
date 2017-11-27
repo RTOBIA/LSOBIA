@@ -510,9 +510,9 @@ LSBaatzSegmentationScheduler<TInputImage>
 
     } // end for(uint32_t ty = 0; ty < this->m_NumberOfTilesY; ty++)
 
-    // std::cout<<"Barrier"<<std::endl;
+
     // mpiConfig->barrier();
-    // std::cout<<"Barrier passed"<<std::endl;
+
 
     // Creation of rma window: each processor will have its shared buffer accessible for other processors
     MPI_Win win;
@@ -904,8 +904,6 @@ LSBaatzSegmentationScheduler<TInputImage>
             {
                 MPI_Get_count( &(statuses[r-1]), MPI_CHAR, &(numberOfRecvBytesPerGraph[r-1]) );
                 serializedOtherGraphs[r-1].resize(numberOfRecvBytesPerGraph[r-1]);
-
-		std::cout<<"[0] Recieved "<<numberOfRecvBytesPerGraph[r-1]<<" from "<<r<<std::endl;
             }
         }
 
