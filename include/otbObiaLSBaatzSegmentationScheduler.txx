@@ -241,6 +241,8 @@ LSBaatzSegmentationScheduler<TInputImage>
         auto imgReader = InputImageReaderType::New();
         imgReader->SetFileName(this->m_FileName);
 
+        typename InputImageType::PointType origin = imgReader->GetOutput()->GetOrigin();
+
 				// Extraction of the tile
 				auto tileExtractor = MultiChannelExtractROIFilterType::New();
 				tileExtractor->SetStartX(tile.m_Frame.GetIndex(0));
@@ -292,8 +294,8 @@ LSBaatzSegmentationScheduler<TInputImage>
 				this->m_Graph->SetImageWidth(this->m_ImageWidth);
 				this->m_Graph->SetImageHeight(this->m_ImageHeight);
 				this->m_Graph->SetNumberOfSpectralBands(this->m_NumberOfSpectralBands);
-				this->m_Graph->SetOriginX(imgReader->GetOutput()->GetOrigin()[0]);
-				this->m_Graph->SetOriginY(imgReader->GetOutput()->GetOrigin()[1]);
+				this->m_Graph->SetOriginX(origin[0]);
+				this->m_Graph->SetOriginY(origin[1]);
 
 				// Remove the unstable segments
 				GraphOperationsType::RemoveUnstableNodes(this->m_Graph,
