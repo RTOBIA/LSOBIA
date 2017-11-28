@@ -11,7 +11,7 @@ namespace obia
 uint64_t
 BaatzEdgeAttribute::GetMemorySize() const
 {
-    return FloatSize + BoolSize;
+  return sizeof(BaatzEdgeAttribute);
 }
 
 uint64_t 
@@ -24,10 +24,7 @@ BaatzEdgeAttribute::GetNumberOfBytesToSerialize() const
 uint64_t 
 BaatzNodeAttribute::GetMemorySize() const
 {
-    return m_AvgSpec.size() * 2 * FloatSize + // Mean and standard deviations
-        2 * sizeof(std::vector<float>) +
-      2 * UInt32Size + // area and perimeter
-      BoolSize; // the flag
+  return sizeof(BaatzNodeAttribute)+ m_AvgSpec.size() * 2 * FloatSize;
 }
 
 uint64_t 

@@ -37,14 +37,11 @@ template< typename TNodeAttribute, typename TEdgeAttribute >
 uint64_t 
 Node<TNodeAttribute, TEdgeAttribute>::GetMemorySize() const
 {
-    uint64_t nodeMemory = 2*BoolSize + // valid and remove flags
-                          IdSize + // the id
-                          sizeof(m_BoundingBox) + // bbox
-                          m_Contour.GetMemorySize() + // contour
-                          m_Attributes.GetMemorySize() + // attributs
-                          sizeof(EdgeListType); // the edge container
+  uint64_t nodeMemory = sizeof(Self);
 
-    for(auto edgeIt = m_Edges.begin(); edgeIt != m_Edges.end(); edgeIt++)
+  nodeMemory+=m_Contour.GetMemorySize()+m_Attributes.GetMemorySize();
+
+  for(auto edgeIt = m_Edges.begin(); edgeIt != m_Edges.end(); edgeIt++)
     {
         nodeMemory += edgeIt->GetMemorySize();
     }

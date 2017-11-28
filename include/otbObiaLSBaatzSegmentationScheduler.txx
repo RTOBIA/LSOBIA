@@ -20,8 +20,8 @@ LSBaatzSegmentationScheduler<TInputImage>
 ::LSBaatzSegmentationScheduler() :
 m_MaxNumberOfIterations(75),
 m_CurrentNumberOfIterations(0),
-m_Threshold(1600), 
-m_SpectralWeight(0.5), 
+m_Threshold(1600),
+m_SpectralWeight(0.5),
 m_ShapeWeight(0.5),
 m_StartingNumberOfIterations(1),
 m_AggregateGraphs(false),
@@ -125,7 +125,7 @@ LSBaatzSegmentationScheduler<TInputImage>
             break;
             default:
                 std::cout << "DEFAULT state, should stop" << std::endl;
-            
+
         }
     }
 }
@@ -192,7 +192,7 @@ LSBaatzSegmentationScheduler<TInputImage>
 }
 
 template< class TInputImage >
-void 
+void
 LSBaatzSegmentationScheduler<TInputImage>
 ::RescaleGraph(ProcessingTile& tile)
 {
@@ -223,10 +223,6 @@ LSBaatzSegmentationScheduler<TInputImage>
 	auto mpiConfig = MPIConfig::Instance();
 	auto mpiTools = MPITools::Instance();
 
-	// Read the input image
-	auto imgReader = InputImageReaderType::New();
-	imgReader->SetFileName(this->m_FileName);
-
 	uint32_t tid = 0;
 	int localFusion = 0;
 	unsigned long int accumulatedMemory = 0;
@@ -241,32 +237,53 @@ LSBaatzSegmentationScheduler<TInputImage>
 				// Retrieve the tile by reference since it will be modified.
 				auto& tile = this->m_TileMap[tid];
 
+        // Read the input image
+        auto imgReader = InputImageReaderType::New();
+        imgReader->SetFileName(this->m_FileName);
+
 				// Extraction of the tile
 				auto tileExtractor = MultiChannelExtractROIFilterType::New();
 				tileExtractor->SetStartX(tile.m_Frame.GetIndex(0));
 				tileExtractor->SetStartY(tile.m_Frame.GetIndex(1));
 				tileExtractor->SetSizeX(tile.m_Frame.GetSize(0));
 				tileExtractor->SetSizeY(tile.m_Frame.GetSize(1));
+        tileExtractor->SetInput(imgReader->GetOutput());
+        tileExtractor->Update();
+        typename InputImageType::Pointer img = tileExtractor->GetOutput();
+
+        // Clear the reader
+        imgReader=ITK_NULLPTR;
+        tileExtractor=ITK_NULLPTR;
 
 				// Creation of the initial baatz graph
 				auto imgToBaatzFilter = ImageToBaatzGraphFilterType::New();
+
+        // Pipeline branching
+				imgToBaatzFilter->SetInput(img);
+        imgToBaatzFilter->Update();
+
+				//Update image origin in graph
+				this->m_Graph = imgToBaatzFilter->GetOutput();
+
+        // Now clear the tileExtractor and baatzFilter
+        tileExtractor=ITK_NULLPTR;
+        imgToBaatzFilter=ITK_NULLPTR;
 
 				// Segmentation filter
 				// Baatz & Shäpe segmentation
 				auto baatzFilter = CreateFilter();
 				baatzFilter->SetMaxNumberOfIterations(this->m_StartingNumberOfIterations);
-
-				// Pipeline branching
-				tileExtractor->SetInput(imgReader->GetOutput());
-				imgToBaatzFilter->SetInput(tileExtractor->GetOutput());
-				baatzFilter->SetInput(imgToBaatzFilter->GetOutput());
+				baatzFilter->SetInput(this->m_Graph);
 				baatzFilter->Update();
+
+				// Determine if the segmentation is over
+				localFusion += (baatzFilter->GetMergingOver()) ? 0 : 1;
 
 				//Update image origin in graph
 				this->m_Graph = baatzFilter->GetOutput();
 
-				// Determine if the segmentation is over
-				localFusion += (baatzFilter->GetMergingOver()) ? 0 : 1;
+        // Now clear the baatzFilter
+        baatzFilter=ITK_NULLPTR;
 
 				// tile referential -> image referential
 				RescaleGraph(tile);
@@ -356,7 +373,7 @@ LSBaatzSegmentationScheduler<TInputImage>
         std::cout << "Memory : " << accumulatedMemory << "/" << this->m_AvailableMemory << std::endl;
         std::cout << "Local sum : " << fusionSum << std::endl;
         //TODO : ExtractStabilityMargins();
-        
+
         AggregateStabilityMargins();
         RunPartialSegmentation(accumulatedMemory, fusionSum);
         m_CurrentNumberOfIterations += m_PartialNumberOfIterations;
@@ -418,11 +435,11 @@ LSBaatzSegmentationScheduler<TInputImage>
                 // Retrieve the tile
                 auto tile = this->m_TileMap[tid];
 
-                auto subGraphMap = GraphOperationsType::ExtractStabilityMargin(this->m_Graph, 
-                                                                                  nbAdjacencyLayers, 
-                                                                                  tile, 
-                                                                                  this->m_NumberOfTilesX, 
-                                                                                  this->m_NumberOfTilesY, 
+                auto subGraphMap = GraphOperationsType::ExtractStabilityMargin(this->m_Graph,
+                                                                                  nbAdjacencyLayers,
+                                                                                  tile,
+                                                                                  this->m_NumberOfTilesX,
+                                                                                  this->m_NumberOfTilesY,
                                                                                   this->m_ImageWidth
                                                                                   /*this->m_ImageHeight*/);
 
@@ -434,7 +451,7 @@ LSBaatzSegmentationScheduler<TInputImage>
                     m_MaxNumberOfBytes = m_SerializedStabilityMargin.size();
                 }
 
-                
+
                 if(this->m_TileMap.size() > 1)
                 {
                     std::stringstream os;
@@ -494,7 +511,7 @@ LSBaatzSegmentationScheduler<TInputImage>
                 uint64_t numNodes;
                 // Write the number of bytes in the serialized margin.
                 from_stream(m_SerializedStabilityMargin,numNodes);
-		
+
                 // Can release this serialized stability margin
                 m_SerializedStabilityMargin.clear();
                 m_SerializedStabilityMargin.shrink_to_fit();
@@ -518,7 +535,7 @@ LSBaatzSegmentationScheduler<TInputImage>
     MPI_Win win;
     int success = MPI_Win_create(&sharedBuffer[0], maxNumberOfElements, CharSize, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
     assert(success==0);
-    
+
 
     tid = 0;
     for(uint32_t ty = 0; ty < this->m_NumberOfTilesY; ty++)
@@ -561,7 +578,7 @@ LSBaatzSegmentationScheduler<TInputImage>
                         // Allocate a new serialized stability margin.
                         otherSerializedMargins.push_back( std::vector<char>(sizeof(size_t) + m_MaxNumberOfBytes) );
 
-                        
+
                         success = MPI_Get(&(otherSerializedMargins.back()[0]),
                                 sizeof(size_t) + m_MaxNumberOfBytes,
                                 MPI_CHAR,
@@ -571,11 +588,11 @@ LSBaatzSegmentationScheduler<TInputImage>
                                 MPI_CHAR,
                                 win);
                         assert(success==0);
-                        
 
-                       
 
-                    
+
+
+
                     } // end if(neighborTiles[n] > -1)
 
                 } // end for(unsigned short n = 0; n < 8; n++)
@@ -592,7 +609,7 @@ LSBaatzSegmentationScheduler<TInputImage>
 
                     otherSerializedMargins[i].clear();
                     otherSerializedMargins[i].shrink_to_fit();
- 
+
 		    uint64_t numNodes;
 		    from_stream(otherSerializedMargin,numNodes);
 
@@ -611,9 +628,9 @@ LSBaatzSegmentationScheduler<TInputImage>
                 auto tile = this->m_TileMap[tid];
 
                 // Remove duplicated nodes
-                auto borderNodeMap = GraphOperationsType::BuildBorderNodesMap(this->m_Graph, 
+                auto borderNodeMap = GraphOperationsType::BuildBorderNodesMap(this->m_Graph,
                                                                               tile,
-                                                                              this->m_NumberOfTilesX, 
+                                                                              this->m_NumberOfTilesX,
                                                                               this->m_NumberOfTilesY,
                                                                               this->m_ImageWidth);
 
@@ -634,8 +651,8 @@ LSBaatzSegmentationScheduler<TInputImage>
         } // end for(uint32_t tx = 0; tx < this->m_NumberOfTilesX; tx++)
 
     } // end for(uint32_t ty = 0; ty < this->m_NumberOfTilesY; ty++)
-    
-    
+
+
     // Can release the rma window
     MPI_Win_free(&win);
 }
@@ -647,7 +664,7 @@ LSBaatzSegmentationScheduler<TInputImage>
 {
     auto mpiConfig = MPIConfig::Instance();
     auto mpiTools = MPITools::Instance();
-    
+
     accumulatedMemory = 0;
     fusionSum = 0;
     uint32_t tid = 0;
@@ -780,9 +797,9 @@ LSBaatzSegmentationScheduler<TInputImage>
             if(hasToProcessDuplicatedNodes)
             {
                 // Retrieve the nodes on the borders of the adjacent tiles.
-                auto borderNodeMap = GraphOperationsType::BuildBorderNodesMapForFinalAggregation(this->m_Graph, 
+                auto borderNodeMap = GraphOperationsType::BuildBorderNodesMapForFinalAggregation(this->m_Graph,
                                                                                                  rowBounds,
-                                                                                                 colBounds, 
+                                                                                                 colBounds,
                                                                                                  this->m_ImageWidth);
 
                 // Remove the duplicated nodes
@@ -796,7 +813,7 @@ LSBaatzSegmentationScheduler<TInputImage>
 
     } // end if (this->m_TileMap.size() > 1)
 
-    // Synchronisation point 
+    // Synchronisation point
     mpiConfig->barrier();
 
     /* The slave processes have to serialize their graph */
@@ -887,8 +904,8 @@ LSBaatzSegmentationScheduler<TInputImage>
                       m_MaxNumberOfBytes,
                       MPI_CHAR,
                       r,
-                      MPI_ANY_TAG, 
-                      MPI_COMM_WORLD, 
+                      MPI_ANY_TAG,
+                      MPI_COMM_WORLD,
                       &(requests[r-1]));
         }
 
@@ -953,9 +970,9 @@ LSBaatzSegmentationScheduler<TInputImage>
             } // end for (uint32_t ty = 0; ty < nbTilesY; ty++)
 
             // Retrieve the nodes on the borders of the adjacent tiles.
-            auto borderNodeMap = GraphOperationsType::BuildBorderNodesMapForFinalAggregation(this->m_Graph, 
-                                                                                             rowBounds, 
-                                                                                             colBounds, 
+            auto borderNodeMap = GraphOperationsType::BuildBorderNodesMapForFinalAggregation(this->m_Graph,
+                                                                                             rowBounds,
+                                                                                             colBounds,
                                                                                              this->m_ImageWidth);
 
             // Remove the duplicated nodes

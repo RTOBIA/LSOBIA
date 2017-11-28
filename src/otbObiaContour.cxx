@@ -12,10 +12,7 @@ namespace otb{
 
         uint64_t Contour::GetMemorySize() const
         {
-                return (CoordValueSize +
-                        UInt8Size +
-                        sizeof(PacketList) +
-                        m_Moves.size() * UInt8Size);
+          return sizeof(Contour)+m_Moves.size()*UInt8Size;
         }
 
         uint64_t Contour::GetNumberOfBytesToSerialize() const
