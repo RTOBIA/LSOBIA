@@ -141,7 +141,6 @@ ImageToBaatzGraphFilter< TInputImage >
     // Geometric attributes
     newNode->m_Attributes.m_Area = 1;
     newNode->m_Attributes.m_Perimeter = 4;
-<<<<<<< HEAD
 
     // Force to compute all the costs at the first iteration
     newNode->m_Attributes.m_HasPreviouslyMerged = true;
@@ -151,19 +150,6 @@ ImageToBaatzGraphFilter< TInputImage >
 
     // Increment the id
     id++;
-
-=======
-
-    // Force to compute all the costs at the first iteration
-    newNode->m_Attributes.m_HasPreviouslyMerged = true;
-
-    // If the pixel is no-data, then the node has to be removed
-    newNode->m_HasToBeRemoved = (noDataPresent && otb::IsNoData<double>(it.Get(), noDataFlags, noDataValues));
-
-    // Increment the id
-    id++;
-
->>>>>>> ecd0955c635a087fca09638e549dd07a3a5d1a48
     } // end for(it.GoToBegin(); !it.IsAtEnd(); ++it)
 
 
@@ -176,7 +162,6 @@ ImageToBaatzGraphFilter< TInputImage >
       auto neighbors = otb::obia::SpatialTools::FourConnectivity(nodeIt->m_Id, imageWidth, imageHeight);
       uint32_t numEdges = 0;
       for(unsigned short n = 0; n < 4; n++)
-<<<<<<< HEAD
         {
         if(neighbors[n] > -1)
           if  (!outputGraph->GetNodeAt(neighbors[n])->m_HasToBeRemoved)
@@ -210,41 +195,6 @@ ImageToBaatzGraphFilter< TInputImage >
       }
     }
 
-=======
-        {
-        if(neighbors[n] > -1)
-          if  (!outputGraph->GetNodeAt(neighbors[n])->m_HasToBeRemoved)
-            numEdges++;
-
-        }
-
-      // Initialisation of the edges
-      nodeIt->m_Edges.reserve(numEdges);
-      for(unsigned short n = 0; n < 4; n++)
-        {
-        if(neighbors[n] > -1)
-          {
-          if  (!outputGraph->GetNodeAt(neighbors[n])->m_HasToBeRemoved)
-            {
-            // Add an edge to the current node targeting the adjacent node
-            auto newEdge = nodeIt->AddEdge();
-
-            // Add the target
-            newEdge->m_TargetId = neighbors[n];
-
-            // Initialisation of the boundary
-            newEdge->m_Boundary = 1;
-
-            // Initialisation of the merging cost
-            newEdge->m_Attributes.m_MergingCost = std::numeric_limits<float>::max();
-            }
-          }
-        }
-
-      }
-    }
-
->>>>>>> ecd0955c635a087fca09638e549dd07a3a5d1a48
   // Here, we remove the "no-data" nodes
   outputGraph->RemoveNodes();
 
