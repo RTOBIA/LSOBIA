@@ -455,9 +455,11 @@ LSImageToGraphScheduler<TInputImage, TOutputGraph>
 	LabelToRGBFilterType::Pointer label2colorFilter = LabelToRGBFilterType::New();
 
 	fillHoleFilter->SetInput(graphToLabelFilter->GetOutput());
-	label2colorFilter->SetInput(fillHoleFilter->GetOutput());
 
-	grayWriter->SetInput(label2colorFilter->GetOutput());
+	LabelToRGBFilterType::Pointer gray2colorFilt = LabelToRGBFilterType::New();
+	gray2colorFilt->SetInput(fillHoleFilter->GetOutput());
+
+	grayWriter->SetInput(gray2colorFilt->GetOutput());
 	grayWriter->Update();
 }
 
