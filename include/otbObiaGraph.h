@@ -137,8 +137,7 @@ struct Node
          m_HasToBeRemoved(other.m_HasToBeRemoved), m_Valid(other.m_Valid),
          m_Id(other.m_Id), m_BoundingBox(other.m_BoundingBox),
          m_Contour(other.m_Contour), m_Edges(other.m_Edges),
-         m_Attributes(other.m_Attributes), m_ThreadSafe(other.m_ThreadSafe),
-         m_ThreadSafeForMerge(other.m_ThreadSafeForMerge)
+         m_Attributes(other.m_Attributes)
     {}
 
     /**\brief Returns the vectorized coordinates (x,y) of the first pixel composing this node. */
@@ -197,10 +196,6 @@ struct Node
 
     /**\brief Specific attributes related to the node*/
     NodeAttributeType m_Attributes;
-
-    /**\brief Thread safe properties of the node*/
-    bool m_ThreadSafe:1;
-    bool m_ThreadSafeForMerge:1;
 
     /**\brief Debug */
     EdgeIteratorType Begin(){return m_Edges.begin();}
@@ -334,11 +329,6 @@ public:
         m_Nodes.shrink_to_fit();
     }
 
-    /**\brief Merge edge between 2 nodes by updating contour, boundary, edges, etc ...
-     * \param: Node in
-     * \param: Node Out*/
-    void MergeEdge(NodeType* nodeIn, NodeType* nodeOut);
-
 protected:
 
     Graph(){}
@@ -367,6 +357,13 @@ protected:
     double m_OriginY;
     std::string m_ProjectionRef;
 
+
+private:
+
+    /**\brief Merge edge between 2 nodes by updating contour, boundary, edges, etc ...
+     * \param: Node in
+     * \param: Node Out*/
+    void MergeEdge(NodeType* nodeIn, NodeType* nodeOut);
 };
 
 } // end of namespace obia

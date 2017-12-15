@@ -119,18 +119,40 @@ template< typename TNode >
 void
 Graph<TNode>::InitStartingNode(NodeType* node, const IdType id)
 {
-  // Initialisation of its position
-  node->m_Id = id;
+    // Initialisation of its position
+    node->m_Id = id;
+        
+    // Initialisation of the bounding box
+    node->m_BoundingBox[0] = id % m_ImageWidth;
+    node->m_BoundingBox[1] = id / m_ImageWidth;
+    node->m_BoundingBox[2] = 1;
+    node->m_BoundingBox[3] = 1;
 
-  // Initialisation of the bounding box
-  node->m_BoundingBox[0] = id % m_ImageWidth;
-  node->m_BoundingBox[1] = id / m_ImageWidth;
-  node->m_BoundingBox[2] = 1;
-  node->m_BoundingBox[3] = 1;
+    // Initialisation of the contour
+    node->m_Contour.SetStartingCoords(id);
+    node->m_Contour.FirstInit();
 
-  // Initialisation of the contour
-  node->m_Contour.SetStartingCoords(id);
-  node->m_Contour.FirstInit();
+    // Initialisation of the edges
+    auto neighbors = otb::obia::SpatialTools::FourConnectivity(id, m_ImageWidth, m_ImageHeight);
+
+    uint32_t numEdges = 0;
+    for(unsigned short n = 0; n < 4; n++){ if(neighbors[n] > -1){ numEdges++; } }
+    node->m_Edges.reserve(numEdges);
+
+    for(unsigned short n = 0; n < 4; n++)
+    {
+        if(neighbors[n] > -1)
+        {
+            // Add an edge to the current node targeting the adjacent node
+            auto newEdge = node->AddEdge();
+
+            // Add the target
+            newEdge->m_TargetId = neighbors[n];
+
+            // Initialisation of the boundary
+            newEdge->m_Boundary = 1;
+        }
+    }
 }
 
 template< typename TNode >
@@ -317,9 +339,6 @@ Graph<TNode>::RemoveNodes()
     });
 
     m_Nodes.erase(eraseIt, m_Nodes.end());
-    
-    // Need to call this method to reduce the memory usage.
-    m_Nodes.shrink_to_fit();
 
     auto lambdaDecrementIdEdge = [&numMergedNodes](EdgeType& edge){
         edge.m_TargetId = edge.m_TargetId - numMergedNodes[edge.m_TargetId];

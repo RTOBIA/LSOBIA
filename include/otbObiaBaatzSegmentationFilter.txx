@@ -36,7 +36,7 @@ BaatzMergingCost<TCost, TGraph>::ComputeMergingCostsForThisAdjNode(const NodeTyp
 
 template< typename TCost, typename TGraph >
 typename BaatzMergingCost< TCost, TGraph>::ValueType
-BaatzMergingCost<TCost, TGraph>::ComputeMergingCost(NodeType* n1, NodeType* n2) // TODO: should be const
+BaatzMergingCost<TCost, TGraph>::ComputeMergingCost(NodeType* n1, NodeType* n2)
 {
     // Retrieve attributes
     const float aArea = n1->m_Attributes.m_Area;
@@ -45,11 +45,10 @@ BaatzMergingCost<TCost, TGraph>::ComputeMergingCost(NodeType* n1, NodeType* n2) 
     
     float colorH = 0.0f;
 
-    // TODO: No. We should do this elsewhere!
-//    if(m_BandWeights.size() < 1)
-//    {
-//        m_BandWeights.assign(n1->m_Attributes.m_AvgSpec.size(), 1.0f);
-//    }
+    if(m_BandWeights.size() < 1)
+    {
+        m_BandWeights.assign(n1->m_Attributes.m_AvgSpec.size(), 1.0f);
+    }
 
     for (uint32_t band = 0; band < n1->m_Attributes.m_AvgSpec.size(); band++)
     {
@@ -67,10 +66,7 @@ BaatzMergingCost<TCost, TGraph>::ComputeMergingCost(NodeType* n1, NodeType* n2) 
         stddev = std::sqrt(stddevTmp / areaSum);
         colorF = n1->m_Attributes.m_Area * n1->m_Attributes.m_StdSpec[band] + n2->m_Attributes.m_Area * n2->m_Attributes.m_StdSpec[band];
 
-        // TODO: replace it, when m_BandWeights will be properly set elsewhere
-//        colorF = m_BandWeights[band] * ((areaSum * stddev) - colorF);
-        colorF = ((areaSum * stddev) - colorF);
-
+        colorF = m_BandWeights[band] * ((areaSum * stddev) - colorF);
         colorH += colorF;
 
     }
@@ -131,38 +127,50 @@ BaatzHeuristic<TGraph>
 ::GetBestAdjacentNode(NodeType* node)
 {
 
-  auto outputGraph = this->m_Graph;
+    auto outputGraph = this->m_Graph;
 
-  if(node->m_Valid
-      && node->m_Edges.size() > 0) // Since the introducing of no-data, a node can be alone
-  {
-    auto cost = node->m_Edges.front().m_Attributes.m_MergingCost;
-
-    if(cost < this->m_Threshold)
+    if(node->m_Valid)
     {
-      auto bestAdjNode = outputGraph->GetNodeAt(node->m_Edges.front().m_TargetId);
+        auto cost = node->m_Edges.front().m_Attributes.m_MergingCost;
 
-      if(bestAdjNode->m_Valid
-          && bestAdjNode->m_Edges.size() > 0) // Since the introducing of no-data, a node can be alone
-      {
-        auto bbNode = outputGraph->GetNodeAt(bestAdjNode->m_Edges.front().m_TargetId);
-
-        if(bbNode->m_Id == node->m_Id)
+        if(cost < this->m_Threshold)
         {
-          if(bestAdjNode->GetFirstPixelCoords() < node->GetFirstPixelCoords())
-          {
-            return bestAdjNode;
-          }
-          else
-          {
-            return node;
-          }
-        }
-      }
-    }
-  }
-  return nullptr;
+            auto bestAdjNode = outputGraph->GetNodeAt(node->m_Edges.front().m_TargetId);
 
+            if(bestAdjNode->m_Valid)
+            {
+                auto bbNode = outputGraph->GetNodeAt(bestAdjNode->m_Edges.front().m_TargetId);
+
+                if(bbNode->m_Id == node->m_Id)
+                {
+                    if(bestAdjNode->GetFirstPixelCoords() < node->GetFirstPixelCoords())
+                    {
+                        return bestAdjNode;
+                    }
+                    else
+                    {
+                        return node;
+                    }
+                }
+                else
+                {
+                    return nullptr;
+                }
+            }
+            else
+            {
+                return nullptr;
+            }
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
+    else
+    {
+        return nullptr;
+    }
 }
 
 

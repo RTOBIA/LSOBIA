@@ -85,7 +85,7 @@ public:
      * \param: NodeIn
      * \param: NodeOut
      * \return : return true if the merging cost is required*/
-    ValueType ComputeMergingCost(NodeType* NodeIn, NodeType* NodeOut); // TODO: should be const
+    ValueType ComputeMergingCost(NodeType* NodeIn, NodeType* NodeOut);
 protected:
 
     /**\brief Maximal cost of merging*/
