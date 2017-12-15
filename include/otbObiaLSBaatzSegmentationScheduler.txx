@@ -515,8 +515,11 @@ LSBaatzSegmentationScheduler<TInputImage>
                 from_stream(m_SerializedStabilityMargin,numNodes);
 
                 // Can release this serialized stability margin
-                m_SerializedStabilityMargin.clear();
-                m_SerializedStabilityMargin.shrink_to_fit();
+
+                std::vector<char>().swap(m_SerializedStabilityMargin);
+                    //m_SerializedStabilityMargin.clear();
+                    // m_SerializedStabilityMargin.shrink_to_fit();
+
 
                 // Increment the number of tiles processed
                 ntile++;
@@ -609,8 +612,10 @@ LSBaatzSegmentationScheduler<TInputImage>
    		    std::vector<char> otherSerializedMargin;
                     from_stream(otherSerializedMargins[i],otherSerializedMargin);
 
-                    otherSerializedMargins[i].clear();
-                    otherSerializedMargins[i].shrink_to_fit();
+
+                    std::vector<char>().swap(otherSerializedMargins[i]);
+                    // otherSerializedMargins[i].clear();
+                    // otherSerializedMargins[i].shrink_to_fit();
 
 		    uint64_t numNodes;
 		    from_stream(otherSerializedMargin,numNodes);
