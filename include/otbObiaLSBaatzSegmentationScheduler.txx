@@ -515,8 +515,11 @@ LSBaatzSegmentationScheduler<TInputImage>
                 from_stream(m_SerializedStabilityMargin,numNodes);
 
                 // Can release this serialized stability margin
-                m_SerializedStabilityMargin.clear();
-                m_SerializedStabilityMargin.shrink_to_fit();
+
+                std::vector<char>().swap(m_SerializedStabilityMargin);
+                    //m_SerializedStabilityMargin.clear();
+                    // m_SerializedStabilityMargin.shrink_to_fit();
+
 
                 // Increment the number of tiles processed
                 ntile++;
@@ -605,25 +608,28 @@ LSBaatzSegmentationScheduler<TInputImage>
 
                 // Agregate the stability margins to the graph
                 for(uint32_t i = 0; i < otherSerializedMargins.size(); i++)
-                {
-   		    std::vector<char> otherSerializedMargin;
-                    from_stream(otherSerializedMargins[i],otherSerializedMargin);
-
-                    otherSerializedMargins[i].clear();
-                    otherSerializedMargins[i].shrink_to_fit();
-
-		    uint64_t numNodes;
-		    from_stream(otherSerializedMargin,numNodes);
-
-                    // Deserialize the graph
-
-		    // TODO: This is the call that fails with the duplicated node error
-                    auto subGraph = GraphOperationsType::DeSerializeGraph(otherSerializedMargin);
-
-                    GraphOperationsType::AggregateGraphs(this->m_Graph, subGraph);
-
-                    //Reset subgraph
-            		subGraph->Reset();
+                  {
+                  std::vector<char> otherSerializedMargin;
+                  from_stream(otherSerializedMargins[i],otherSerializedMargin);
+                  
+                  // Retrieve the serialized margin
+                  std::vector< char > otherSerializedMargin(numBytes);
+                  std::memcpy(&otherSerializedMargin[0], &otherSerializedMargins[i][IntSize], numBytes);
+                  
+                  std::vector<char>().swap(otherSerializedMargins[i]);
+                  
+                  uint64_t numNodes;
+                  from_stream(otherSerializedMargin,numNodes);
+                  
+                  // Deserialize the graph
+                  
+                  // TODO: This is the call that fails with the duplicated node error
+                  auto subGraph = GraphOperationsType::DeSerializeGraph(otherSerializedMargin);
+                  
+                  GraphOperationsType::AggregateGraphs(this->m_Graph, subGraph);
+                  
+                  //Reset subgraph
+                  subGraph->Reset();
                 }
 
                 // Retrieve the tile
