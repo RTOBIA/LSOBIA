@@ -497,8 +497,11 @@ LSBaatzSegmentationScheduler<TInputImage>
                 std::memcpy(&sharedBuffer[offset + IntSize], &m_SerializedStabilityMargin[0], numBytes);
 
                 // Can release this serialized stability margin
-                m_SerializedStabilityMargin.clear();
-                m_SerializedStabilityMargin.shrink_to_fit();
+
+                std::vector<char>().swap(m_SerializedStabilityMargin);
+                    //m_SerializedStabilityMargin.clear();
+                    // m_SerializedStabilityMargin.shrink_to_fit();
+
 
                 // Increment the number of tiles processed
                 ntile++;
@@ -589,8 +592,10 @@ LSBaatzSegmentationScheduler<TInputImage>
                     // Retrieve the serialized margin
                     std::vector< char > otherSerializedMargin(numBytes);
                     std::memcpy(&otherSerializedMargin[0], &otherSerializedMargins[i][IntSize], numBytes);
-                    otherSerializedMargins[i].clear();
-                    otherSerializedMargins[i].shrink_to_fit();
+
+                    std::vector<char>().swap(otherSerializedMargins[i]);
+                    // otherSerializedMargins[i].clear();
+                    // otherSerializedMargins[i].shrink_to_fit();
 
                     // Deserialize the graph
                     auto subGraph = GraphOperationsType::DeSerializeGraph(otherSerializedMargin);

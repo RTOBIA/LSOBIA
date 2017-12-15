@@ -325,8 +325,9 @@ public:
     /**\brief Removes all nodes*/
     void Reset()
     {
-        m_Nodes.clear();
-        m_Nodes.shrink_to_fit();
+      NodeListType().swap(m_Nodes);
+        // m_Nodes.clear();
+        // m_Nodes.shrink_to_fit();
     }
 
 protected:
