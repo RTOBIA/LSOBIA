@@ -1,6 +1,7 @@
 #include "otbTestMain.h"
+
 void RegisterTests()
 {
-	std::cout<<"Test registering"<<std::endl;
-	REGISTER_TEST(otbObiaConvertGraphToImage);
+        REGISTER_TEST(otbObiaConvertGraphToImage);
+	REGISTER_TEST(otbObiaStreamUtils);
 }
