@@ -611,13 +611,7 @@ LSBaatzSegmentationScheduler<TInputImage>
                   {
                   std::vector<char> otherSerializedMargin;
                   from_stream(otherSerializedMargins[i],otherSerializedMargin);
-                  
-                  // Retrieve the serialized margin
-                  std::vector< char > otherSerializedMargin(numBytes);
-                  std::memcpy(&otherSerializedMargin[0], &otherSerializedMargins[i][IntSize], numBytes);
-                  
-                  std::vector<char>().swap(otherSerializedMargins[i]);
-                  
+                                    
                   uint64_t numNodes;
                   from_stream(otherSerializedMargin,numNodes);
                   
