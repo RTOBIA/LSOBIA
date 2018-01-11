@@ -28,42 +28,25 @@ struct LabelNodeAttribute : GraphAttribute
 
     virtual uint64_t GetNumberOfBytesToSerialize() const 
     { 
-        return (sizeof(TLabelPixelType) + // label to write
-            IdSize +  // number of pixels to write
-            CoordValueSize * m_ListOfPixels.size()); // the coordinates of the pixels;
+      return stream_offset(m_Label) + stream_offset(m_ListOfPixels);
     }
     
     virtual void Serialize(std::vector<char>& stream, uint64_t& position) const
     {
         // Serialize the label
-        std::memcpy(&(stream[position]), &m_Label, sizeof(TLabelPixelType));
-        position += sizeof(TLabelPixelType);
-
+        to_stream(stream,m_Label,position);
+  
         // Serialize the number of pixels to write
-        const IdType numPixels = m_ListOfPixels.size();
-        std::memcpy(&(stream[position]), &numPixels, IdSize);
-        position += IdSize;
-
-        // Serialize the list of pixels
-        std::memcpy(&(stream[position]), &m_ListOfPixels[0], CoordValueSize * m_ListOfPixels.size());
-        position += CoordValueSize * m_ListOfPixels.size();
+	to_stream(stream,m_ListOfPixels,position);
     }
 
     virtual void DeSerialize(const std::vector<char>& stream, uint64_t& position)
     {
         // Deserialize the label value
-        std::memcpy(&m_Label, &stream[position], sizeof(TLabelPixelType));
-        position += sizeof(TLabelPixelType);
+        from_stream(stream,m_Label,position);
 
-        // Deserialize the number of pixels
-        IdType numPixels = 0;
-        std::memcpy(&numPixels, &stream[position], IdSize);
-        position += IdSize;
-
-        m_ListOfPixels.clear();
-        m_ListOfPixels.assign(numPixels, 0);
-        std::memcpy(&m_ListOfPixels[0], &stream[position], CoordValueSize * numPixels);
-        position += CoordValueSize * numPixels;
+	// Deserialize the list of pixels
+	from_stream(stream,m_ListOfPixels,position);
     }
 };
 

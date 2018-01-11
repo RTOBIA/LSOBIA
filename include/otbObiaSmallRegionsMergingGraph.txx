@@ -1,6 +1,8 @@
 #ifndef otbObiaSmallRegionsMergingGraph_txx
 #define otbObiaSmallRegionsMergingGraph_txx
 #include "otbObiaSmallRegionsMergingGraph.h"
+#înclude "otbObiaStreamUtils.h"
+
 namespace otb
 {
 namespace obia
@@ -33,63 +35,42 @@ uint64_t
 SRMNodeAttribute::GetNumberOfBytesToSerialize() const
 {
     // The flag does not need to be serialized.
-    return UInt32Size +
-    m_AvgSpec.size() * 2 * FloatSize +
-    2* UInt32Size;
+  return stream_offset(m_AvgSpec)
+    + stream_offset(m_StdSpec),
+    + stream_offset(m_Area),
+    + stream_offset(m_Perimeter)
 }
 
 void
 SRMNodeAttribute::Serialize(std::vector<char>& stream, uint64_t& position) const
 {
-    // Serialize the number of bands
-    const uint32_t numBands = m_AvgSpec.size();
-    std::memcpy(&(stream[position]), &numBands, UInt32Size);
-    position += UInt32Size;
-
     // Serialize the average spectral values
-    std::memcpy(&(stream[position]), &m_AvgSpec[0], numBands * FloatSize);
-    position += numBands * FloatSize;
+    to_stream(stream,m_AvgSpec,position);
 
     // Serialize the standard deviation values
-    std::memcpy(&(stream[position]), &m_StdSpec[0], numBands * FloatSize);
-    position += numBands * FloatSize;
+    to_stream(stream,m_StdSpec,position);
 
     // Serialize the perimeter
-    std::memcpy(&(stream[position]), &m_Perimeter, UInt32Size);
-    position += UInt32Size;
+    to_stream(stream,m_Perimeter,position);
 
     // Serialize the area
-    std::memcpy(&(stream[position]), &m_Area, UInt32Size);
-    position += UInt32Size;
+    to_stream(stream,m_Area,position);
 }
 
 void
 SRMNodeAttribute::DeSerialize(const std::vector<char>& stream, uint64_t& position)
 {
-    // Deserialize the number of bands.
-    uint32_t numBands = 0;
-    std::memcpy(&numBands, &(stream[position]), UInt32Size);
-    position += UInt32Size;
-
-    // Initialization of the statistical attributes
-    m_AvgSpec.assign(numBands, 0.0f);
-    m_StdSpec.assign(numBands, 0.0f);
-
     // Deserialize the average spectral values
-    std::memcpy(&m_AvgSpec[0], &(stream[position]), numBands * FloatSize);
-    position += numBands * FloatSize;
-
+    from_stream(stream,m_AvgSpec,position);
+  
     // Deserialize the standard deviation values
-    std::memcpy(&m_StdSpec[0], &(stream[position]), numBands * FloatSize);
-    position += numBands * FloatSize;
+    from_stream(stream,m_StdSpec,position);
 
     // Deserialize the perimeter
-    std::memcpy(&m_Perimeter, &(stream[position]), UInt32Size);
-    position += UInt32Size;
+    from_stream(stream,m_Perimeter,position);
 
     // Deserialize the area
-    std::memcpy(&m_Area, &(stream[position]), UInt32Size);
-    position += UInt32Size;
+    from_stream(stream,m_Area,position);
 }
 
 }

@@ -37,14 +37,11 @@ template< typename TNodeAttribute, typename TEdgeAttribute >
 uint64_t 
 Node<TNodeAttribute, TEdgeAttribute>::GetMemorySize() const
 {
-    uint64_t nodeMemory = 2*BoolSize + // valid and remove flags
-                          IdSize + // the id
-                          sizeof(m_BoundingBox) + // bbox
-                          m_Contour.GetMemorySize() + // contour
-                          m_Attributes.GetMemorySize() + // attributs
-                          sizeof(EdgeListType); // the edge container
+  uint64_t nodeMemory = sizeof(Self);
 
-    for(auto edgeIt = m_Edges.begin(); edgeIt != m_Edges.end(); edgeIt++)
+  nodeMemory+=m_Contour.GetMemorySize()+m_Attributes.GetMemorySize();
+
+  for(auto edgeIt = m_Edges.begin(); edgeIt != m_Edges.end(); edgeIt++)
     {
         nodeMemory += edgeIt->GetMemorySize();
     }
@@ -241,7 +238,7 @@ Graph<TNode>::MergeEdge(NodeType* nodeIn, NodeType* nodeOut)
         boundary = edgAdjToOut->m_Boundary;
 
         // The edge adjNodeOut -> nodeOut can be safely removed
-        adjNodeOut->m_Edges.erase(edgAdjToOut);
+        adjNodeOut->m_Edges.erase(edgAdjToOut);        
 
         // Edges have to be added or updated if adjNodeOut is not nodeIn
         if(adjNodeOut != nodeIn)
@@ -281,8 +278,9 @@ Graph<TNode>::MergeEdge(NodeType* nodeIn, NodeType* nodeOut)
     } // end for(auto edgeIt = nodeOut->m_Edges.begin(); edgeIt != nodeOut->m_Edges.end(); edgeIt++)
 
     // All the edges of nodeOut can be safely removes
-    nodeOut->m_Edges.clear();
-    nodeOut->m_Edges.shrink_to_fit();
+    typename NodeType::EdgeListType().swap(nodeOut->m_Edges);
+    // nodeOut->m_Edges.clear();
+    // nodeOut->m_Edges.shrink_to_fit();
 
 }
 
@@ -342,10 +340,14 @@ Graph<TNode>::RemoveNodes()
     });
 
     m_Nodes.erase(eraseIt, m_Nodes.end());
-    
-    // Need to call this method to reduce the memory usage.
-    m_Nodes.shrink_to_fit();
 
+    // m_Nodes.shrink_to_fit();
+
+    // shrink_to_fit all edges container
+    for (auto it = m_Nodes.begin(); it != m_Nodes.end();++it)
+      {
+      it->m_Edges.shrink_to_fit();
+      }
     auto lambdaDecrementIdEdge = [&numMergedNodes](EdgeType& edge){
         edge.m_TargetId = edge.m_TargetId - numMergedNodes[edge.m_TargetId];
     };

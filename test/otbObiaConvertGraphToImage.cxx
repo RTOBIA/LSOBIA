@@ -127,10 +127,10 @@ int otbObiaConvertGraphToImage(int argc, char * argv[])
                                 //"-a_ullr", "0.0, -3650.000, 800.000, -4415.000"
                             };*/
 
-    char* papszArgv[] = { "-of", "PNG", "-a_nodata", "0 0 0",  nullptr };
+    const char* papszArgv[] = { "-of", "PNG", "-a_nodata", "0 0 0",  nullptr };
     //char* papszArgv[] = { "-of", "PNG",  NULL };
     std::cout << "New options" <<std::endl;
-    GDALTranslateOptions* psOptionsIn = GDALTranslateOptionsNew(papszArgv, nullptr);
+    GDALTranslateOptions* psOptionsIn = GDALTranslateOptionsNew(const_cast<char**>(papszArgv), nullptr);
     // GDALTranslateOptions* psOptionsIn = GDALTranslateOptionsNew(papszArgv, NULL);
 
     std::cout << "Prepare to translate!" <<std::endl;

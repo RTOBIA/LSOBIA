@@ -2,6 +2,7 @@
 #define otbObiaLSBaatzSegmentationScheduler_txx
 #include "otbObiaLSBaatzSegmentationScheduler.h"
 #include "otbObiaGraphToLabelImageFilter.h"
+#include "otbObiaStreamUtils.h"
 #include "itkRGBPixel.h"
 #include "itkLabelToRGBImageFilter.h"
 #include "otbImage.h"
@@ -19,8 +20,8 @@ LSBaatzSegmentationScheduler<TInputImage>
 ::LSBaatzSegmentationScheduler() :
 m_MaxNumberOfIterations(75),
 m_CurrentNumberOfIterations(0),
-m_Threshold(1600), 
-m_SpectralWeight(0.5), 
+m_Threshold(1600),
+m_SpectralWeight(0.5),
 m_ShapeWeight(0.5),
 m_StartingNumberOfIterations(1),
 m_AggregateGraphs(false),
@@ -124,7 +125,7 @@ LSBaatzSegmentationScheduler<TInputImage>
             break;
             default:
                 std::cout << "DEFAULT state, should stop" << std::endl;
-            
+
         }
     }
 }
@@ -191,7 +192,7 @@ LSBaatzSegmentationScheduler<TInputImage>
 }
 
 template< class TInputImage >
-void 
+void
 LSBaatzSegmentationScheduler<TInputImage>
 ::RescaleGraph(ProcessingTile& tile)
 {
@@ -222,10 +223,6 @@ LSBaatzSegmentationScheduler<TInputImage>
 	auto mpiConfig = MPIConfig::Instance();
 	auto mpiTools = MPITools::Instance();
 
-	// Read the input image
-	auto imgReader = InputImageReaderType::New();
-	imgReader->SetFileName(this->m_FileName);
-
 	uint32_t tid = 0;
 	int localFusion = 0;
 	unsigned long int accumulatedMemory = 0;
@@ -240,32 +237,55 @@ LSBaatzSegmentationScheduler<TInputImage>
 				// Retrieve the tile by reference since it will be modified.
 				auto& tile = this->m_TileMap[tid];
 
+        // Read the input image
+        auto imgReader = InputImageReaderType::New();
+        imgReader->SetFileName(this->m_FileName);
+
+        typename InputImageType::PointType origin = imgReader->GetOutput()->GetOrigin();
+
 				// Extraction of the tile
 				auto tileExtractor = MultiChannelExtractROIFilterType::New();
 				tileExtractor->SetStartX(tile.m_Frame.GetIndex(0));
 				tileExtractor->SetStartY(tile.m_Frame.GetIndex(1));
 				tileExtractor->SetSizeX(tile.m_Frame.GetSize(0));
 				tileExtractor->SetSizeY(tile.m_Frame.GetSize(1));
+        tileExtractor->SetInput(imgReader->GetOutput());
+        tileExtractor->Update();
+        typename InputImageType::Pointer img = tileExtractor->GetOutput();
+
+        // Clear the reader
+        imgReader=ITK_NULLPTR;
+        tileExtractor=ITK_NULLPTR;
 
 				// Creation of the initial baatz graph
 				auto imgToBaatzFilter = ImageToBaatzGraphFilterType::New();
+
+        // Pipeline branching
+				imgToBaatzFilter->SetInput(img);
+        imgToBaatzFilter->Update();
+
+				//Update image origin in graph
+				this->m_Graph = imgToBaatzFilter->GetOutput();
+
+        // Now clear the tileExtractor and baatzFilter
+        tileExtractor=ITK_NULLPTR;
+        imgToBaatzFilter=ITK_NULLPTR;
 
 				// Segmentation filter
 				// Baatz & Shäpe segmentation
 				auto baatzFilter = CreateFilter();
 				baatzFilter->SetMaxNumberOfIterations(this->m_StartingNumberOfIterations);
-
-				// Pipeline branching
-				tileExtractor->SetInput(imgReader->GetOutput());
-				imgToBaatzFilter->SetInput(tileExtractor->GetOutput());
-				baatzFilter->SetInput(imgToBaatzFilter->GetOutput());
+				baatzFilter->SetInput(this->m_Graph);
 				baatzFilter->Update();
+
+				// Determine if the segmentation is over
+				localFusion += (baatzFilter->GetMergingOver()) ? 0 : 1;
 
 				//Update image origin in graph
 				this->m_Graph = baatzFilter->GetOutput();
 
-				// Determine if the segmentation is over
-				localFusion += (baatzFilter->GetMergingOver()) ? 0 : 1;
+        // Now clear the baatzFilter
+        baatzFilter=ITK_NULLPTR;
 
 				// tile referential -> image referential
 				RescaleGraph(tile);
@@ -274,8 +294,8 @@ LSBaatzSegmentationScheduler<TInputImage>
 				this->m_Graph->SetImageWidth(this->m_ImageWidth);
 				this->m_Graph->SetImageHeight(this->m_ImageHeight);
 				this->m_Graph->SetNumberOfSpectralBands(this->m_NumberOfSpectralBands);
-				this->m_Graph->SetOriginX(imgReader->GetOutput()->GetOrigin()[0]);
-				this->m_Graph->SetOriginY(imgReader->GetOutput()->GetOrigin()[1]);
+				this->m_Graph->SetOriginX(origin[0]);
+				this->m_Graph->SetOriginY(origin[1]);
 
 				// Remove the unstable segments
 				GraphOperationsType::RemoveUnstableNodes(this->m_Graph,
@@ -355,11 +375,9 @@ LSBaatzSegmentationScheduler<TInputImage>
         std::cout << "Memory : " << accumulatedMemory << "/" << this->m_AvailableMemory << std::endl;
         std::cout << "Local sum : " << fusionSum << std::endl;
         //TODO : ExtractStabilityMargins();
-        
-        AggregateStabilityMargins();
-        
-        RunPartialSegmentation(accumulatedMemory, fusionSum);
 
+        AggregateStabilityMargins();
+        RunPartialSegmentation(accumulatedMemory, fusionSum);
         m_CurrentNumberOfIterations += m_PartialNumberOfIterations;
 
         //Extract for next iterations
@@ -419,11 +437,11 @@ LSBaatzSegmentationScheduler<TInputImage>
                 // Retrieve the tile
                 auto tile = this->m_TileMap[tid];
 
-                auto subGraphMap = GraphOperationsType::ExtractStabilityMargin(this->m_Graph, 
-                                                                                  nbAdjacencyLayers, 
-                                                                                  tile, 
-                                                                                  this->m_NumberOfTilesX, 
-                                                                                  this->m_NumberOfTilesY, 
+                auto subGraphMap = GraphOperationsType::ExtractStabilityMargin(this->m_Graph,
+                                                                                  nbAdjacencyLayers,
+                                                                                  tile,
+                                                                                  this->m_NumberOfTilesX,
+                                                                                  this->m_NumberOfTilesY,
                                                                                   this->m_ImageWidth
                                                                                   /*this->m_ImageHeight*/);
 
@@ -435,7 +453,7 @@ LSBaatzSegmentationScheduler<TInputImage>
                     m_MaxNumberOfBytes = m_SerializedStabilityMargin.size();
                 }
 
-                
+
                 if(this->m_TileMap.size() > 1)
                 {
                     std::stringstream os;
@@ -467,7 +485,7 @@ LSBaatzSegmentationScheduler<TInputImage>
 
 
     // Create the shared buffer which will be accessible by other processes.
-    uint64_t maxNumberOfElements = this->m_MaxNumberOfTilesPerProcessor * (IntSize + m_MaxNumberOfBytes);
+    uint64_t maxNumberOfElements = this->m_MaxNumberOfTilesPerProcessor * (sizeof(std::size_t) + m_MaxNumberOfBytes);
     std::vector< char > sharedBuffer(maxNumberOfElements);
 
     uint32_t tid = 0;
@@ -481,24 +499,27 @@ LSBaatzSegmentationScheduler<TInputImage>
 
                 if(this->m_TileMap.size() > 1)
                 {
+
                     std::stringstream os;
                     os << this->m_TemporaryDirectory << "MarginGraph_" << ty << "_" << tx << ".dat";
                     m_SerializedStabilityMargin = GraphOperationsType::ReadSerializedMarginFromDisk(os.str());
                 }
 
                 // Move at the right location in the shared buffer.
-                uint64_t offset = ntile * (IntSize + m_MaxNumberOfBytes);
-
-                // Write the number of bytes in the serialized margin.
-                const int numBytes = m_SerializedStabilityMargin.size();
-                std::memcpy(&sharedBuffer[offset], &numBytes, IntSize);
+                uint64_t offset = ntile * (sizeof(size_t) + m_MaxNumberOfBytes);
 
                 // Write the serialized stablity margin in the shared buffer
-                std::memcpy(&sharedBuffer[offset + IntSize], &m_SerializedStabilityMargin[0], numBytes);
+                to_stream(sharedBuffer,m_SerializedStabilityMargin,offset);
+                uint64_t numNodes;
+                // Write the number of bytes in the serialized margin.
+                from_stream(m_SerializedStabilityMargin,numNodes);
 
                 // Can release this serialized stability margin
-                m_SerializedStabilityMargin.clear();
-                m_SerializedStabilityMargin.shrink_to_fit();
+
+                std::vector<char>().swap(m_SerializedStabilityMargin);
+                    //m_SerializedStabilityMargin.clear();
+                    // m_SerializedStabilityMargin.shrink_to_fit();
+
 
                 // Increment the number of tiles processed
                 ntile++;
@@ -511,11 +532,15 @@ LSBaatzSegmentationScheduler<TInputImage>
 
     } // end for(uint32_t ty = 0; ty < this->m_NumberOfTilesY; ty++)
 
-    mpiConfig->barrier();
+
+    // mpiConfig->barrier();
+
 
     // Creation of rma window: each processor will have its shared buffer accessible for other processors
     MPI_Win win;
-    MPI_Win_create(&sharedBuffer[0], maxNumberOfElements, CharSize, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+    int success = MPI_Win_create(&sharedBuffer[0], maxNumberOfElements, CharSize, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+    assert(success==0);
+
 
     tid = 0;
     for(uint32_t ty = 0; ty < this->m_NumberOfTilesY; ty++)
@@ -529,6 +554,8 @@ LSBaatzSegmentationScheduler<TInputImage>
 
                 // Retrieve the neighbor tiles
                 auto neighborTiles = SpatialTools::EightConnectivity(tid, this->m_NumberOfTilesX, this->m_NumberOfTilesY);
+
+                MPI_Win_fence((MPI_MODE_NOPUT | MPI_MODE_NOPRECEDE), win);
                 for(unsigned short n = 0; n < 8; n++)
                 {
                     if(neighborTiles[n] > -1)
@@ -551,49 +578,53 @@ LSBaatzSegmentationScheduler<TInputImage>
                         }
 
                         // Compute the offset of displacement.
-                        uint64_t offset = pos * (IntSize + m_MaxNumberOfBytes);
+                        uint64_t offset = pos * (sizeof(size_t) + m_MaxNumberOfBytes);
 
                         // Allocate a new serialized stability margin.
-                        otherSerializedMargins.push_back( std::vector<char>(IntSize + m_MaxNumberOfBytes) );
+                        otherSerializedMargins.push_back( std::vector<char>(sizeof(size_t) + m_MaxNumberOfBytes) );
 
-                        // Read rma operation
-                        
-                        //MPI_Win_fence(0, win);
-                        MPI_Win_lock(MPI_LOCK_SHARED, neighRank, 0, win);
 
-                        MPI_Get(&(otherSerializedMargins[otherSerializedMargins.size()-1][0]), 
-                                IntSize + m_MaxNumberOfBytes,
+                        success = MPI_Get(&(otherSerializedMargins.back()[0]),
+                                sizeof(size_t) + m_MaxNumberOfBytes,
                                 MPI_CHAR,
                                 neighRank,
                                 offset,
-                                IntSize + m_MaxNumberOfBytes,
+                                sizeof(size_t) + m_MaxNumberOfBytes,
                                 MPI_CHAR,
                                 win);
+                        assert(success==0);
 
-                        MPI_Win_unlock(neighRank, win);
-                        //MPI_Win_fence(0, win);
+
+
+
 
                     } // end if(neighborTiles[n] > -1)
 
                 } // end for(unsigned short n = 0; n < 8; n++)
+
+                 MPI_Win_fence(MPI_MODE_NOSUCCEED,win);
 
                 this->ReadGraphIfNecessary(ty, tx);
 
                 // Agregate the stability margins to the graph
                 for(uint32_t i = 0; i < otherSerializedMargins.size(); i++)
                 {
-                    // Retrieve the real number of bytes
-                    int numBytes;
-                    std::memcpy(&numBytes, &otherSerializedMargins[i][0], IntSize);
+   		    std::vector<char> otherSerializedMargin;
+                    from_stream(otherSerializedMargins[i],otherSerializedMargin);
 
-                    // Retrieve the serialized margin
-                    std::vector< char > otherSerializedMargin(numBytes);
-                    std::memcpy(&otherSerializedMargin[0], &otherSerializedMargins[i][IntSize], numBytes);
-                    otherSerializedMargins[i].clear();
-                    otherSerializedMargins[i].shrink_to_fit();
+
+                    std::vector<char>().swap(otherSerializedMargins[i]);
+                    // otherSerializedMargins[i].clear();
+                    // otherSerializedMargins[i].shrink_to_fit();
+
+		    uint64_t numNodes;
+		    from_stream(otherSerializedMargin,numNodes);
 
                     // Deserialize the graph
+
+		    // TODO: This is the call that fails with the duplicated node error
                     auto subGraph = GraphOperationsType::DeSerializeGraph(otherSerializedMargin);
+
                     GraphOperationsType::AggregateGraphs(this->m_Graph, subGraph);
 
                     //Reset subgraph
@@ -604,9 +635,9 @@ LSBaatzSegmentationScheduler<TInputImage>
                 auto tile = this->m_TileMap[tid];
 
                 // Remove duplicated nodes
-                auto borderNodeMap = GraphOperationsType::BuildBorderNodesMap(this->m_Graph, 
+                auto borderNodeMap = GraphOperationsType::BuildBorderNodesMap(this->m_Graph,
                                                                               tile,
-                                                                              this->m_NumberOfTilesX, 
+                                                                              this->m_NumberOfTilesX,
                                                                               this->m_NumberOfTilesY,
                                                                               this->m_ImageWidth);
 
@@ -628,7 +659,6 @@ LSBaatzSegmentationScheduler<TInputImage>
 
     } // end for(uint32_t ty = 0; ty < this->m_NumberOfTilesY; ty++)
 
-    mpiConfig->barrier();
 
     // Can release the rma window
     MPI_Win_free(&win);
@@ -641,7 +671,7 @@ LSBaatzSegmentationScheduler<TInputImage>
 {
     auto mpiConfig = MPIConfig::Instance();
     auto mpiTools = MPITools::Instance();
-    
+
     accumulatedMemory = 0;
     fusionSum = 0;
     uint32_t tid = 0;
@@ -774,9 +804,9 @@ LSBaatzSegmentationScheduler<TInputImage>
             if(hasToProcessDuplicatedNodes)
             {
                 // Retrieve the nodes on the borders of the adjacent tiles.
-                auto borderNodeMap = GraphOperationsType::BuildBorderNodesMapForFinalAggregation(this->m_Graph, 
+                auto borderNodeMap = GraphOperationsType::BuildBorderNodesMapForFinalAggregation(this->m_Graph,
                                                                                                  rowBounds,
-                                                                                                 colBounds, 
+                                                                                                 colBounds,
                                                                                                  this->m_ImageWidth);
 
                 // Remove the duplicated nodes
@@ -790,25 +820,13 @@ LSBaatzSegmentationScheduler<TInputImage>
 
     } // end if (this->m_TileMap.size() > 1)
 
-    // Synchronisation point 
+    // Synchronisation point
     mpiConfig->barrier();
 
     /* The slave processes have to serialize their graph */
     if(mpiConfig->GetMyRank() == 0)
     {
         m_SerializedStabilityMargin.clear();
-
-//        for(auto nodeIt = this->m_Graph->Begin(); nodeIt != this->m_Graph->End(); nodeIt++)
-//		{
-//			if(nodeIt->GetFirstPixelCoords() == 1348)
-//			{
-//				std::cout << "RANK = " << mpiConfig->GetMyRank() << std::endl;
-//				for(auto edgeIt = nodeIt->m_Edges.begin(); edgeIt != nodeIt->m_Edges.end(); edgeIt++)
-//				{
-//					std::cout << "Edge = " << edgeIt->m_TargetId << std::endl;
-//				}
-//			}
-//		}
     }
     else
     {
@@ -893,8 +911,8 @@ LSBaatzSegmentationScheduler<TInputImage>
                       m_MaxNumberOfBytes,
                       MPI_CHAR,
                       r,
-                      MPI_ANY_TAG, 
-                      MPI_COMM_WORLD, 
+                      MPI_ANY_TAG,
+                      MPI_COMM_WORLD,
                       &(requests[r-1]));
         }
 
@@ -959,9 +977,9 @@ LSBaatzSegmentationScheduler<TInputImage>
             } // end for (uint32_t ty = 0; ty < nbTilesY; ty++)
 
             // Retrieve the nodes on the borders of the adjacent tiles.
-            auto borderNodeMap = GraphOperationsType::BuildBorderNodesMapForFinalAggregation(this->m_Graph, 
-                                                                                             rowBounds, 
-                                                                                             colBounds, 
+            auto borderNodeMap = GraphOperationsType::BuildBorderNodesMapForFinalAggregation(this->m_Graph,
+                                                                                             rowBounds,
+                                                                                             colBounds,
                                                                                              this->m_ImageWidth);
 
             // Remove the duplicated nodes
@@ -972,7 +990,7 @@ LSBaatzSegmentationScheduler<TInputImage>
 
         }
         else
-        {
+	  {
             MPI_Send(&m_SerializedStabilityMargin[0],
                      m_SerializedStabilityMargin.size(),
                      MPI_CHAR,
@@ -1027,7 +1045,7 @@ LSBaatzSegmentationScheduler<TInputImage>
     std::cout<<"----------------------"<<std::endl;
     if(mpiConfig->GetMyRank() == 0 && m_AggregateGraphs)
     {
-        std::cout << "Baatz Filter avec " << m_MaxNumberOfIterations + 1 - m_CurrentNumberOfIterations << std::endl;
+        std::cout << "Baatz with " << m_MaxNumberOfIterations + 1 - m_CurrentNumberOfIterations << std::endl;
         auto baatzFilter = CreateFilter();
         //auto baatzFilter = BaatzSegmentationFilterType::New();
         baatzFilter->SetInput(this->m_Graph);
