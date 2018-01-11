@@ -342,6 +342,9 @@ Graph<TNode>::RemoveNodes()
     });
 
     m_Nodes.erase(eraseIt, m_Nodes.end());
+    
+    // Need to call this method to reduce the memory usage.
+    m_Nodes.shrink_to_fit();
 
     auto lambdaDecrementIdEdge = [&numMergedNodes](EdgeType& edge){
         edge.m_TargetId = edge.m_TargetId - numMergedNodes[edge.m_TargetId];
