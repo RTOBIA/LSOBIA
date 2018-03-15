@@ -36,6 +36,9 @@ public:
     virtual void SetInput(const InputImageType *input);
     virtual void SetInput(unsigned int, const TInputImage *image);
 
+    void SetProcessNoData(bool p) {m_ProcessNoData = p;}
+    void SetNoDataValue(float n) {m_NoDataValue = n;}
+
     const InputImageType * GetInput() const;
     const InputImageType * GetInput(unsigned int idx) const;
 
@@ -43,6 +46,9 @@ protected:
 
     ImageToGraphFilter();
     ~ImageToGraphFilter();
+
+    bool m_ProcessNoData;
+    float m_NoDataValue;
 
     virtual void PrintSelf(std::ostream & os, itk::Indent indent) const ITK_OVERRIDE;
 

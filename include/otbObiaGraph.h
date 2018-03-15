@@ -141,10 +141,10 @@ struct Node
     {}
 
     /**\brief Returns the vectorized coordinates (x,y) of the first pixel composing this node. */
-    inline uint64_t GetFirstPixelCoords() const { return m_Contour.GetStartingCoords(); }
+    inline CoordValueType GetFirstPixelCoords() const { return m_Contour.GetStartingCoords(); }
 
     /**\brief Change the vectorized coordinates (x,y) of the first pixel composing this node. */
-    inline void SetFirstPixelCoords(const uint64_t newCoords){ m_Contour.SetStartingCoords(newCoords); }
+    inline void SetFirstPixelCoords(const CoordValueType newCoords){ m_Contour.SetStartingCoords(newCoords); }
 
     /**\brief Given the position of the adjacent node, find the outgoing edge to it. */
     EdgeIteratorType FindEdge(const IdType targetId);
@@ -288,7 +288,7 @@ public:
     /** \brief This methods removes the expired nodes from the graph, i.e
         those whose m_HasToBeRemoved is true.
     */
-    void RemoveNodes();
+    void RemoveNodes(bool merge =true);
 
     /** \brief This methods returns the quantity of memory in bytes to store this graph */
     uint64_t GetMemorySize() const;
@@ -304,7 +304,7 @@ public:
      * \param : Other graph*/
     void InsertAtEnd(const Pointer& other)
     {
-        m_Nodes.insert(m_Nodes.end(), other->Begin(), other->End());
+       	m_Nodes.insert(m_Nodes.end(), other->Begin(), other->End());	
     }
 
     /**\brief Move the graph to the input pointer
@@ -325,8 +325,9 @@ public:
     /**\brief Removes all nodes*/
     void Reset()
     {
-        m_Nodes.clear();
-        m_Nodes.shrink_to_fit();
+      NodeListType().swap(m_Nodes);
+        // m_Nodes.clear();
+        // m_Nodes.shrink_to_fit();
     }
 
 protected:

@@ -1,6 +1,7 @@
 #ifndef otbObiaGraphOperations_txx
 #define otbObiaGraphOperations_txx
 #include "otbObiaGraphOperations.h"
+#include "otbObiaStreamUtils.h"
 
 //TEMP
 #include "otbMPIConfig.h"
@@ -102,8 +103,8 @@ GraphOperations<TGraph>::DeSerializeGraph(const std::vector<char>& serializedGra
 
     // Read the number of nodes
     uint64_t numNodes;
-    std::memcpy(&numNodes, &(serializedGraph[position]), UInt64Size);
-    position += UInt64Size;
+    from_stream(serializedGraph,numNodes,position);
+    
 
     // Reserve memory space for the graph
     graph->SetNumberOfNodes(numNodes);
@@ -127,31 +128,22 @@ GraphOperations<TGraph>::DeSerializeGraph(const std::vector<char>& serializedGra
         newNode->m_Valid = true;
 
         // The bounding box
-        std::memcpy(&(newNode->m_BoundingBox[0]), &(serializedGraph[position]), 4*UInt32Size);
-        position += 4*UInt32Size;
+	from_stream(serializedGraph,newNode->m_BoundingBox,position);
 
         // The contour
         newNode->m_Contour.DeSerialize(serializedGraph, position);
 
-
         // Create a new entry in the map startPixIdMap
-        if(startPixIdMap.find(newNode->GetFirstPixelCoords()) == startPixIdMap.end())
-        {
-              startPixIdMap[newNode->GetFirstPixelCoords()] = id;
-        }
-        else
-        {
-              std::cerr << "Error: there are least two nodes sharing the same starting coordinates." << std::endl;
-              exit(EXIT_FAILURE);
-        }
+        assert(startPixIdMap.find(newNode->GetFirstPixelCoords()) == startPixIdMap.end());
 
+	startPixIdMap[newNode->GetFirstPixelCoords()] = id;
+	
         // The specific attributes of the node
         newNode->m_Attributes.DeSerialize(serializedGraph, position);
 
         // The number of edges
         uint32_t numEdges;
-        std::memcpy(&numEdges, &(serializedGraph[position]), UInt32Size);
-        position += UInt32Size;
+	from_stream(serializedGraph,numEdges,position);
 
         newNode->m_Edges.reserve(numEdges);
 
@@ -161,12 +153,10 @@ GraphOperations<TGraph>::DeSerializeGraph(const std::vector<char>& serializedGra
             auto newEdge = newNode->AddEdge();
 
             // The starting coords
-            std::memcpy(&(newEdge->m_TargetId), &(serializedGraph[position]), CoordValueSize);
-            position += CoordValueSize;
-
-            // The boundary
-            std::memcpy(&(newEdge->m_Boundary), &(serializedGraph[position]), UInt32Size);
-            position += UInt32Size;
+	    from_stream(serializedGraph,newEdge->m_TargetId,position);
+	    
+	    // The boundary
+	    from_stream(serializedGraph,newEdge->m_Boundary,position);
 
             // Serialize the specific attributes of the edges
             newEdge->m_Attributes.DeSerialize(serializedGraph, position);
@@ -175,28 +165,21 @@ GraphOperations<TGraph>::DeSerializeGraph(const std::vector<char>& serializedGra
 
     } // end for(IdType id = 0; id < numNodes; id++)
 
-      // Update the target ids of the edges with the real ids of the nodes
+    // Update the target ids of the edges with the real ids of the nodes
     for(auto nodeIt = graph->Begin(); nodeIt != graph->End(); nodeIt++)
     {
         for(auto& edg : nodeIt->m_Edges)
         {
             auto isInStartPixIdMap = startPixIdMap.find(edg.m_TargetId);
 
-            if(isInStartPixIdMap == startPixIdMap.end())
-            {
-                std::cerr << "Error: the starting coordinates of the edge is not in the map." << std::endl;
-                exit(EXIT_FAILURE);
-            }
-            else
-            {
-                edg.m_TargetId = isInStartPixIdMap->second;
-            }
+	    assert(isInStartPixIdMap != startPixIdMap.end());
+	    edg.m_TargetId = isInStartPixIdMap->second;
 
         } // end for(auto& edg : nodeIt->m_Edges)
 
     } // end for(auto nodeIt = graph->Begin(); nodeIt != graph->End(); nodeIt++)
-
-      return graph;
+    
+    return graph;
 }
 
 template< typename TGraph >
@@ -223,7 +206,7 @@ GraphOperations<TGraph>::SerializeStabilityMargin(std::unordered_map< NodeType*,
         auto node = kv.first;
 
         // Serialization of the bounding box
-        numberOfBytes += 4 * UInt32Size;
+        numberOfBytes += stream_offset(node->m_BoundingBox);
 
         // Serialization of the contour
         numberOfBytes += node->m_Contour.GetNumberOfBytesToSerialize();
@@ -232,7 +215,7 @@ GraphOperations<TGraph>::SerializeStabilityMargin(std::unordered_map< NodeType*,
         numberOfBytes += node->m_Attributes.GetNumberOfBytesToSerialize();
 
         // Serialization of the number of edges
-        numberOfBytes += UInt32Size;
+        numberOfBytes += stream_offset(node->m_Edges.size());
 
         // Loop over the edges
         for(const auto& edg : node->m_Edges)
@@ -264,18 +247,14 @@ GraphOperations<TGraph>::SerializeStabilityMargin(std::unordered_map< NodeType*,
 
     // Serialize the number of nodes.
     const uint64_t numNodes = stabilityMargin.size();
-    std::memcpy(&(serializedGraph[position]), &numNodes, UInt64Size);
-
-    // Increment the displacement value.
-    position += UInt64Size;
+    to_stream(serializedGraph,numNodes,position);
 
     for(const auto& kv : stabilityMargin)
     {
         auto node = kv.first;
 
         // Serialization of the bounding box
-        std::memcpy(&(serializedGraph[position]), &(node->m_BoundingBox[0]), 4*UInt32Size);
-        position += 4*UInt32Size;
+	to_stream(serializedGraph,node->m_BoundingBox,position);
 
         // Serialization of the contour
         node->m_Contour.Serialize(serializedGraph, position);
@@ -284,8 +263,7 @@ GraphOperations<TGraph>::SerializeStabilityMargin(std::unordered_map< NodeType*,
         node->m_Attributes.Serialize(serializedGraph, position);
 
         // Serialization of the number of edges
-        std::memcpy(&(serializedGraph[position]), &(numEdgesPerNode[i]), UInt32Size);
-        position += UInt32Size;
+	to_stream(serializedGraph,numEdgesPerNode[i],position);
 
         for(const auto& edg : node->m_Edges)
         {
@@ -294,12 +272,10 @@ GraphOperations<TGraph>::SerializeStabilityMargin(std::unordered_map< NodeType*,
               
               // Serialize the first starting coords
               const CoordValueType startPix = (graph->GetNodeAt(edg.m_TargetId))->GetFirstPixelCoords();
-              std::memcpy(&(serializedGraph[position]), &startPix, CoordValueSize);
-              position += CoordValueSize;
+	      to_stream(serializedGraph,startPix,position);
 
               // Serialize the boundary
-              std::memcpy(&(serializedGraph[position]), &(edg.m_Boundary), UInt32Size);
-              position += UInt32Size;
+	      to_stream(serializedGraph,edg.m_Boundary,position);
 
               // Serialize the specific attributes of the edges
               edg.m_Attributes.Serialize(serializedGraph, position);
@@ -311,6 +287,7 @@ GraphOperations<TGraph>::SerializeStabilityMargin(std::unordered_map< NodeType*,
         i++;
 
     } // end for(const auto& kv : stabilityMargin)
+
 
   return serializedGraph;
 }
@@ -324,12 +301,12 @@ GraphOperations<TGraph>::SerializeGraph(const GraphPointerType graph)
     // The first pass consists of determining the number of bytes to write.
 
     // Number of nodes
-    uint64_t numberOfBytes = UInt64Size;
+    uint64_t numberOfBytes = stream_offset(graph->GetNumberOfNodes());
 
     for(auto nodeIt = graph->Begin(); nodeIt != graph->End(); nodeIt++)
     {
         // Serialization of the bounding box
-        numberOfBytes += 4 * UInt32Size;
+        numberOfBytes += stream_offset(nodeIt->m_BoundingBox);
 
         // Serialization of the contour
         numberOfBytes += nodeIt->m_Contour.GetNumberOfBytesToSerialize();
@@ -338,7 +315,7 @@ GraphOperations<TGraph>::SerializeGraph(const GraphPointerType graph)
         numberOfBytes += nodeIt->m_Attributes.GetNumberOfBytesToSerialize();
 
         // Serialization of the number of edges
-        numberOfBytes += UInt32Size;
+	numberOfBytes+= stream_offset(nodeIt->m_Edges.size());
 
         for(const auto& edg : nodeIt->m_Edges)
         {
@@ -354,15 +331,14 @@ GraphOperations<TGraph>::SerializeGraph(const GraphPointerType graph)
     // Second pass: build the serialized graph
     uint64_t position = 0;
     const uint64_t numNodes = graph->GetNumberOfNodes();
-    std::memcpy(&(serializedGraph[position]), &numNodes, UInt64Size);
-    position += UInt64Size;
+
+    to_stream(serializedGraph,numNodes,position);
 
     for(auto nodeIt = graph->Begin(); nodeIt != graph->End(); nodeIt++)
     {
         // Serialization of the bounding box
-        std::memcpy(&(serializedGraph[position]), &(nodeIt->m_BoundingBox[0]), 4*UInt32Size);
-        position += 4*UInt32Size;
-
+        to_stream(serializedGraph,nodeIt->m_BoundingBox,position);
+        
         // Serialization of the contour
         nodeIt->m_Contour.Serialize(serializedGraph, position);
 
@@ -371,19 +347,17 @@ GraphOperations<TGraph>::SerializeGraph(const GraphPointerType graph)
 
         // Serialization of the number of edges
         const uint32_t numEdges = nodeIt->m_Edges.size();
-        std::memcpy(&(serializedGraph[position]), &numEdges, UInt32Size);
-        position += UInt32Size;
+	to_stream(serializedGraph,numEdges,position);
 
         for(const auto& edg : nodeIt->m_Edges)
         {
             // Serialize the first starting coords
-            const CoordValueType startPix = (graph->GetNodeAt(edg.m_TargetId))->GetFirstPixelCoords();
-            std::memcpy(&(serializedGraph[position]), &startPix, CoordValueSize);
-            position += CoordValueSize;
+             const CoordValueType startPix = (graph->GetNodeAt(edg.m_TargetId))->GetFirstPixelCoords();
+	     to_stream(serializedGraph,startPix,position);
+	    //to_stream(serializedGraph,edg.m_TargetId,position);
 
             // Serialize the boundary
-            std::memcpy(&(serializedGraph[position]), &(edg.m_Boundary), UInt32Size);
-            position += UInt32Size;
+	    to_stream(serializedGraph,edg.m_Boundary,position);
 
             // Serialize the specific attributes of the edges
             edg.m_Attributes.Serialize(serializedGraph, position);
@@ -613,7 +587,6 @@ GraphOperations<TGraph>::ExtractStabilityMargin(const GraphPointerType graph,
       RecursiveDepthBreadFirstExploration(n, extractedNodes, graph, 0, numMaxAdjacencyLayers);
     }
 
-
     return extractedNodes;
 }
 
@@ -768,19 +741,17 @@ GraphOperations<TGraph>::AggregateGraphs(GraphPointerType graph,
     auto lambdaIncrementIdEdge = [&](EdgeType& edge){
         edge.m_TargetId = edge.m_TargetId + numNodes;
     };
-
+    
     auto lambdaOp = [&](NodeType& node)
     {
     	node.m_Id = node.m_Id + numNodes;
     	node.ApplyForEachEdge(lambdaIncrementIdEdge);
     };
-
-
+    
     otherGraph->ApplyForEachNode(lambdaOp);
-
+    
     // Step 2: We can safely copy the nodes of subgraph into the adjacent list of graph.
     graph->InsertAtEnd(otherGraph);
-
 }
 
 
@@ -1066,11 +1037,7 @@ GraphOperations<TGraph>::DetectNewAdjacentNodes(std::unordered_map<CoordValueTyp
                             } // end for(const auto& pix : currBorderPixels)
 
                               // The boundary must not be null
-                              if(boundary < 1)
-                            {
-                                  std::cerr << "Error null boundary length between " << currBorderNode->m_Id << " and " << neighBorderNode->m_Id << std::endl;
-                                  exit(EXIT_FAILURE);
-                            }
+                              assert(boundary>=1);
 
                               // Step 2: Add edges
 

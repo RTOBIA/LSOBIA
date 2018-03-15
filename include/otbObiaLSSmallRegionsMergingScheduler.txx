@@ -383,12 +383,8 @@ LSSmallRegionsMergingScheduler<TGraph>
         // Move at the right location in the shared buffer.
         uint64_t offset = ntile * (IntSize + m_MaxNumberOfBytes);
 
-        // Write the number of bytes in the serialized margin.
-        const int numBytes = m_SerializedStabilityMargin.size();
-        std::memcpy(&sharedBuffer[offset], &numBytes, IntSize);
-
         // Write the serialized stablity margin in the shared buffer
-        std::memcpy(&sharedBuffer[offset + IntSize], &m_SerializedStabilityMargin[0], numBytes);
+	to_stream(sharedBuffer,m_SerializedStabilityMargin,offset);
 
         // Can release this serialized stability margin
         m_SerializedStabilityMargin.clear();
@@ -492,13 +488,10 @@ LSSmallRegionsMergingScheduler<TGraph>
 		// Agregate the stability margins to the graph
 		for(uint32_t i = 0; i < otherSerializedMargins.size(); i++)
 		{
-			// Retrieve the real number of bytes
-			int numBytes;
-			std::memcpy(&numBytes, &otherSerializedMargins[i][0], IntSize);
 
-			// Retrieve the serialized margin
-			std::vector< char > otherSerializedMargin(numBytes);
-			std::memcpy(&otherSerializedMargin[0], &otherSerializedMargins[i][IntSize], numBytes);
+			// Retrieve the serialized margin		       
+			std::vector< char > otherSerializedMargin(0);
+			from_stream(otherSerializedMargins[i],otherSerializedMargin);
 			otherSerializedMargins[i].clear();
 			otherSerializedMargins[i].shrink_to_fit();
 

@@ -160,12 +160,14 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
 {
     std::cout << "Compute Merging cost" << std::endl;
     // Retrieve the output graph.
+
     auto outputGraph = this->GetOutput();
 
     MergingCostValueType minCost;
     // Fix : uninitialized variable
     uint64_t minNodeId = outputGraph->GetNumberOfNodes()+1, idx, minIdx;
 
+    std::cout << "updating attribute cost updated ...";
     // The nodes must have a boolean attribute called m_CostUpdated.
     for(auto nodeIt =outputGraph->Begin(); nodeIt != outputGraph->End(); nodeIt++)
     {
@@ -174,13 +176,19 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
             edgeIt->m_Attributes.m_CostUpdated = false;
         }
     }
+    std::cout << "OK ." << std::endl;
+
+
+    std::cout << "Number of nodes : " << std::endl;
 
     // Loop over the nodes
     for(auto nodeIt = outputGraph->Begin(); nodeIt != outputGraph->End(); nodeIt++)
     {
 
-        if(m_MergingCostFunc->ComputeMergingCostsForThisNode(&(*nodeIt)))
+        if(m_MergingCostFunc->ComputeMergingCostsForThisNode(&(*nodeIt))
+	 && nodeIt->m_Edges.size() > 0)
         {
+
             // The merging cost function must give the maximum value of the merging cost.
             minCost = MergingCostFunctionType::Max();
             idx = 0;
@@ -192,8 +200,8 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
             for(auto edgeIt = nodeIt->m_Edges.begin(); edgeIt != nodeIt->m_Edges.end(); edgeIt++)
             {
                 // Retrieve the adjacent node.
-                auto adjNode = outputGraph->GetNodeAt(edgeIt->m_TargetId);
 
+                auto adjNode = outputGraph->GetNodeAt(edgeIt->m_TargetId);
 
                 if(m_MergingCostFunc->ComputeMergingCostsForThisAdjNode(adjNode))
                 {

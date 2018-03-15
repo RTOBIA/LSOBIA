@@ -88,8 +88,7 @@ void GraphFileReader< TOutputGraph >
 
         // Read the number of nodes
         uint64_t numNodes;
-        std::memcpy(&numNodes, &(serializedGraph[position]), UInt64Size);
-        position += UInt64Size;
+	from_stream(serializedGraph,numNodes,position);
 
         // Reserve memory space for the graph
         graph->SetNumberOfNodes(numNodes);
@@ -112,8 +111,7 @@ void GraphFileReader< TOutputGraph >
             newNode->m_Valid = true;
 
             // The bounding box
-            std::memcpy(&(newNode->m_BoundingBox[0]), &(serializedGraph[position]), 4*UInt32Size);
-            position += 4*UInt32Size;
+	    from_stream(serializedGraph,newNode->m_BoundingBox,position);
 
             // The contour
             newNode->m_Contour.DeSerialize(serializedGraph, position);
@@ -134,8 +132,7 @@ void GraphFileReader< TOutputGraph >
 
             // The number of edges
             uint32_t numEdges;
-            std::memcpy(&numEdges, &(serializedGraph[position]), UInt32Size);
-            position += UInt32Size;
+	    from_stream(serializedGraph,numEdges,position);
 
             newNode->m_Edges.reserve(numEdges);
 
@@ -145,12 +142,10 @@ void GraphFileReader< TOutputGraph >
                 auto newEdge = newNode->AddEdge();
 
                 // The starting coords
-                std::memcpy(&(newEdge->m_TargetId), &(serializedGraph[position]), CoordValueSize);
-                position += CoordValueSize;
+		from_stream(serializedGraph,newEdge->m_TargetId, position);
 
                 // The boundary
-                std::memcpy(&(newEdge->m_Boundary), &(serializedGraph[position]), UInt32Size);
-                position += UInt32Size;
+		from_stream(serializedGraph,newEdge->m_Boundary,position);
 
                 // Serialize the specific attributes of the edges
                 newEdge->m_Attributes.DeSerialize(serializedGraph, position);
