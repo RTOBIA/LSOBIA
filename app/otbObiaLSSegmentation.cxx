@@ -115,7 +115,7 @@ private:
         AddParameter(ParameterType_Choice,"algorithm.meanshift.modesearch","Activation of search mode");
         MandatoryOff("algorithm.meanshift.modesearch");
         AddChoice("algorithm.meanshift.modesearch.on","Activated");
-        AddChoice("algorithm.meanshift.modesearch.off","Desactivated");
+        AddChoice("algorithm.meanshift.modesearch.off","Deactivated");
 
         // Processing Parameters
         AddParameter(ParameterType_Group,"processing","Set of parameters related to processing options");
@@ -131,13 +131,9 @@ private:
         AddParameter(ParameterType_Choice,"algorithm.baatz.aggregategraphs","Aggregation of graph traces");
         MandatoryOff("algorithm.baatz.aggregategraphs");
         AddChoice("algorithm.baatz.aggregategraphs.on","Activated");
-        AddChoice("algorithm.baatz.aggregategraphs.off","Desactivated");
+        AddChoice("algorithm.baatz.aggregategraphs.off","Deactivated");
 
 	// processing no data
-	AddParameter(ParameterType_Choice,"processing.nodata","Ignorance of no Data by the algorithm");
-	MandatoryOff("processing.nodata");
-        AddChoice("processing.nodata.on","Activated");
-        AddChoice("processing.nodata.off","Desactivated");
 	AddParameter(ParameterType_Float, "processing.nodatavalue", "Definition of no data value");
 	SetDefaultParameterFloat("processing.nodatavalue",  0);	
 	MandatoryOff("processing.nodatavalue");
@@ -162,7 +158,7 @@ private:
         unsigned long int memory = GetParameterInt("processing.memory");
         bool writeImages = false;
         bool writeGraphs = false;
-	bool processNodata = false;
+        bool processUserNodata = false;
 
         switch (GetParameterInt("processing.writeimages")) {
             case ON:
@@ -181,16 +177,9 @@ private:
                 break;
         }
 
-	if(HasUserValue("processing.nodata"))
+	if(HasUserValue("processing.nodatavalue"))
 	{
-		 switch (GetParameterInt("processing.nodata")) {
-		    case ON:
-		        processNodata = true;
-		        break;
-		    case OFF:
-		        processNodata = false;    
-		        break;
-		}
+		processUserNodata = true;
 	}	        
 
 	float noDataValue = GetParameterFloat("processing.nodatavalue");
@@ -242,7 +231,7 @@ private:
                 lsBaatzFilter->SetAggregateGraphs(aggregateGraphs);
                 lsBaatzFilter->SetOutputDir(outDir);
                 lsBaatzFilter->SetLabelImageName(labelImage);
-		lsBaatzFilter->SetProcessNoData(processNodata);
+		lsBaatzFilter->SetProcessNoData(processUserNodata);
 		lsBaatzFilter->SetNoDataValue(noDataValue);
 	
                 lsBaatzFilter->Update();
@@ -279,7 +268,7 @@ private:
                 lsMSFilter->SetLabelImageName(labelImage);
                 lsMSFilter->SetWriteLabelImage(writeImages);
                 lsMSFilter->SetWriteGraph(writeGraphs);
-		lsMSFilter->SetProcessNoData(processNodata);
+		lsMSFilter->SetProcessNoData(processUserNodata);
 		lsMSFilter->SetNoDataValue(noDataValue);
 
                 lsMSFilter->Update();

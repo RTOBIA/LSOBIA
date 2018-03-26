@@ -134,12 +134,6 @@ ImageToBaatzGraphFilter< TInputImage >
 	}	
   }
 
-  /*
-  std::cout<<"BDU : test with NO DATA, noDataPresent ? "<< noDataPresent<< " size noDataValues : "<< noDataValues.size() << " size noDataFlags : " <<noDataFlags.size()<<std::endl;
-
-  std::cout<<"BDU : test with NO DATA, noDataPresent ? " << noDataPresent<< ", noDataValues : "<< noDataValues[0] << ", noDataFlags : " <<noDataFlags[0]<<std::endl;
- */
-
   // Set the right number of starting nodes for memory allocation
   // 1 pixel = 1 node
   outputGraph->SetNumberOfNodes(imageWidth * imageHeight);
