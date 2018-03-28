@@ -87,9 +87,13 @@ private:
         MandatoryOff("algorithm.baatz.numitpartial");
         SetDefaultParameterInt("algorithm.baatz.numitpartial",  1);
 
-	AddParameter(ParameterType_Int,"algorithm.baatz.maxiter","max number of iterations");
-	MandatoryOff("algorithm.baatz.maxiter");
-	SetDefaultParameterInt("algorithm.baatz.maxiter",  75);
+        AddParameter(ParameterType_Int,"algorithm.baatz.maxiter","max number of iterations");
+        MandatoryOff("algorithm.baatz.maxiter");
+        SetDefaultParameterInt("algorithm.baatz.maxiter",  75);
+
+        AddParameter(ParameterType_Float,"algorithm.baatz.mindec","minimum decreasing of accumulated Memory");
+        MandatoryOff("algorithm.baatz.mindec");
+        SetDefaultParameterFloat("algorithm.baatz.mindec",  0.);
 
         AddParameter(ParameterType_Float,"algorithm.baatz.scale","Value for scale criterion");
         MandatoryOff("algorithm.baatz.scale");
@@ -210,6 +214,7 @@ private:
                 uint32_t nbPartialIterations = GetParameterInt("algorithm.baatz.numitpartial");
 		unsigned int maxIter = GetParameterInt("algorithm.baatz.maxiter");
                 float threshold = GetParameterFloat("algorithm.baatz.scale");
+                float decreasing = GetParameterFloat("algorithm.baatz.mindec");
                 threshold = threshold * threshold;
                 float spectralW = GetParameterFloat("algorithm.baatz.spectralweight");
                 float shapeW = GetParameterFloat("algorithm.baatz.geomweight");
@@ -224,6 +229,7 @@ private:
                 lsBaatzFilter->SetTemporaryDirectory(tmpDir);
                 lsBaatzFilter->SetAvailableMemory(memory);
                 lsBaatzFilter->SetThreshold(threshold);
+                lsBaatzFilter->SetDecreasing(decreasing);
                 lsBaatzFilter->SetSpectralWeight(spectralW);
                 lsBaatzFilter->SetShapeWeight(shapeW);
                 lsBaatzFilter->SetWriteLabelImage(writeImages);

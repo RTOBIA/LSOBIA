@@ -68,6 +68,10 @@ public:
 	 * \param: Threshold*/
     void SetThreshold(const float thresh){ m_Threshold = thresh; }
 
+    /**\brief Set the minimum decreasing for accumulated memory during baatz segmentation
+	 * \param: decreasing*/
+	void SetDecreasing(const float decreasing){ m_Decreasing = decreasing; }
+
     /**\brief Set the spectral weight, used for baatz segmentation criterion
 	 * \param: Spectral weight*/
     void SetSpectralWeight(const float sw){ m_SpectralWeight = sw; }
@@ -178,6 +182,9 @@ private:
 
     // Threshold to determine if two adjacent nodes are similar
     float m_Threshold;
+
+    // Minimum decreasing wanted for accumulated memory
+    float m_Decreasing;
 
     // Relative importance given to the spectral information
     float m_SpectralWeight;

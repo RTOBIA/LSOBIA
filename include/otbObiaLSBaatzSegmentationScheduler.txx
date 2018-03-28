@@ -21,6 +21,7 @@ LSBaatzSegmentationScheduler<TInputImage>
 m_MaxNumberOfIterations(75),
 m_CurrentNumberOfIterations(0),
 m_Threshold(1600),
+m_Decreasing(0.0),
 m_SpectralWeight(0.5),
 m_ShapeWeight(0.5),
 m_StartingNumberOfIterations(1),
@@ -394,13 +395,13 @@ LSBaatzSegmentationScheduler<TInputImage>
         ExtractStabilityMargins();
 
 	//Test decreasing of accumulated Memory : not for first iteration
-	if (!firstIt)
+	if (!firstIt && m_Decreasing)
 	{
-		double decreasing = (double)(prevAccumulatedMemory - accumulatedMemory)*100.0 / (double)prevAccumulatedMemory;
+		float decreasing = (float)(prevAccumulatedMemory - accumulatedMemory)*100.0 / (float)prevAccumulatedMemory;
 		std::cout << "prevAccumulatedMemory : " << prevAccumulatedMemory << std::endl;
 		std::cout << "accumulatedMemory : " << accumulatedMemory << std::endl;
 		std::cout << "decreasing since last iteration : " << decreasing << std::endl;
-		if (decreasing < 1.0)
+		if (decreasing < m_Decreasing)
 		{
 			keepOn = false;
 			std::cout << "stopping partial segmentation"<<std::endl;
@@ -412,7 +413,6 @@ LSBaatzSegmentationScheduler<TInputImage>
     } // end while( accumulatedMemory > this->m_AvailableMemory && fusionSum > 0)
 
     if(accumulatedMemory < this->m_AvailableMemory)
-    //if(false)
     {
         std::cout << "Aggregation (accumulated memory = " << accumulatedMemory << " and available = "
         		  << this->m_AvailableMemory << ")" << std::endl;
@@ -512,7 +512,8 @@ LSBaatzSegmentationScheduler<TInputImage>
 
 
     // Create the shared buffer which will be accessible by other processes.
-    uint64_t maxNumberOfElements = this->m_MaxNumberOfTilesPerProcessor * (sizeof(std::size_t) + m_MaxNumberOfBytes);
+    uint64_t blockSize = sizeof(size_t) + m_MaxNumberOfBytes;
+    uint64_t maxNumberOfElements = this->m_MaxNumberOfTilesPerProcessor * blockSize;
     std::vector< char > sharedBuffer(maxNumberOfElements);
 
     uint32_t tid = 0;
@@ -533,7 +534,7 @@ LSBaatzSegmentationScheduler<TInputImage>
                 }
 
                 // Move at the right location in the shared buffer.
-                uint64_t offset = ntile * (sizeof(size_t) + m_MaxNumberOfBytes);
+                uint64_t offset = ntile * blockSize;
 
                 // Write the serialized stablity margin in the shared buffer
                 to_stream(sharedBuffer,m_SerializedStabilityMargin,offset);
@@ -602,18 +603,18 @@ LSBaatzSegmentationScheduler<TInputImage>
                         }
 
                         // Compute the offset of displacement.
-                        uint64_t offset = pos * (sizeof(size_t) + m_MaxNumberOfBytes);
+                        uint64_t offset = pos * blockSize;
 
                         // Allocate a new serialized stability margin.
-                        otherSerializedMargins.push_back( std::vector<char>(sizeof(size_t) + m_MaxNumberOfBytes) );
+                        otherSerializedMargins.push_back( std::vector<char>(blockSize) );
 
 
                         success = MPI_Get(&(otherSerializedMargins.back()[0]),
-                                sizeof(size_t) + m_MaxNumberOfBytes,
+                        		blockSize,
                                 MPI_CHAR,
                                 neighRank,
                                 offset,
-                                sizeof(size_t) + m_MaxNumberOfBytes,
+                                blockSize,
                                 MPI_CHAR,
                                 win);
                         assert(success==0);
