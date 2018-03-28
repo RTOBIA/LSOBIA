@@ -9,7 +9,9 @@ namespace obia
 
 template< typename TInputImage, typename TOutputGraph >
 ImageToGraphFilter<TInputImage, TOutputGraph>::
-ImageToGraphFilter()
+ImageToGraphFilter():
+m_ProcessNoData(false),
+m_NoDataValue(0)
 {
       // Modify superclass default values, can be overridden by subclasses
       this->SetNumberOfRequiredInputs(1);

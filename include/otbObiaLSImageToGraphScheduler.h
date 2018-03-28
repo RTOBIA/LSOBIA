@@ -62,6 +62,8 @@ public:
     void SetMaxTileSizeX(const uint32_t MaxTileSizeX);
     void SetMaxTileSizeY(const uint32_t MaxTileSizeY);
     void SetLabelImageName(const std::string& labelImage);
+    void SetProcessNoData(bool p){ m_ProcessNoData = p;}
+    void SetNoDataValue(const float n);
 
 
     // The memory is given in megabytes.
@@ -81,6 +83,8 @@ public:
     uint32_t GetMaxTileSizeY(){return m_MaxTileSizeY;};
     uint32_t GetNumberOfSpectralBands(){return m_NumberOfSpectralBands;};
     uint32_t GetMaxNumberOfTilesPerProcessor(){return m_MaxNumberOfTilesPerProcessor;};
+    bool GetProcessNoData(){return m_ProcessNoData;};
+    bool GetNoDataValue(){return m_NoDataValue;};
 
 protected:
 
@@ -127,6 +131,7 @@ protected:
     bool m_WriteLabelImage;
     bool m_SplittedGraph;
     bool m_WriteGraph;
+    bool m_ProcessNoData;
 
     /** Tile size with respect to x-axis. */
     uint32_t m_MaxTileSizeX;
@@ -177,6 +182,9 @@ protected:
     uint32_t m_PaddingValue;
 
     OutputGraphPointerType m_Graph;
+
+    /** Value set for NO DATA */
+    float m_NoDataValue;
 
 private:
     

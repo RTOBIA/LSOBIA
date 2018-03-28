@@ -127,50 +127,38 @@ BaatzHeuristic<TGraph>
 ::GetBestAdjacentNode(NodeType* node)
 {
 
-    auto outputGraph = this->m_Graph;
+  auto outputGraph = this->m_Graph;
 
-    if(node->m_Valid)
+  if(node->m_Valid
+      && node->m_Edges.size() > 0) // Since the introducing of no-data, a node can be alone
+  {
+    auto cost = node->m_Edges.front().m_Attributes.m_MergingCost;
+
+    if(cost < this->m_Threshold)
     {
-        auto cost = node->m_Edges.front().m_Attributes.m_MergingCost;
+      auto bestAdjNode = outputGraph->GetNodeAt(node->m_Edges.front().m_TargetId);
 
-        if(cost < this->m_Threshold)
+      if(bestAdjNode->m_Valid
+          && bestAdjNode->m_Edges.size() > 0) // Since the introducing of no-data, a node can be alone
+      {
+        auto bbNode = outputGraph->GetNodeAt(bestAdjNode->m_Edges.front().m_TargetId);
+
+        if(bbNode->m_Id == node->m_Id)
         {
-            auto bestAdjNode = outputGraph->GetNodeAt(node->m_Edges.front().m_TargetId);
-
-            if(bestAdjNode->m_Valid)
-            {
-                auto bbNode = outputGraph->GetNodeAt(bestAdjNode->m_Edges.front().m_TargetId);
-
-                if(bbNode->m_Id == node->m_Id)
-                {
-                    if(bestAdjNode->GetFirstPixelCoords() < node->GetFirstPixelCoords())
-                    {
-                        return bestAdjNode;
-                    }
-                    else
-                    {
-                        return node;
-                    }
-                }
-                else
-                {
-                    return nullptr;
-                }
-            }
-            else
-            {
-                return nullptr;
-            }
+          if(bestAdjNode->GetFirstPixelCoords() < node->GetFirstPixelCoords())
+          {
+            return bestAdjNode;
+          }
+          else
+          {
+            return node;
+          }
         }
-        else
-        {
-            return nullptr;
-        }
+      }
     }
-    else
-    {
-        return nullptr;
-    }
+  }
+  return nullptr;
+
 }
 
 

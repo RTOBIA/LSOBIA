@@ -29,7 +29,9 @@ m_LabelImageName("labelOutput"),
  m_OriginX(0),
  m_OriginY(0),
  m_NumberOfSpectralBands(0),
- m_AvailableMemory(0)
+ m_AvailableMemory(0),
+ m_ProcessNoData(false),
+ m_NoDataValue(0)
  {
  }
 
@@ -100,6 +102,14 @@ LSImageToGraphScheduler<TInputImage, TOutputGraph>
 ::SetAvailableMemory(const uint64_t mem)
 {
     m_AvailableMemory = mem * 1024 * 1024;
+}
+
+template< typename TInputImage, typename TOutputGraph>
+void
+LSImageToGraphScheduler<TInputImage, TOutputGraph>
+::SetNoDataValue(const float n)
+{
+    m_NoDataValue = n;
 }
 
 template< typename TInputImage, typename TOutputGraph>

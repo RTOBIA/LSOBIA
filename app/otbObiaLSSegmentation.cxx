@@ -82,15 +82,27 @@ private:
         AddParameter(ParameterType_Int,"algorithm.baatz.numitfirstpartial","Number of iterations for first partial segmentation");
         SetDefaultParameterInt("algorithm.baatz.numitfirstpartial",  1);
         MandatoryOff("algorithm.baatz.numitfirstpartial");
+	
         AddParameter(ParameterType_Int,"algorithm.baatz.numitpartial","Number of iterations for partial segmentation");
         MandatoryOff("algorithm.baatz.numitpartial");
         SetDefaultParameterInt("algorithm.baatz.numitpartial",  1);
-        AddParameter(ParameterType_Float,"algorithm.baatz.stopping","Value for stopping criterion");
-        MandatoryOff("algorithm.baatz.stopping");
-        SetDefaultParameterFloat("algorithm.baatz.stopping",  40.);
+
+        AddParameter(ParameterType_Int,"algorithm.baatz.maxiter","max number of iterations");
+        MandatoryOff("algorithm.baatz.maxiter");
+        SetDefaultParameterInt("algorithm.baatz.maxiter",  75);
+
+        AddParameter(ParameterType_Float,"algorithm.baatz.mindec","minimum decreasing of accumulated Memory");
+        MandatoryOff("algorithm.baatz.mindec");
+        SetDefaultParameterFloat("algorithm.baatz.mindec",  0.);
+
+        AddParameter(ParameterType_Float,"algorithm.baatz.scale","Value for scale criterion");
+        MandatoryOff("algorithm.baatz.scale");
+        SetDefaultParameterFloat("algorithm.baatz.scale",  60.);
+	
         AddParameter(ParameterType_Float,"algorithm.baatz.spectralweight","Value for spectral weight");
         SetDefaultParameterFloat("algorithm.baatz.spectralweight",  0.05);
         MandatoryOff("algorithm.baatz.spectralweight");
+
         AddParameter(ParameterType_Float,"algorithm.baatz.geomweight","Value for geometric (shape) weight");
         MandatoryOff("algorithm.baatz.geomweight");
         SetDefaultParameterFloat("algorithm.baatz.geomweight",  0.95);
@@ -110,7 +122,7 @@ private:
         AddChoice("algorithm.meanshift.modesearch.off","Deactivated");
 
         // Processing Parameters
-        AddParameter(ParameterType_Group,"processing","Set of parameters related to parallel processing options");
+        AddParameter(ParameterType_Group,"processing","Set of parameters related to processing options");
         AddParameter(ParameterType_Int,"processing.memory","Maximum memory to be used on the main node");
         AddParameter(ParameterType_Int,"processing.maxtilesizex","Maximum size of tiles along x axis");
         AddParameter(ParameterType_Int,"processing.maxtilesizey","Maximum size of tiles along x axis");
@@ -124,6 +136,11 @@ private:
         MandatoryOff("algorithm.baatz.aggregategraphs");
         AddChoice("algorithm.baatz.aggregategraphs.on","Activated");
         AddChoice("algorithm.baatz.aggregategraphs.off","Deactivated");
+
+	// processing no data
+	AddParameter(ParameterType_Float, "processing.nodatavalue", "Definition of no data value");
+	SetDefaultParameterFloat("processing.nodatavalue",  0);	
+	MandatoryOff("processing.nodatavalue");
     }
 
     void DoUpdateParameters()
@@ -145,6 +162,7 @@ private:
         unsigned long int memory = GetParameterInt("processing.memory");
         bool writeImages = false;
         bool writeGraphs = false;
+        bool processUserNodata = false;
 
         switch (GetParameterInt("processing.writeimages")) {
             case ON:
@@ -162,7 +180,14 @@ private:
                 writeGraphs = false;
                 break;
         }
-        
+
+	if(HasUserValue("processing.nodatavalue"))
+	{
+		processUserNodata = true;
+	}	        
+
+	float noDataValue = GetParameterFloat("processing.nodatavalue");
+
         // BAATZ
         using InputImageType = otb::VectorImage<float, 2>;
         using LSBaatzSegmentationSchedulerType = otb::obia::LSBaatzSegmentationScheduler<InputImageType>;
@@ -187,7 +212,9 @@ private:
                 }
                 uint32_t nbStartingIterations = GetParameterInt("algorithm.baatz.numitfirstpartial");
                 uint32_t nbPartialIterations = GetParameterInt("algorithm.baatz.numitpartial");
-                float threshold = GetParameterFloat("algorithm.baatz.stopping");
+		unsigned int maxIter = GetParameterInt("algorithm.baatz.maxiter");
+                float threshold = GetParameterFloat("algorithm.baatz.scale");
+                float decreasing = GetParameterFloat("algorithm.baatz.mindec");
                 threshold = threshold * threshold;
                 float spectralW = GetParameterFloat("algorithm.baatz.spectralweight");
                 float shapeW = GetParameterFloat("algorithm.baatz.geomweight");
@@ -198,9 +225,11 @@ private:
                 lsBaatzFilter->SetMaxTileSizeY(maxTileHeight);
                 lsBaatzFilter->SetStartingNumberOfIterations(nbStartingIterations);
                 lsBaatzFilter->SetPartialNumberOfIterations(nbPartialIterations);
+		lsBaatzFilter->SetMaxNumberOfIterations(maxIter);
                 lsBaatzFilter->SetTemporaryDirectory(tmpDir);
                 lsBaatzFilter->SetAvailableMemory(memory);
                 lsBaatzFilter->SetThreshold(threshold);
+                lsBaatzFilter->SetDecreasing(decreasing);
                 lsBaatzFilter->SetSpectralWeight(spectralW);
                 lsBaatzFilter->SetShapeWeight(shapeW);
                 lsBaatzFilter->SetWriteLabelImage(writeImages);
@@ -208,6 +237,9 @@ private:
                 lsBaatzFilter->SetAggregateGraphs(aggregateGraphs);
                 lsBaatzFilter->SetOutputDir(outDir);
                 lsBaatzFilter->SetLabelImageName(labelImage);
+		lsBaatzFilter->SetProcessNoData(processUserNodata);
+		lsBaatzFilter->SetNoDataValue(noDataValue);
+	
                 lsBaatzFilter->Update();
 
                 break;
@@ -242,6 +274,9 @@ private:
                 lsMSFilter->SetLabelImageName(labelImage);
                 lsMSFilter->SetWriteLabelImage(writeImages);
                 lsMSFilter->SetWriteGraph(writeGraphs);
+		lsMSFilter->SetProcessNoData(processUserNodata);
+		lsMSFilter->SetNoDataValue(noDataValue);
+
                 lsMSFilter->Update();
                 break;
             }

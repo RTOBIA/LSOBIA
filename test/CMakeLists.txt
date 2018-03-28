@@ -8,7 +8,6 @@ if (BUILD_TESTING)
 	endif()
 endif()
 
-
 # ----------------------------------------------------------------------------------------------
 # TODO : ADD: memory check tests (valgrind)?
 
@@ -130,6 +129,20 @@ otb_test_application(NAME apLSOBIA_MeanShiftOneProc
 	-processing.memory 2000
 	-processing.maxtilesizex 1000
 	-processing.maxtilesizey 1000)
+
+# ----------------------------------------------------------------------------------------------
+set(${otb-module}TestDriver
+	otbLSOBIATestDriver.cxx
+	otbObiaStreamUtils.cxx
+	otbObiaConvertGraphToImage.cxx
+)	
+
+add_executable(otb${otb-module}TestDriver ${${otb-module}TestDriver})
+target_link_libraries(otb${otb-module}TestDriver ${${otb-module}-Test_LIBRARIES})
+otb_module_target_label(otb${otb-module}TestDriver)
+
+otb_add_test(NAME otbObiaStreamUtilsTest COMMAND otbLSOBIATestDriver otbObiaStreamUtils)
+
 
 # ----------------------------------------------------------------------------------------------
 # Graph to image conversion test driver

@@ -37,14 +37,11 @@ template< typename TNodeAttribute, typename TEdgeAttribute >
 uint64_t 
 Node<TNodeAttribute, TEdgeAttribute>::GetMemorySize() const
 {
-    uint64_t nodeMemory = 2*BoolSize + // valid and remove flags
-                          IdSize + // the id
-                          sizeof(m_BoundingBox) + // bbox
-                          m_Contour.GetMemorySize() + // contour
-                          m_Attributes.GetMemorySize() + // attributs
-                          sizeof(EdgeListType); // the edge container
+  uint64_t nodeMemory = sizeof(Self);
 
-    for(auto edgeIt = m_Edges.begin(); edgeIt != m_Edges.end(); edgeIt++)
+  nodeMemory+=m_Contour.GetMemorySize()+m_Attributes.GetMemorySize();
+
+  for(auto edgeIt = m_Edges.begin(); edgeIt != m_Edges.end(); edgeIt++)
     {
         nodeMemory += edgeIt->GetMemorySize();
     }
@@ -281,9 +278,7 @@ Graph<TNode>::MergeEdge(NodeType* nodeIn, NodeType* nodeOut)
     } // end for(auto edgeIt = nodeOut->m_Edges.begin(); edgeIt != nodeOut->m_Edges.end(); edgeIt++)
 
     // All the edges of nodeOut can be safely removes
-    nodeOut->m_Edges.clear();
-    nodeOut->m_Edges.shrink_to_fit();
-
+    typename NodeType::EdgeListType().swap(nodeOut->m_Edges);
 }
 
 template< typename TNode >
@@ -309,7 +304,7 @@ Graph<TNode>::Merge(NodeType* nodeIn, NodeType* nodeOut)
 
 template< typename TNode >
 void 
-Graph<TNode>::RemoveNodes()
+Graph<TNode>::RemoveNodes(bool merge /*=true*/)
 {
     // To keep nodes aligned in memory, we avoid using vector of pointers
     // but directly vector of nodes. However this complicates the removal
@@ -323,18 +318,21 @@ Graph<TNode>::RemoveNodes()
     uint64_t idx = 0;
     uint32_t numMerged = 0;
 
-    auto lambdaNumMerges = [&numMergedNodes, &idx, &numMerged](const NodeType& node){
-        
-        if(node.m_HasToBeRemoved)
-        {
-            numMerged++;
-        }
+    
+     auto lambdaNumMerges = [&numMergedNodes, &idx, &numMerged](const NodeType& node){
 
-        numMergedNodes[idx] = numMerged;
-        idx++;
+       if(node.m_HasToBeRemoved)
+	{
+	    numMerged++;
+	}
+
+	numMergedNodes[idx] = numMerged;
+	idx++;
     };
 
-    ApplyForEachNode(lambdaNumMerges);
+ApplyForEachNode(lambdaNumMerges);
+   
+
 
     // Remove the nodes: Linear in time wrt to the number of nodes
     auto eraseIt = std::remove_if(m_Nodes.begin(), m_Nodes.end(), [](NodeType& node){
@@ -342,10 +340,14 @@ Graph<TNode>::RemoveNodes()
     });
 
     m_Nodes.erase(eraseIt, m_Nodes.end());
-    
-    // Need to call this method to reduce the memory usage.
-    m_Nodes.shrink_to_fit();
 
+    // m_Nodes.shrink_to_fit();
+
+    // shrink_to_fit all edges container
+    for (auto it = m_Nodes.begin(); it != m_Nodes.end();++it)
+      {
+      it->m_Edges.shrink_to_fit();
+      }
     auto lambdaDecrementIdEdge = [&numMergedNodes](EdgeType& edge){
         edge.m_TargetId = edge.m_TargetId - numMergedNodes[edge.m_TargetId];
     };
