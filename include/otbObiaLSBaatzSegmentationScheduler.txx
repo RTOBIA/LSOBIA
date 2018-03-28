@@ -307,16 +307,8 @@ LSBaatzSegmentationScheduler<TInputImage>
 												         tile,
 												         this->m_ImageWidth);
 
-				// BDU
-				std::cout << "FirstPartialSegmentation : PROCESSOR : " << mpiConfig->GetMyRank() <<", accumulatedMemory = " <<accumulatedMemory<<std::endl; 
-				// BDU
-
 				// Get the memory size of the graph.
 				accumulatedMemory += this->m_Graph->GetMemorySize();
-
-				// BDU
-				std::cout << "FirstPartialSegmentation : PROCESSOR : " << mpiConfig->GetMyRank() <<", accumulatedMemory = " <<accumulatedMemory<<std::endl; 
-				// BDU
 				
 				// Write the graph if necessary
 				this->WriteGraphIfNecessary(ty, tx);
@@ -334,10 +326,6 @@ LSBaatzSegmentationScheduler<TInputImage>
 
 	/* Compute the accumulated memory */
 	mpiTools->Accumulate(accumulatedMemory,  MPI_UNSIGNED_LONG);
-
-	// BDU
-	std::cout << "FirstPartialSegmentation : PROCESSOR : " << mpiConfig->GetMyRank() <<", accumulatedMemory = " <<accumulatedMemory<<std::endl; 
-	// BDU
 
 	/* Determine if segmentation is globally over */
 	mpiTools->Accumulate(localFusion,  MPI_INT);
@@ -439,9 +427,6 @@ LSBaatzSegmentationScheduler<TInputImage>
     }
     else
     {
-	// BDU
-	//std::cout<<"BEND : je passe bien ici !"<<std::endl;	
-
         // For now, we do not write the label image in this situation.
         //this->m_WriteLabelImage = false;
 
@@ -573,9 +558,6 @@ LSBaatzSegmentationScheduler<TInputImage>
         } // end for(uint32_t tx = 0; tx < this->m_NumberOfTilesX; tx++)
 
     } // end for(uint32_t ty = 0; ty < this->m_NumberOfTilesY; ty++)
-
-
-    // mpiConfig->barrier();
 
 
     // Creation of rma window: each processor will have its shared buffer accessible for other processors
@@ -728,9 +710,6 @@ LSBaatzSegmentationScheduler<TInputImage>
                 // Load the graph if necessary
                 this->ReadGraphIfNecessary(ty, tx);
 
-               // std::cout << "ORIGINE = " << this->m_Graph->GetOriginX() << "/" << this->m_Graph->GetOriginY() << std::endl;
-
-
                 // Retrieve the tile
                 auto tile = this->m_TileMap[tid];
 
@@ -781,6 +760,13 @@ LSBaatzSegmentationScheduler<TInputImage>
     auto mpiConfig = MPIConfig::Instance();
     auto mpiTools = MPITools::Instance();
 
+    // computing maximum positive value of an int , limitation for sending data with MPI_Send
+    int exp = 8*sizeof(int) -1;
+    const double dMAX_INT = std::pow(2,exp) - 1;
+    const int MAX_INT = static_cast<int>(dMAX_INT);
+
+    std::cout<<"maximum integer supported by system : "<<MAX_INT<<std::endl;
+
     if(this->m_TileMap.size() > 1)
     {
         // Create the final graph
@@ -802,7 +788,7 @@ LSBaatzSegmentationScheduler<TInputImage>
             uint32_t tx = kv.first % this->m_NumberOfTilesX;
             uint32_t ty = kv.first / this->m_NumberOfTilesX;
 
-	    std::cout << " PROCESSOR : " << mpiConfig->GetMyRank() << " , GRAPH AGREGATION FOR " << tx << "/" << ty << std::endl;
+            std::cout << " PROCESSOR : " << mpiConfig->GetMyRank() << " , GRAPH AGREGATION FOR " << tx << "/" << ty << std::endl;
 
             // Check if there are adjacent tiles to this tile which belong to the current processor
             auto neighborTiles = SpatialTools::EightConnectivity(kv.first, this->m_NumberOfTilesX, this->m_NumberOfTilesY);
@@ -874,58 +860,48 @@ LSBaatzSegmentationScheduler<TInputImage>
     if(mpiConfig->GetMyRank() == 0)
     {
         m_SerializedStabilityMargin.clear();
+		//receiving the size of graph for each proc
+		for(unsigned int r = 1; r < mpiConfig->GetNbProcs(); r++)
+		{
+				MPI_Recv(&sizePerGraph[r-1],
+							  1,
+							  MPI_UNSIGNED_LONG,
+							  r,
+							  MPI_ANY_TAG,
+							  MPI_COMM_WORLD,
+							  MPI_STATUS_IGNORE);
 
-	// BDU : receiving the size of graph for each proc
-	
-	for(unsigned int r = 1; r < mpiConfig->GetNbProcs(); r++)
-        {
-		MPI_Recv(&sizePerGraph[r-1],
-		              1,
-		              MPI_UNSIGNED_LONG,
-		              r,
-		              MPI_ANY_TAG,
-		              MPI_COMM_WORLD,
-		              MPI_STATUS_IGNORE);
-
-		std::cout << " MASTER, size received from proc : " << r << " is " << sizePerGraph[r-1] << std::endl;
-	}
+				std::cout << " MASTER, size received from proc : " << r << " is " << sizePerGraph[r-1] << std::endl;
+		}
     }
     else
     {
+
         uint32_t tid = 0;
+		// Serialize the current graph
+		m_SerializedStabilityMargin = GraphOperationsType::SerializeGraph(this->m_Graph);
 
-        //for(auto& kv : this->m_TileMap)
-        //{	    
-	//	    uint32_t tx = kv.first % this->m_NumberOfTilesX;
-	//	    uint32_t ty = kv.first / this->m_NumberOfTilesX;
+		// sending the size of the graph
+		std::cout << " PROCESSOR : " << mpiConfig->GetMyRank() << " , size of the graph : " << m_SerializedStabilityMargin.size() << std::endl;
+		unsigned long curSize = m_SerializedStabilityMargin.size();
 
-		    // Serialize the current graph
-		    m_SerializedStabilityMargin = GraphOperationsType::SerializeGraph(this->m_Graph);	  
-        //}
-
-	// sending the size of the graph
-
-	std::cout << " PROCESSOR : " << mpiConfig->GetMyRank() << " , size of the graph : " << m_SerializedStabilityMargin.size() << std::endl;
-
-	unsigned long curSize = m_SerializedStabilityMargin.size();
-
-	MPI_Send(&curSize,
-		 1,
-		 MPI_UNSIGNED_LONG,
-		 0,
-		 0,
-		 MPI_COMM_WORLD);
+		MPI_Send(&curSize,
+			 1,
+			 MPI_UNSIGNED_LONG,
+			 0,
+			 0,
+			 MPI_COMM_WORLD);
 
     } // end if (rank !=0 )
 
     /* Synchronization point */
     mpiConfig->barrier();
 
-    m_MaxNumberOfBytes = m_SerializedStabilityMargin.size(); // BDU : useless now
+    m_MaxNumberOfBytes = m_SerializedStabilityMargin.size();
 
     mpiTools->ComputeMax<unsigned long int>(m_MaxNumberOfBytes, MPI_UNSIGNED_LONG);
 
-    std::cout << "PROC : " << mpiConfig->GetMyRank() << " m_MaxNumberOfBytes " << m_MaxNumberOfBytes <<std::endl;  // BDU : anyway ...
+    std::cout << "PROC : " << mpiConfig->GetMyRank() << " m_MaxNumberOfBytes " << m_MaxNumberOfBytes <<std::endl;
 
     if(mpiConfig->GetMyRank() == 0)
     {
@@ -933,7 +909,7 @@ LSBaatzSegmentationScheduler<TInputImage>
         MPI_Request requests[mpiConfig->GetNbProcs() - 1];
         MPI_Status statuses[mpiConfig->GetNbProcs() - 1];
         //std::vector< std::vector<char> > serializedOtherGraphs(mpiConfig->GetNbProcs() - 1, std::vector<char>(m_MaxNumberOfBytes, char()));
-	//std::vector< int > numberOfRecvBytesPerGraph(mpiConfig->GetNbProcs()-1, 0);        
+        //std::vector< int > numberOfRecvBytesPerGraph(mpiConfig->GetNbProcs()-1, 0);
 
 	std::vector< std::vector<char> > serializedOtherGraphs;
 	serializedOtherGraphs.reserve(mpiConfig->GetNbProcs() - 1);
@@ -944,15 +920,14 @@ LSBaatzSegmentationScheduler<TInputImage>
             //serializedOtherGraphs[r-1].assign(m_MaxNumberOfBytes, char());
 	    serializedOtherGraphs.push_back(std::vector<char>(sizePerGraph[r-1]));
 
-	    // BDU
 	    std::cout << "MASTER, receiving data from proc " << r <<std::endl;
 	
-	    if(sizePerGraph[r-1] > 2147483647)
+	    if(sizePerGraph[r-1] > MAX_INT)
 	    {
 
 		// Creating an adapted data_type
 		MPI_Datatype severalChar;
-		double factor = double(sizePerGraph[r-1]) / 2147483647.0;
+		double factor = double(sizePerGraph[r-1]) / dMAX_INT;
 		int nbChar = static_cast<int>(ceil(factor));
 		MPI_Type_contiguous(nbChar, MPI_CHAR, &severalChar);
 		MPI_Type_commit(&severalChar);
@@ -995,19 +970,9 @@ LSBaatzSegmentationScheduler<TInputImage>
             std::cerr << "Error in processor " << mpiConfig->GetMyRank() << std::endl;
             exit(EXIT_FAILURE);
         }
-        //else
-        //{
-            // Get the number of received bytes per margin
-        //    for(uint32_t r = 1; r < mpiConfig->GetNbProcs(); r++)
-        //    {
-	//	
-        //        MPI_Get_count( &(statuses[r-1]), MPI_CHAR, &(numberOfRecvBytesPerGraph[r-1]) );
-        //          serializedOtherGraphs[r-1].resize(numberOfRecvBytesPerGraph[r-1]);
-        //    	}
-        //}
 
         // Deserialize and aggregate the graph into mainGraph
-	std::cout << "MASTER : Deserialize and aggregate the graph into mainGraph ..."<<std::endl;
+        std::cout << "MASTER : Deserialize and aggregate the graph into mainGraph ..."<<std::endl;
         for(unsigned int r = 1; r < mpiConfig->GetNbProcs(); r++)
         {
 	    std::cout << "processing proc " << r << " deserialize graph ... ";
@@ -1022,93 +987,89 @@ LSBaatzSegmentationScheduler<TInputImage>
 	    otherGraph->Reset();
         }
 
-	std::cout << "MASTER : Deserialize and aggregate OK. " << std::endl; 
+        	std::cout << "MASTER : Deserialize and aggregate OK. " << std::endl;
 
-		// Determine the row and col bounds.
+			// Determine the row and col bounds.
         	std::unordered_set< uint32_t > rowBounds;
         	std::unordered_set< uint32_t > colBounds;
 
-        for(uint32_t ty = 0; ty < (unsigned int) this->m_NumberOfTilesY; ty++)
-        {
-            for(uint32_t tx = 0; tx < (unsigned int) this->m_NumberOfTilesX; tx++)
-            {
+			for(uint32_t ty = 0; ty < (unsigned int) this->m_NumberOfTilesY; ty++)
+			{
+				for(uint32_t tx = 0; tx < (unsigned int) this->m_NumberOfTilesX; tx++)
+				{
 
-                if(ty > 0)
-                {
-                    rowBounds.insert(ty * this->m_MaxTileSizeY);
-                    rowBounds.insert(ty * this->m_MaxTileSizeY - 1);
-                }
+					if(ty > 0)
+					{
+						rowBounds.insert(ty * this->m_MaxTileSizeY);
+						rowBounds.insert(ty * this->m_MaxTileSizeY - 1);
+					}
 
-                if(ty < this->m_NumberOfTilesY - 1)
-                {
-                    rowBounds.insert((ty + 1)* this->m_MaxTileSizeY);
-                    rowBounds.insert((ty + 1)* this->m_MaxTileSizeY - 1);
-                }
+					if(ty < this->m_NumberOfTilesY - 1)
+					{
+						rowBounds.insert((ty + 1)* this->m_MaxTileSizeY);
+						rowBounds.insert((ty + 1)* this->m_MaxTileSizeY - 1);
+					}
 
-                if(tx > 0)
-                {
-                    colBounds.insert(tx * this->m_MaxTileSizeX);
-                    colBounds.insert(tx * this->m_MaxTileSizeX - 1);
-                }
+					if(tx > 0)
+					{
+						colBounds.insert(tx * this->m_MaxTileSizeX);
+						colBounds.insert(tx * this->m_MaxTileSizeX - 1);
+					}
 
-                if(tx < this->m_NumberOfTilesX - 1)
-                {
-                    colBounds.insert((tx + 1) * this->m_MaxTileSizeX);
-                    colBounds.insert((tx + 1) * this->m_MaxTileSizeX - 1);
-                }
+					if(tx < this->m_NumberOfTilesX - 1)
+					{
+						colBounds.insert((tx + 1) * this->m_MaxTileSizeX);
+						colBounds.insert((tx + 1) * this->m_MaxTileSizeX - 1);
+					}
 
-            } // end for(uint32_t tx = 0; tx < nbTilesX; tx++)
+				} // end for(uint32_t tx = 0; tx < nbTilesX; tx++)
 
-        } // end for (uint32_t ty = 0; ty < nbTilesY; ty++)
+			} // end for (uint32_t ty = 0; ty < nbTilesY; ty++)
 
 	
-	// Retrieve the nodes on the borders of the adjacent tiles.
-
-	    std::cout << "MASTER (juste once) : remove duplicate nodes, before : "<< this->m_Graph->GetNumberOfNodes();
-            auto borderNodeMap = GraphOperationsType::BuildBorderNodesMapForFinalAggregation(this->m_Graph,
-                                                                                             rowBounds,
-                                                                                             colBounds,
-                                                                                             this->m_ImageWidth);
+			// Retrieve the nodes on the borders of the adjacent tiles.
+			auto borderNodeMap = GraphOperationsType::BuildBorderNodesMapForFinalAggregation(this->m_Graph,
+																								 rowBounds,
+																								 colBounds,
+																								 this->m_ImageWidth);
             // Remove the duplicated nodes
             GraphOperationsType::RemoveDuplicatedNodes(borderNodeMap, this->m_Graph, this->m_ImageWidth);
-
-	    std::cout << "after : "<< this->m_Graph->GetNumberOfNodes()<<std::endl;
 
             // Update the edges
             GraphOperationsType::DetectNewAdjacentNodes(borderNodeMap, this->m_Graph, this->m_ImageWidth, this->m_ImageHeight);
 
         }
         else
-	  {
+	   {
 	    
-	    // BDU : passing by MPI_Type_contiguous for all the proc if at least one proc exceeds the maximum size of an int
-	    if (m_SerializedStabilityMargin.size() > 2147483647)
+	    // Passing by MPI_Type_contiguous if the proc exceeds the maximum size of an int
+	    if (m_SerializedStabilityMargin.size() > MAX_INT)
 	    {
 
-		// Creating an adapted data_type
-		MPI_Datatype severalChar;
-		double factor = double(m_SerializedStabilityMargin.size()) / 2147483647.0;
-		int nbChar = static_cast<int>(ceil(factor));
-		MPI_Type_contiguous(nbChar, MPI_CHAR, &severalChar);
-		MPI_Type_commit(&severalChar);
+			// Creating an adapted data_type
+			MPI_Datatype severalChar;
+			double factor = double(m_SerializedStabilityMargin.size()) / dMAX_INT;
+			int nbChar = static_cast<int>(ceil(factor));
+			MPI_Type_contiguous(nbChar, MPI_CHAR, &severalChar);
+			MPI_Type_commit(&severalChar);
 
-		// Computing the count according to the new data_type
-		double dCount = double(m_SerializedStabilityMargin.size()) / double(nbChar);
-		int currentCount = static_cast<int>(ceil(dCount));
+			// Computing the count according to the new data_type
+			double dCount = double(m_SerializedStabilityMargin.size()) / double(nbChar);
+			int currentCount = static_cast<int>(ceil(dCount));
 
-		std::cout << "PROC : " << mpiConfig->GetMyRank() << " , m_SerializedStabilityMargin.size() = " << m_SerializedStabilityMargin.size() <<" , passing by " << nbChar << "  CHAR, currentCount = "<<currentCount<<std::endl;
+			std::cout << "PROC : " << mpiConfig->GetMyRank() << " , m_SerializedStabilityMargin.size() = " << m_SerializedStabilityMargin.size() <<" , passing by " << nbChar << "  CHAR, currentCount = "<<currentCount<<std::endl;
 
-		MPI_Send(&m_SerializedStabilityMargin[0],
-			 currentCount,
-			 severalChar,
-			 0,
-			 0,
-			 MPI_COMM_WORLD);
+			MPI_Send(&m_SerializedStabilityMargin[0],
+				 currentCount,
+				 severalChar,
+				 0,
+				 0,
+				 MPI_COMM_WORLD);
 	    }
 	    else
 	    {
 
-		std::cout << "PROC : " << mpiConfig->GetMyRank() << " , m_SerializedStabilityMargin.size() = " << m_SerializedStabilityMargin.size() <<" , passing by the whole data."<<std::endl;
+	    	std::cout << "PROC : " << mpiConfig->GetMyRank() << " , m_SerializedStabilityMargin.size() = " << m_SerializedStabilityMargin.size() <<" , passing by the whole data."<<std::endl;
 
 		    MPI_Send(&m_SerializedStabilityMargin[0],
 		             m_SerializedStabilityMargin.size(),
@@ -1117,8 +1078,8 @@ LSBaatzSegmentationScheduler<TInputImage>
 		             0,
 		             MPI_COMM_WORLD);
 	   }
-	   // BDU
-        }
+	  
+   }
 
 
 }

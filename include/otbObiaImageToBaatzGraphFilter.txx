@@ -94,7 +94,7 @@ void
 ImageToBaatzGraphFilter< TInputImage >
 ::GenerateData()
 {
-  std::cout << "Generate Baatz graphe" << std::endl;
+  std::cout << "Generate Baatz graph" << std::endl;
 
   auto inputPtr = const_cast< InputImageType * >( this->GetInput() );
   auto outputGraph = this->GetOutput();

@@ -238,7 +238,7 @@ Graph<TNode>::MergeEdge(NodeType* nodeIn, NodeType* nodeOut)
         boundary = edgAdjToOut->m_Boundary;
 
         // The edge adjNodeOut -> nodeOut can be safely removed
-        adjNodeOut->m_Edges.erase(edgAdjToOut);        
+        adjNodeOut->m_Edges.erase(edgAdjToOut);
 
         // Edges have to be added or updated if adjNodeOut is not nodeIn
         if(adjNodeOut != nodeIn)
@@ -279,9 +279,6 @@ Graph<TNode>::MergeEdge(NodeType* nodeIn, NodeType* nodeOut)
 
     // All the edges of nodeOut can be safely removes
     typename NodeType::EdgeListType().swap(nodeOut->m_Edges);
-    // nodeOut->m_Edges.clear();
-    // nodeOut->m_Edges.shrink_to_fit();
-
 }
 
 template< typename TNode >
