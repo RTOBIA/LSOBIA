@@ -4,6 +4,8 @@
 #include "itkRGBPixel.h"
 #include "itkLabelToRGBImageFilter.h"
 
+#include "otbObiaStreamingGraphToImageFilter.h"
+
 namespace otb
 {
 namespace obia
@@ -464,6 +466,19 @@ LSImageToGraphScheduler<TInputImage, TOutputGraph>
 	fillHoleFilter->SetInput(graphToLabelFilter->GetOutput());
 	grayWriter->SetInput(fillHoleFilter->GetOutput());
 	grayWriter->Update();
+
+	// Streaming label image writer
+  std::stringstream os2;
+  os2 << this->m_OutputDir << m_LabelImageName << ty << "_" << tx << "_stream.tif";
+
+  using StreamingGraph2LabelImgFilterType = otb::obia::StreamingGraphToImageFilter<TOutputGraph, LabelImageType>;
+  auto filter = StreamingGraph2LabelImgFilterType::New();
+  filter->SetInput(m_Graph);
+
+  grayWriter->SetFileName(os2.str());
+  grayWriter->SetInput(filter->GetOutput());
+  grayWriter->Update();
+
 }
 
 } // end of namespace obia
