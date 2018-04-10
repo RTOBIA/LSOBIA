@@ -137,7 +137,9 @@ struct Node
          m_HasToBeRemoved(other.m_HasToBeRemoved), m_Valid(other.m_Valid),
          m_Id(other.m_Id), m_BoundingBox(other.m_BoundingBox),
          m_Contour(other.m_Contour), m_Edges(other.m_Edges),
-         m_Attributes(other.m_Attributes)
+         m_Attributes(other.m_Attributes), m_ThreadSafe(other.m_ThreadSafe),
+         m_ThreadSafeForMerge(other.m_ThreadSafeForMerge)
+
     {}
 
     /**\brief Returns the vectorized coordinates (x,y) of the first pixel composing this node. */
@@ -196,6 +198,10 @@ struct Node
 
     /**\brief Specific attributes related to the node*/
     NodeAttributeType m_Attributes;
+
+    /**\brief Thread safe properties of the node*/
+    bool m_ThreadSafe:1;
+    bool m_ThreadSafeForMerge:1;
 
     /**\brief Debug */
     EdgeIteratorType Begin(){return m_Edges.begin();}
@@ -288,7 +294,7 @@ public:
     /** \brief This methods removes the expired nodes from the graph, i.e
         those whose m_HasToBeRemoved is true.
     */
-    void RemoveNodes(bool merge =true);
+    void RemoveNodes();
 
     /** \brief This methods returns the quantity of memory in bytes to store this graph */
     uint64_t GetMemorySize() const;
@@ -328,6 +334,11 @@ public:
       NodeListType().swap(m_Nodes);
     }
 
+    /**\brief Merge edge between 2 nodes by updating contour, boundary, edges, etc ...
+	 * \param: Node in
+	 * \param: Node Out*/
+	void MergeEdge(NodeType* nodeIn, NodeType* nodeOut);
+
 protected:
 
     Graph(){}
@@ -356,13 +367,6 @@ protected:
     double m_OriginY;
     std::string m_ProjectionRef;
 
-
-private:
-
-    /**\brief Merge edge between 2 nodes by updating contour, boundary, edges, etc ...
-     * \param: Node in
-     * \param: Node Out*/
-    void MergeEdge(NodeType* nodeIn, NodeType* nodeOut);
 };
 
 } // end of namespace obia

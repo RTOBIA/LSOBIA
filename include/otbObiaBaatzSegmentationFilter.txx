@@ -36,7 +36,7 @@ BaatzMergingCost<TCost, TGraph>::ComputeMergingCostsForThisAdjNode(const NodeTyp
 
 template< typename TCost, typename TGraph >
 typename BaatzMergingCost< TCost, TGraph>::ValueType
-BaatzMergingCost<TCost, TGraph>::ComputeMergingCost(NodeType* n1, NodeType* n2)
+BaatzMergingCost<TCost, TGraph>::ComputeMergingCost(NodeType* n1, NodeType* n2)  // TODO: should be const
 {
     // Retrieve attributes
     const float aArea = n1->m_Attributes.m_Area;
@@ -45,10 +45,11 @@ BaatzMergingCost<TCost, TGraph>::ComputeMergingCost(NodeType* n1, NodeType* n2)
     
     float colorH = 0.0f;
 
-    if(m_BandWeights.size() < 1)
-    {
-        m_BandWeights.assign(n1->m_Attributes.m_AvgSpec.size(), 1.0f);
-    }
+    // TODO: No. We should do this elsewhere!
+   //    if(m_BandWeights.size() < 1)
+   //    {
+   //        m_BandWeights.assign(n1->m_Attributes.m_AvgSpec.size(), 1.0f);
+   //    }
 
     for (uint32_t band = 0; band < n1->m_Attributes.m_AvgSpec.size(); band++)
     {
@@ -66,7 +67,13 @@ BaatzMergingCost<TCost, TGraph>::ComputeMergingCost(NodeType* n1, NodeType* n2)
         stddev = std::sqrt(stddevTmp / areaSum);
         colorF = n1->m_Attributes.m_Area * n1->m_Attributes.m_StdSpec[band] + n2->m_Attributes.m_Area * n2->m_Attributes.m_StdSpec[band];
 
-        colorF = m_BandWeights[band] * ((areaSum * stddev) - colorF);
+        // TODO: replace it, when m_BandWeights will be properly set elsewhere
+//     colorF = m_BandWeights[band] * ((areaSum * stddev) - colorF);
+       colorF = ((areaSum * stddev) - colorF);
+
+
+
+
         colorH += colorF;
 
     }

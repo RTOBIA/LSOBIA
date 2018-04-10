@@ -443,12 +443,12 @@ LSImageToGraphScheduler<TInputImage, TOutputGraph>
 	using GraphToLabelImageFilterType = otb::obia::GraphToLabelImageFilter<TOutputGraph, LabelImageType>;
 	using WriterType = otb::ImageFileWriter< LabelImageType>;
 
-	/** FOR COLOR IMAGE
+	// FOR COLOR IMAGE
 	using RGBPixelType = itk::RGBPixel<unsigned char>;
 	using RGBImageType = otb::Image<RGBPixelType, 2>;
 	using LabelToRGBFilterType = itk::LabelToRGBImageFilter<LabelImageType, RGBImageType>;
 	using RGBWriterType = otb::ImageFileWriter< RGBImageType >;
-	*/
+
 	using FillholeFilterType           = itk::GrayscaleFillholeImageFilter<LabelImageType,LabelImageType>;
 
 	//Output name
@@ -456,13 +456,23 @@ LSImageToGraphScheduler<TInputImage, TOutputGraph>
 	os << this->m_OutputDir << m_LabelImageName << ty << "_" << tx << ".tif";
 
 	auto graphToLabelFilter = GraphToLabelImageFilterType::New();
-	auto grayWriter = WriterType::New();
+	//auto grayWriter = WriterType::New();
+	auto grayWriter = RGBWriterType::New(); // from multithreaded grm
 	auto fillHoleFilter = FillholeFilterType::New();
 
 	grayWriter->SetFileName(os.str());
 	graphToLabelFilter->SetInput(m_Graph);
+
+	LabelToRGBFilterType::Pointer label2colorFilter = LabelToRGBFilterType::New(); // from multithreaded grm
+
 	fillHoleFilter->SetInput(graphToLabelFilter->GetOutput());
-	grayWriter->SetInput(fillHoleFilter->GetOutput());
+	//grayWriter->SetInput(fillHoleFilter->GetOutput());
+
+	// from multithreaded grm
+	label2colorFilter->SetInput(fillHoleFilter->GetOutput());
+	grayWriter->SetInput(label2colorFilter->GetOutput());
+	// from multithreaded grm
+
 	grayWriter->Update();
 }
 
