@@ -145,7 +145,7 @@ StreamingGraphToImageFilter<TGraph, TLabelImage>
         {
           index[0] = pix % graph->GetImageWidth();
           index[1] = pix / graph->GetImageWidth();
-          labelImage->SetPixel(index, res.second);
+          labelImage->SetPixel(index, res.second+1); // 0 is the no-data value
         }
     }
 
