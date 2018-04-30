@@ -209,6 +209,13 @@ void Graph<TNode>::ApplyForEachNode(LambdaFunctionType f)
 }
 
 template< typename TNode >
+template< typename LambdaFunctionType >
+void Graph<TNode>::ApplyForEachNode(const uint64_t rangeStart, const uint64_t rangeEnd, LambdaFunctionType f)
+{
+    std::for_each(m_Nodes.begin()+rangeStart, m_Nodes.begin()+rangeEnd, f);
+}
+
+template< typename TNode >
 void
 Graph<TNode>::MergeEdge(NodeType* nodeIn, NodeType* nodeOut)
 {

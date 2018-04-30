@@ -284,6 +284,8 @@ public:
     /**\brief This method applies a lambda function on each node of the graph. */
     template< typename LambdaFunctionType >
     void ApplyForEachNode(LambdaFunctionType f);
+    template< typename LambdaFunctionType >
+    void ApplyForEachNode(const uint64_t rangeStart, const uint64_t rangeEnd, LambdaFunctionType f);
 
     /**\brief This method merges two adjacent nodes: nodeOut merges into nodeIn
      * @param: Node in (node which will be updated after merge)
