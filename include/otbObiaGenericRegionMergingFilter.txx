@@ -52,6 +52,10 @@ public:
   {
     m_PairsOfNodesToProcess = pairs;
   }
+  void SetNumMergedNodes(std::vector<uint32_t> & vector)
+  {
+    m_NumMergedNodes = vector;
+  }
 
   /*
    * Compute merging costs of the nodes
@@ -210,6 +214,26 @@ public:
     }
   }
 
+  /*
+   * Update nodes ids
+   */
+  void UpdateNodesIds()
+  {
+
+    // Update the edge target id
+    auto lambdaDecrementIdEdge = [this](typename TOutputGraph::EdgeType& edge){
+      edge.m_TargetId = edge.m_TargetId - m_NumMergedNodes[edge.m_TargetId];
+    };
+
+    auto lambdaDecrementIdNode = [this, &lambdaDecrementIdEdge](typename TOutputGraph::NodeType& node ){
+      // Update the node id
+      node.m_Id = node.m_Id - m_NumMergedNodes[node.m_Id];
+      node.ApplyForEachEdge(lambdaDecrementIdEdge);
+    };
+
+    m_OutputGraph->ApplyForEachNode(m_RangeStart, m_RangeEnd, lambdaDecrementIdNode);
+  }
+
 private:
   TOutputGraph*           m_OutputGraph;
   TMergingCostFunc *      m_MergingCostFunc;
@@ -218,6 +242,7 @@ private:
   int64_t                 m_RangeEnd;
   std::vector<std::pair<typename TOutputGraph::NodeType * ,typename TOutputGraph::NodeType * >>
                           m_PairsOfNodesToProcess;
+  std::vector<uint32_t>   m_NumMergedNodes;
 
 };
 
@@ -269,6 +294,18 @@ void ReconditioningInRange (TOutputGraph * graph, TMergingCostFunc * mergingCost
   worker.SetMergingCostFunc( mergingCostFunc );
   worker.SetRange(start, end);
   worker.Reconditioning();
+
+}
+
+template<typename TOutputGraph, typename TMergingCostFunc, typename TUpdateAttributeFunc>
+void UpdateNodesInRange (TOutputGraph * graph, uint64_t start, uint64_t end,
+                         std::vector<uint32_t> & numMergedNodes)
+{
+  ThreadWorker<TOutputGraph, TMergingCostFunc, TUpdateAttributeFunc> worker;
+  worker.SetGraph( graph );
+  worker.SetRange(start, end);
+  worker.SetNumMergedNodes(numMergedNodes);
+  worker.UpdateNodesIds();
 
 }
 
@@ -427,7 +464,46 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
   // Start remove() processing time
   itk::TimeProbe tremove; tremove.Start();
 
-  outputGraph->RemoveNodes();
+//  // Remove nodes
+//  outputGraph->RemoveNodes();
+  
+  //////////////////////////////////////  
+  // Remove nodes (in parallel)
+  //////////////////////////////////////
+  std::vector<uint32_t> numMergedNodes = outputGraph->RemoveNodes();
+  
+  int64_t nbOfNodes = outputGraph->GetNumberOfNodes();
+  chunkSize = nbOfNodes/nbOfThreads;
+  std::vector<std::thread> threadpoolRemovenodes;
+  threadpoolRemovenodes.reserve(nbOfThreads);
+  ranges.clear();
+  for(unsigned int i=0; i < nbOfThreads; i++ )
+    {
+    // Compute range
+    std::pair<uint64_t,uint64_t> range;
+    range.first = i*chunkSize;
+    if (i == nbOfThreads - 1 )
+      {
+      chunkSize += nbOfNodes % nbOfThreads;
+      }
+    range.second = range.first + chunkSize;
+    ranges.push_back(range);
+
+    // run threads to count nodes to remove
+    threadpoolRemovenodes.push_back(
+        std::thread(UpdateNodesInRange<TOutputGraph, TMergingCostFunc, TUpdateAttributeFunc>,
+            std::ref( outputGraph ),
+            ranges[i].first,
+            ranges[i].second,
+            std::ref( numMergedNodes))
+    );
+
+    } // next ProcessGraph() thread
+
+  // Barrier for threadpoolProcess
+  for (auto& t: threadpoolRemovenodes) { t.join(); }
+
+  //////////////////////////////////////
 
   // Stop remove() processing time
   tremove.Stop(); timingsValues[6] += tremove.GetTotal();
