@@ -358,6 +358,7 @@ Graph<TNode>::RemoveNodes(bool update)
 
     m_Nodes.erase(eraseIt, m_Nodes.end());
     
+    // We might want do this in parallel instead
     if (update)
     {
       auto lambdaDecrementIdEdge = [&numMergedNodes](EdgeType& edge){

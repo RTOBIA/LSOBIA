@@ -296,6 +296,7 @@ public:
 
     /** \brief This methods removes the expired nodes from the graph, i.e
         those whose m_HasToBeRemoved is true.
+        @param: a boolean telling if nodes/edges IDs have to be updated
     */
     std::vector<uint32_t> RemoveNodes(bool update = true);
 
