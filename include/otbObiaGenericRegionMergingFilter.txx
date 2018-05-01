@@ -339,6 +339,7 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
   //        * pairsOfNodesToProcess_parallel
   //        * pairsOfNodesToProcess_sequential
   typedef typename TInputGraph::NodeType NodeType;
+  typedef typename TInputGraph::EdgeType EdgeType;
   typedef std::pair<NodeType * ,NodeType * > PairOfNodes;
   std::vector<PairOfNodes> pairsOfNodesToProcess_parallel;
   std::vector<PairOfNodes> pairsOfNodesToProcess_sequential;
@@ -470,8 +471,8 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
   //////////////////////////////////////  
   // Remove nodes (in parallel)
   //////////////////////////////////////
-  std::vector<uint32_t> numMergedNodes = outputGraph->RemoveNodes();
-  
+  std::vector<uint32_t> numMergedNodes = outputGraph->RemoveNodes(false);
+      
   int64_t nbOfNodes = outputGraph->GetNumberOfNodes();
   chunkSize = nbOfNodes/nbOfThreads;
   std::vector<std::thread> threadpoolRemovenodes;

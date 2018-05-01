@@ -297,7 +297,7 @@ public:
     /** \brief This methods removes the expired nodes from the graph, i.e
         those whose m_HasToBeRemoved is true.
     */
-    std::vector<uint32_t> RemoveNodes();
+    std::vector<uint32_t> RemoveNodes(bool update = true);
 
     /** \brief This methods returns the quantity of memory in bytes to store this graph */
     uint64_t GetMemorySize() const;

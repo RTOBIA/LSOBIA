@@ -324,7 +324,7 @@ Graph<TNode>::Merge(NodeType* nodeIn, NodeType* nodeOut)
 
 template< typename TNode >
 std::vector<uint32_t> 
-Graph<TNode>::RemoveNodes()
+Graph<TNode>::RemoveNodes(bool update)
 {
     // To keep nodes aligned in memory, we avoid using vector of pointers
     // but directly vector of nodes. However this complicates the removal
@@ -358,21 +358,22 @@ Graph<TNode>::RemoveNodes()
 
     m_Nodes.erase(eraseIt, m_Nodes.end());
     
+    if (update)
+    {
+      auto lambdaDecrementIdEdge = [&numMergedNodes](EdgeType& edge){
+        edge.m_TargetId = edge.m_TargetId - numMergedNodes[edge.m_TargetId];
+      };
+
+      auto lambdaDecrementIdNode = [&numMergedNodes, &lambdaDecrementIdEdge]( NodeType& node ){
+        // Update the node's id
+        node.m_Id = node.m_Id - numMergedNodes[node.m_Id];
+        node.ApplyForEachEdge(lambdaDecrementIdEdge);
+      };
+
+      ApplyForEachNode(lambdaDecrementIdNode);
+    }   
     return numMergedNodes;
-    
-    // Now we do this in parallel in the GenericRegionMerging
-//
-//    auto lambdaDecrementIdEdge = [&numMergedNodes](EdgeType& edge){
-//        edge.m_TargetId = edge.m_TargetId - numMergedNodes[edge.m_TargetId];
-//    };
-//
-//    auto lambdaDecrementIdNode = [&numMergedNodes, &lambdaDecrementIdEdge]( NodeType& node ){
-//        // Update the node's id
-//        node.m_Id = node.m_Id - numMergedNodes[node.m_Id];
-//        node.ApplyForEachEdge(lambdaDecrementIdEdge);
-//    };
-//
-//    ApplyForEachNode(lambdaDecrementIdNode);
+
 }
 
 template< typename TNode >
