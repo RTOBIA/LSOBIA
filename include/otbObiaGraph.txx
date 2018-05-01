@@ -135,27 +135,27 @@ Graph<TNode>::InitStartingNode(NodeType* node, const IdType id)
     node->m_Contour.SetStartingCoords(id);
     node->m_Contour.FirstInit();
 
-    // Initialisation of the edges
-    auto neighbors = otb::obia::SpatialTools::FourConnectivity(id, m_ImageWidth, m_ImageHeight);
-
-    uint32_t numEdges = 0;
-    for(unsigned short n = 0; n < 4; n++){ if(neighbors[n] > -1){ numEdges++; } }
-    node->m_Edges.reserve(numEdges);
-
-    for(unsigned short n = 0; n < 4; n++)
-    {
-        if(neighbors[n] > -1)
-        {
-            // Add an edge to the current node targeting the adjacent node
-            auto newEdge = node->AddEdge();
-
-            // Add the target
-            newEdge->m_TargetId = neighbors[n];
-
-            // Initialisation of the boundary
-            newEdge->m_Boundary = 1;
-        }
-    }
+//    // Initialisation of the edges
+//    auto neighbors = otb::obia::SpatialTools::FourConnectivity(id, m_ImageWidth, m_ImageHeight);
+//
+//    uint32_t numEdges = 0;
+//    for(unsigned short n = 0; n < 4; n++){ if(neighbors[n] > -1){ numEdges++; } }
+//    node->m_Edges.reserve(numEdges);
+//
+//    for(unsigned short n = 0; n < 4; n++)
+//    {
+//        if(neighbors[n] > -1)
+//        {
+//            // Add an edge to the current node targeting the adjacent node
+//            auto newEdge = node->AddEdge();
+//
+//            // Add the target
+//            newEdge->m_TargetId = neighbors[n];
+//
+//            // Initialisation of the boundary
+//            newEdge->m_Boundary = 1;
+//        }
+//    }
 }
 
 template< typename TNode >
@@ -219,8 +219,8 @@ template< typename TNode >
 void
 Graph<TNode>::MergeEdge(NodeType* nodeIn, NodeType* nodeOut)
 {
-	double startCoords = nodeIn->GetFirstPixelCoords();
-	double startCoords2 = nodeOut->GetFirstPixelCoords();
+//	double startCoords = nodeIn->GetFirstPixelCoords();
+//	double startCoords2 = nodeOut->GetFirstPixelCoords();
 
 	// Explore the edges of nodeOut
     for(auto edgeIt = nodeOut->m_Edges.begin(); edgeIt != nodeOut->m_Edges.end(); edgeIt++)
@@ -294,24 +294,32 @@ Graph<TNode>::MergeEdge(NodeType* nodeIn, NodeType* nodeOut)
 }
 
 template< typename TNode >
+void
+Graph<TNode>::MergePairOfNodes(NodeType* nodeIn, NodeType* nodeOut)
+{
+  // Fusion of the bounding box
+  SpatialTools::MergeBoundingBox(nodeIn->m_BoundingBox, nodeOut->m_BoundingBox);
+
+  // Fusion of the contour
+  nodeIn->m_Contour.MergeWith(nodeOut->m_Contour, m_ImageWidth, m_ImageHeight);
+
+  // Fusion of the edges
+  MergeEdge(nodeIn, nodeOut);
+
+  // nodeOut has to be removed, so we mark it as it
+  nodeOut->m_HasToBeRemoved = true;
+}
+
+template< typename TNode >
 void 
 Graph<TNode>::Merge(NodeType* nodeIn, NodeType* nodeOut)
 {
-    // Fusion of the bounding box
-    SpatialTools::MergeBoundingBox(nodeIn->m_BoundingBox, nodeOut->m_BoundingBox);
+  // Merge the pair of nodes
+  MergePairOfNodes(nodeIn, nodeOut);
 
-    // Fusion of the contour
-    nodeIn->m_Contour.MergeWith(nodeOut->m_Contour, m_ImageWidth, m_ImageHeight);
-
-    // Fusion of the edges
-    MergeEdge(nodeIn, nodeOut);
-
-    // nodeOut has to be removed, so we mark it as it
-    nodeOut->m_HasToBeRemoved = true;
-
-    // Both nodes must not have to be considered
-    nodeIn->m_Valid = false;
-    nodeOut->m_Valid = false;
+  // Both nodes must not have to be considered
+  nodeIn->m_Valid = false;
+  nodeOut->m_Valid = false;
 }
 
 template< typename TNode >

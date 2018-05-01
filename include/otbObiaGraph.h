@@ -287,6 +287,8 @@ public:
     template< typename LambdaFunctionType >
     void ApplyForEachNode(const uint64_t rangeStart, const uint64_t rangeEnd, LambdaFunctionType f);
 
+    void MergePairOfNodes(NodeType* nodeIn, NodeType* nodeOut);
+
     /**\brief This method merges two adjacent nodes: nodeOut merges into nodeIn
      * @param: Node in (node which will be updated after merge)
      * @param: Node out (node which will be removed after merge)*/
