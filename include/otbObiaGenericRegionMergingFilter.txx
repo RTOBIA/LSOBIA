@@ -475,8 +475,8 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
       
   int64_t nbOfNodes = outputGraph->GetNumberOfNodes();
   chunkSize = nbOfNodes/nbOfThreads;
-  std::vector<std::thread> threadpoolRemovenodes;
-  threadpoolRemovenodes.reserve(nbOfThreads);
+  std::vector<std::thread> threadpoolUpdateNodes;
+  threadpoolUpdateNodes.reserve(nbOfThreads);
   ranges.clear();
   for(unsigned int i=0; i < nbOfThreads; i++ )
     {
@@ -491,7 +491,7 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
     ranges.push_back(range);
 
     // run threads to count nodes to remove
-    threadpoolRemovenodes.push_back(
+    threadpoolUpdateNodes.push_back(
         std::thread(UpdateNodesInRange<TOutputGraph, TMergingCostFunc, TUpdateAttributeFunc>,
             std::ref( outputGraph ),
             ranges[i].first,
@@ -502,7 +502,7 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
     } // next ProcessGraph() thread
 
   // Barrier for threadpoolProcess
-  for (auto& t: threadpoolRemovenodes) { t.join(); }
+  for (auto& t: threadpoolUpdateNodes) { t.join(); }
 
   //////////////////////////////////////
 
