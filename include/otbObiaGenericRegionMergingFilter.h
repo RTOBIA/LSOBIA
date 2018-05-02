@@ -29,8 +29,10 @@ public:
 	/** Some convenient alias */
 	using InputGraphType  = TInputGraph;
 	using OutputGraphType = TOutputGraph;
-	using NodeType		  = typename InputGraphType::NodeType;
-	/** 
+  using NodeType = typename InputGraphType::NodeType;
+  using EdgeType = typename InputGraphType::EdgeType;
+
+  /**
 		Some convenient alias concerning the type of the function
 		which computes the merging cost.
 	*/
@@ -38,7 +40,6 @@ public:
 	using MergingCostValueType = typename MergingCostFunctionType::ValueType;
 	using HeuristicType = THeuristic;
 	using UpdateAttributeFuncType = TUpdateAttributeFunc;
-
 
 	/** Method for creation through the object factory. */
   	itkNewMacro(Self);

@@ -48,7 +48,8 @@ public:
     m_RangeStart = istart;
     m_RangeEnd = iend;
   }
-  void SetPairsOfNodesToProcess(std::vector<std::pair<typename TOutputGraph::NodeType * ,typename TOutputGraph::NodeType * >> &pairs)
+  void SetPairsOfNodesToProcess(std::vector<std::pair<typename TOutputGraph::NodeType * ,
+                                typename TOutputGraph::NodeType * >> &pairs)
   {
     m_PairsOfNodesToProcess = pairs;
   }
@@ -63,99 +64,110 @@ public:
    */
   void ComputeMergingCosts()
   {
+
+    // Compute merging costs
+
     uint64_t minNodeId = m_OutputGraph->GetNumberOfNodes()+1, idx, minIdx;
     typename TMergingCostFunc::ValueType minCost;
 
-    // Loop over the nodes
-    for(auto nodeIt = m_OutputGraph->Begin() + m_RangeStart; nodeIt != m_OutputGraph->Begin() + m_RangeEnd; nodeIt++)
-      {
-      nodeIt->m_ThreadSafe = true;
-      nodeIt->m_ThreadSafeForMerge = true;
+    auto updateEdgesCosts = [this, &idx, &minIdx, &minCost, &minNodeId](typename TOutputGraph::EdgeType& edgeIt,
+        typename TOutputGraph::NodeType& node){ // Lambda for the edges loop
 
-      if(m_MergingCostFunc->ComputeMergingCostsForThisNode(&(*nodeIt))
-          && nodeIt->m_Edges.size()>0) // Since the introducing of no-data, a node can be alone
+      // Tell if this node has edges targeting nodes which are outside the thread range
+      if ( edgeIt.m_TargetId < m_RangeStart || edgeIt.m_TargetId >= m_RangeEnd )
+        {
+        node.m_ThreadSafe = false;
+        node.m_ThreadSafeForMerge = false;
+        }
+
+      // Retrieve the adjacent node.
+      auto adjNode = m_OutputGraph->GetNodeAt(edgeIt.m_TargetId);
+      if(m_MergingCostFunc->ComputeMergingCostsForThisAdjNode(adjNode))
+        {
+
+        // If one of the adjacent nodes
+        // has merged at the previous iteration then we must compute the
+        // merging cost.
+        if(node.m_Attributes.m_HasPreviouslyMerged || adjNode->m_Attributes.m_HasPreviouslyMerged)
+          {
+          edgeIt.m_Attributes.m_MergingCost = m_MergingCostFunc->ComputeMergingCost(&node, adjNode);
+          }
+
+        // If the current cost is minimum than we record it.
+        if(edgeIt.m_Attributes.m_MergingCost < minCost)
+          {
+          minCost = edgeIt.m_Attributes.m_MergingCost;
+          minNodeId = adjNode->GetFirstPixelCoords();
+          minIdx = idx;
+          }
+
+        // In case of equality, we keep the adjacent node with the lower starting
+        // coordinates.
+        else if(minCost == edgeIt.m_Attributes.m_MergingCost)
+          {
+          if(adjNode->GetFirstPixelCoords() < minNodeId)
+            {
+            minNodeId = adjNode->GetFirstPixelCoords();
+            minIdx = idx;
+            }
+          }
+
+        } // end if(MergingCostFunctionType::ComputeMergingCostsForThisAdjNode(adjNode))
+
+      idx++;
+
+    }; // end lambda for edges loop
+
+    auto updateNodes = [this, &minNodeId, &minCost, &idx, &minIdx, &updateEdgesCosts](
+        typename TOutputGraph::NodeType& node){ // Lambda for nodes loop
+      node.m_ThreadSafe = true;
+      node.m_ThreadSafeForMerge = true;
+
+      if(m_MergingCostFunc->ComputeMergingCostsForThisNode(&(node))
+          && node.m_Edges.size()>0) // Since the introducing of no-data, a node can be alone
         {
 
         // The merging cost function must give the maximum value of the merging cost.
         minCost = TMergingCostFunc::Max();
         idx = 0;
         minIdx = 0;
-        nodeIt->m_HasToBeRemoved = false;
-        nodeIt->m_Valid = true;
+        node.m_HasToBeRemoved = false;
+        node.m_Valid = true;
 
-        // Loop over the edges
-        for(auto& edgeIt : nodeIt->m_Edges)
-          {
+        // Loop over edges
+        auto updateEdges = [&node, &updateEdgesCosts](typename TOutputGraph::EdgeType& edgeIt)  {
+          updateEdgesCosts(edgeIt, node);
+        };
 
-          // Tell if this node has edges targeting nodes which are outside the thread range
-          if ( edgeIt.m_TargetId < m_RangeStart || edgeIt.m_TargetId >= m_RangeEnd )
-            {
-            nodeIt->m_ThreadSafe = false;
-            nodeIt->m_ThreadSafeForMerge = false;
-            }
-
-          // Retrieve the adjacent node.
-          auto adjNode = m_OutputGraph->GetNodeAt(edgeIt.m_TargetId);
-          if(m_MergingCostFunc->ComputeMergingCostsForThisAdjNode(adjNode))
-            {
-
-            // If one of the adjacent nodes
-            // has merged at the previous iteration then we must compute the
-            // merging cost.
-            if(nodeIt->m_Attributes.m_HasPreviouslyMerged || adjNode->m_Attributes.m_HasPreviouslyMerged)
-              {
-              edgeIt.m_Attributes.m_MergingCost = m_MergingCostFunc->ComputeMergingCost(&(*nodeIt), adjNode);
-              }
-
-            // If the current cost is minimum than we record it.
-            if(edgeIt.m_Attributes.m_MergingCost < minCost)
-              {
-              minCost = edgeIt.m_Attributes.m_MergingCost;
-              minNodeId = adjNode->GetFirstPixelCoords();
-              minIdx = idx;
-              }
-
-            // In case of equality, we keep the adjacent node with the lower starting
-            // coordinates.
-            else if(minCost == edgeIt.m_Attributes.m_MergingCost)
-              {
-              if(adjNode->GetFirstPixelCoords() < minNodeId)
-                {
-                minNodeId = adjNode->GetFirstPixelCoords();
-                minIdx = idx;
-                }
-              }
-
-            } // end if(MergingCostFunctionType::ComputeMergingCostsForThisAdjNode(adjNode))
-
-          idx++;
-
-          } // end loop over the edges.
+        node.ApplyForEachEdge(updateEdges);
 
         // Finally we move the adjacent node with the lower merging cost
         // at the first position in the list of adjacent nodes.
-        std::swap(nodeIt->m_Edges[0], nodeIt->m_Edges[minIdx]);
+        std::swap(node.m_Edges[0], node.m_Edges[minIdx]);
+        }
+    };
 
-        } // end if(MergingCostFunctionType::ComputeMergingCostsForThisNode(&(*nodeIt)))
-      } // end for loop over the nodes
+    m_OutputGraph->ApplyForEachNode(m_RangeStart, m_RangeEnd, updateNodes);
 
     // Grow the thread-unsafe-for-merge region (we know that the merge operation requires to R/W adjacent nodes of
     // the pair of nodes to merge)
-    for(auto nodeIt = m_OutputGraph->Begin() + m_RangeStart; nodeIt != m_OutputGraph->Begin() + m_RangeEnd; nodeIt++)
-      {
-      if (nodeIt->m_ThreadSafe == false)
-        {
-        for(auto& edgeIt : nodeIt->m_Edges)
-          {
-          if (m_RangeStart <= edgeIt.m_TargetId && edgeIt.m_TargetId < m_RangeEnd)
-            {
-            auto adjNode = m_OutputGraph->GetNodeAt(edgeIt.m_TargetId);
-            adjNode->m_ThreadSafeForMerge = false;
-            }
-          }
-        }
-      }
 
+    auto setThreadSafe = [this] (typename TOutputGraph::EdgeType& edge){
+      if (m_RangeStart <= edge.m_TargetId && edge.m_TargetId < m_RangeEnd)
+        {
+        auto adjNode = m_OutputGraph->GetNodeAt(edge.m_TargetId);
+        adjNode->m_ThreadSafeForMerge = false;
+        }
+    };
+
+    auto growThreadRegions = [this, &setThreadSafe] (typename TOutputGraph::NodeType& node){
+      if (node.m_ThreadSafe == false)
+        {
+        node.ApplyForEachEdge(setThreadSafe);
+        }
+    };
+
+    m_OutputGraph->ApplyForEachNode(m_RangeStart, m_RangeEnd, growThreadRegions);
 
   } // ComputeMergingCosts()
 
@@ -164,10 +176,11 @@ public:
    */
   void ResetMergeFlags()
   {
-    for(auto nodeIt = m_OutputGraph->Begin() + m_RangeStart; nodeIt != m_OutputGraph->Begin() + m_RangeEnd; nodeIt++)
-      {
-      nodeIt->m_Attributes.m_HasPreviouslyMerged = false;
-      }
+    auto setHasPrevMergedFalse = [] (typename TOutputGraph::NodeType& node){
+      node.m_Attributes.m_HasPreviouslyMerged = false;
+    };
+
+    m_OutputGraph->ApplyForEachNode(m_RangeStart, m_RangeEnd, setHasPrevMergedFalse);
   } // ResetMergeFlags()
 
   /*
@@ -175,7 +188,8 @@ public:
    */
   void FusionOfPairs()
   {
-    for (auto pairIt =  m_PairsOfNodesToProcess.begin() + m_RangeStart ; pairIt != m_PairsOfNodesToProcess.begin() + m_RangeEnd; pairIt++)
+    for (auto pairIt =  m_PairsOfNodesToProcess.begin() + m_RangeStart ;
+        pairIt != m_PairsOfNodesToProcess.begin() + m_RangeEnd; pairIt++)
       {
       typename TOutputGraph::NodeType * nodeIn = pairIt->first;
       typename TOutputGraph::NodeType * nodeOut = pairIt->second;
@@ -183,17 +197,8 @@ public:
       // Update attributes of thread-safe nodes
       m_UpdateAttributesFunc->UpdateAttributes(nodeIn, nodeOut);
 
-      // Fusion of the bounding box
-      SpatialTools::MergeBoundingBox(nodeIn->m_BoundingBox, nodeOut->m_BoundingBox);
-
-      // Merge the edges
-      m_OutputGraph->MergeEdge(nodeIn, nodeOut);
-
-      // Fusion of the contour
-      nodeIn->m_Contour.MergeWith(nodeOut->m_Contour, m_OutputGraph->GetImageWidth(), m_OutputGraph->GetImageHeight());
-
-      // nodeOut has to be removed, so we mark it as it
-      nodeOut->m_HasToBeRemoved = true;
+      // Merge the pair of nodes
+      m_OutputGraph->MergePairOfNodes(nodeIn, nodeOut);
       }
   } // FusionOfPairs()
 
@@ -202,31 +207,34 @@ public:
    */
   void Reconditioning()
   {
-    for(auto nodeIt = m_OutputGraph->Begin() + m_RangeStart; nodeIt != m_OutputGraph->Begin() + m_RangeEnd; nodeIt++)
-    {
-      nodeIt->m_HasToBeRemoved = false;
-      nodeIt->m_Valid = true;
-      nodeIt->m_Attributes.m_HasPreviouslyMerged = true;
-      for(auto& edg : nodeIt->m_Edges)
-      {
-        edg.m_Attributes.m_MergingCost = m_MergingCostFunc->GetMax();
-      }
-    }
-  }
+    // Reset the edge attributes
+    auto resetEdgAttr = [this](typename TOutputGraph::EdgeType& edge){
+      edge.m_Attributes.m_MergingCost = m_MergingCostFunc->GetMax();
+    };
+
+    // Reset the node attributes
+    auto resetNodeAttr = [&resetEdgAttr](typename TOutputGraph::NodeType& node){
+      node.m_HasToBeRemoved = false;
+      node.m_Valid = true;
+      node.m_Attributes.m_HasPreviouslyMerged = true;
+      node.ApplyForEachEdge(resetEdgAttr);
+    };
+
+    m_OutputGraph->ApplyForEachNode(m_RangeStart, m_RangeEnd, resetNodeAttr);
+   }
 
   /*
    * Update nodes ids
    */
   void UpdateNodesIds()
   {
-
     // Update the edge target id
     auto lambdaDecrementIdEdge = [this](typename TOutputGraph::EdgeType& edge){
       edge.m_TargetId = edge.m_TargetId - m_NumMergedNodes[edge.m_TargetId];
     };
 
+    // Update the node id
     auto lambdaDecrementIdNode = [this, &lambdaDecrementIdEdge](typename TOutputGraph::NodeType& node ){
-      // Update the node id
       node.m_Id = node.m_Id - m_NumMergedNodes[node.m_Id];
       node.ApplyForEachEdge(lambdaDecrementIdEdge);
     };
@@ -259,12 +267,11 @@ void ComputeMergingCostsInRange (TOutputGraph * graph, TMergingCostFunc * mergin
 }
 
 template<typename TOutputGraph, typename TMergingCostFunc, typename TUpdateAttributeFunc>
-void ResetMergeFlagsInRange (TOutputGraph * graph, TMergingCostFunc * mergingCostFunc, uint64_t start, uint64_t end)
+void ResetMergeFlagsInRange (TOutputGraph * graph, uint64_t start, uint64_t end)
 {
 
   ThreadWorker<TOutputGraph, TMergingCostFunc, TUpdateAttributeFunc> worker;
   worker.SetGraph( graph );
-  worker.SetMergingCostFunc( mergingCostFunc );
   worker.SetRange(start, end);
   worker.ResetMergeFlags();
 
@@ -301,6 +308,7 @@ template<typename TOutputGraph, typename TMergingCostFunc, typename TUpdateAttri
 void UpdateNodesInRange (TOutputGraph * graph, uint64_t start, uint64_t end,
                          std::vector<uint32_t> & numMergedNodes)
 {
+
   ThreadWorker<TOutputGraph, TMergingCostFunc, TUpdateAttributeFunc> worker;
   worker.SetGraph( graph );
   worker.SetRange(start, end);
@@ -338,8 +346,6 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
   //       might just be vectors or pointers:
   //        * pairsOfNodesToProcess_parallel
   //        * pairsOfNodesToProcess_sequential
-  typedef typename TInputGraph::NodeType NodeType;
-  typedef typename TInputGraph::EdgeType EdgeType;
   typedef std::pair<NodeType * ,NodeType * > PairOfNodes;
   std::vector<PairOfNodes> pairsOfNodesToProcess_parallel;
   std::vector<PairOfNodes> pairsOfNodesToProcess_sequential;
@@ -351,11 +357,12 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
   pairsOfNodesToProcess_sequential.reserve(maxNbOfPairs);
   pairsOfNodesToProcess_all.reserve(maxNbOfPairs);
 
-  // Search the pairs to merge and fill the vector
-  for(auto nodeIt = outputGraph->Begin(); nodeIt != outputGraph->End(); nodeIt++)
-  {
+  // Lambda to search the pairs to merge and fill the vector
+  auto searchPairs = [this, &outputGraph, &pairsOfNodesToProcess_parallel, &pairsOfNodesToProcess_sequential,
+                      &pairsOfNodesToProcess_all, &merged] (typename TOutputGraph::NodeType& node ){
+
     // Heuristic to determine with which adjacent node this current node has to merge.
-    auto nodeIn = m_HeuristicFunc->GetBestAdjacentNode(&(*nodeIt));
+    auto nodeIn = m_HeuristicFunc->GetBestAdjacentNode(&(node));
 
     // The heuristic must return true if no adjacent node has been found.
     if(nodeIn != nullptr)
@@ -394,7 +401,9 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
 
     } // best adjacent node is not null
 
-  } // next node
+  };
+
+  outputGraph->ApplyForEachNode(searchPairs);
 
   // Store pre-merge processing time
   tmergePre.Stop(); timingsValues[3] += tmergePre.GetTotal();
@@ -403,8 +412,8 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
   itk::TimeProbe tmergeMulti; tmergeMulti.Start();
 
   // Process the pairs of nodes in parallel
-  int64_t nbOfPairs = pairsOfNodesToProcess_parallel.size();
-  unsigned int nbOfThreads = this->GetNumberOfThreads();
+  const int64_t nbOfPairs = pairsOfNodesToProcess_parallel.size();
+  const unsigned int nbOfThreads = this->GetNumberOfThreads();
   int64_t chunkSize = nbOfPairs/nbOfThreads;
   std::vector<std::thread> threadpoolMerge;
   threadpoolMerge.reserve(nbOfThreads);
@@ -473,12 +482,12 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
   //////////////////////////////////////
   std::vector<uint32_t> numMergedNodes = outputGraph->RemoveNodes(false);
       
-  int64_t nbOfNodes = outputGraph->GetNumberOfNodes();
+  const int64_t nbOfNodes = outputGraph->GetNumberOfNodes();
   chunkSize = nbOfNodes/nbOfThreads;
   std::vector<std::thread> threadpoolUpdateNodes;
   threadpoolUpdateNodes.reserve(nbOfThreads);
   ranges.clear();
-  for(unsigned int i=0; i < nbOfThreads; i++ )
+  for(unsigned int i = 0; i < nbOfThreads; i++ )
     {
     // Compute range
     std::pair<uint64_t,uint64_t> range;
@@ -586,14 +595,14 @@ GenerateData()
 	// Reconditionning of the graph
 	itk::TimeProbe recon_probe; recon_probe.Start();
 
-  int64_t nbOfNodes = outputGraph->GetNumberOfNodes();
-  unsigned int nbOfThreads = this->GetNumberOfThreads();
+  const int64_t nbOfNodes = outputGraph->GetNumberOfNodes();
+  const unsigned int nbOfThreads = this->GetNumberOfThreads();
   int64_t chunkSize = nbOfNodes/nbOfThreads;
 
   std::vector<std::thread> threadpoolReconditioning;
   threadpoolReconditioning.reserve(nbOfThreads);
   std::vector<std::pair<uint64_t,uint64_t>> ranges;
-  for(unsigned int i=0; i < nbOfThreads; i++ )
+  for(unsigned int i = 0; i < nbOfThreads; i++ )
     {
     // Compute range
     std::pair<uint64_t,uint64_t> range;
@@ -639,7 +648,6 @@ GenerateData()
       << "Merge(--)\t" // sequential
 	    << "nodes\t" << std::endl;
 
-	uint64_t initialNbOfNodes = outputGraph->GetNumberOfNodes();
 	this->UpdateProgress(.0f);
 	for(uint32_t i = 0; i < m_MaxNumberOfIterations; i++)
 	{
@@ -673,10 +681,9 @@ GenerateData()
 
 }
 
-
-
 /*
- * Fully parallel
+ * Compute merging costs.
+ * This function is fully parallelized.
  */
 template< typename TInputGraph, typename TOutputGraph, typename TMergingCostFunc, typename THeuristic, typename TUpdateAttributeFunc >
 void
@@ -686,15 +693,15 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
   // Retrieve the output graph.
   auto outputGraph = this->GetOutput();
 
-  int64_t nbOfNodes = outputGraph->GetNumberOfNodes();
-  unsigned int nbOfThreads = this->GetNumberOfThreads();
+  const int64_t nbOfNodes = outputGraph->GetNumberOfNodes();
+  const unsigned int nbOfThreads = this->GetNumberOfThreads();
   int64_t chunkSize = nbOfNodes/nbOfThreads;
 
   std::vector<std::thread> threadpoolComputeMergingCosts, threadpoolReset;
   threadpoolComputeMergingCosts.reserve(nbOfThreads);
   threadpoolReset.reserve(nbOfThreads);
   std::vector<std::pair<uint64_t,uint64_t>> ranges;
-  for(unsigned int i=0; i < nbOfThreads; i++ )
+  for(unsigned int i = 0; i < nbOfThreads; i++ )
     {
     // Compute range
     std::pair<uint64_t,uint64_t> range;
@@ -721,14 +728,12 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
   for (auto& t: threadpoolComputeMergingCosts) { t.join(); }
 
   // Reset
-  for(unsigned int i=0; i < nbOfThreads; i++ )
+  for(unsigned int i = 0; i < nbOfThreads; i++ )
     {
-
     // run thread
     threadpoolReset.push_back(
         std::thread(ResetMergeFlagsInRange<TOutputGraph, TMergingCostFunc, TUpdateAttributeFunc>,
             std::ref( outputGraph ),
-            std::ref( m_MergingCostFunc ),
             ranges[i].first,
             ranges[i].second)
     );
@@ -737,7 +742,6 @@ GenericRegionMergingFilter<TInputGraph, TOutputGraph, TMergingCostFunc, THeurist
 
   // Barrier for threadpoolReset
   for (auto& t: threadpoolReset) { t.join(); }
-
 
 }
 
