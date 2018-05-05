@@ -175,33 +175,47 @@ ImageToBaatzGraphFilter< TInputImage >
     } // end for(it.GoToBegin(); !it.IsAtEnd(); ++it)
 
 
-  // Update the edges
+  // Add the edges
   for(auto nodeIt = outputGraph->Begin(); nodeIt != outputGraph->End(); nodeIt++)
     {
     if (!nodeIt->m_HasToBeRemoved)
-    {
+      {
       // Count the required number of edges
       auto neighbors = otb::obia::SpatialTools::FourConnectivity(nodeIt->m_Id, imageWidth, imageHeight);
-      uint32_t numEdges = nodeIt->m_Edges.size();
-
+      uint32_t numEdges = 0;
       for(unsigned short n = 0; n < 4; n++)
-      {
+        {
         if(neighbors[n] > -1)
-      	{
-          if  (outputGraph->GetNodeAt(neighbors[n])->m_HasToBeRemoved)
-      	  {
-	       auto edgToErase = nodeIt->FindEdge(outputGraph->GetNodeAt(neighbors[n])->m_Id);
-	       nodeIt->m_Edges.erase(edgToErase);
-	       numEdges--;
-		 }
-	
-	}
-      }            
-	
-	nodeIt->m_Edges.resize(numEdges);
-	
+          if  (!outputGraph->GetNodeAt(neighbors[n])->m_HasToBeRemoved)
+            numEdges++;
+
+        }
+
+      // Initialisation of the edges
+      nodeIt->m_Edges.reserve(numEdges);
+      for(unsigned short n = 0; n < 4; n++)
+        {
+        if(neighbors[n] > -1)
+          {
+          if  (!outputGraph->GetNodeAt(neighbors[n])->m_HasToBeRemoved)
+            {
+            // Add an edge to the current node targeting the adjacent node
+            auto newEdge = nodeIt->AddEdge();
+
+            // Add the target
+            newEdge->m_TargetId = neighbors[n];
+
+            // Initialisation of the boundary
+            newEdge->m_Boundary = 1;
+
+            // Initialisation of the merging cost
+            newEdge->m_Attributes.m_MergingCost = std::numeric_limits<float>::max();
+            }
+          }
+        }
+
+      }
     }
- }
 
   // Here, we remove the "no-data" nodes
   outputGraph->RemoveNodes();
