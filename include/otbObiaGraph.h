@@ -285,6 +285,10 @@ public:
     /**\brief This method applies a lambda function on each node of the graph. */
     template< typename LambdaFunctionType >
     void ApplyForEachNode(LambdaFunctionType f);
+    template< typename LambdaFunctionType >
+    void ApplyForEachNode(const uint64_t rangeStart, const uint64_t rangeEnd, LambdaFunctionType f);
+
+    void MergePairOfNodes(NodeType* nodeIn, NodeType* nodeOut);
 
     /**\brief This method merges two adjacent nodes: nodeOut merges into nodeIn
      * @param: Node in (node which will be updated after merge)
@@ -293,8 +297,9 @@ public:
 
     /** \brief This methods removes the expired nodes from the graph, i.e
         those whose m_HasToBeRemoved is true.
+        @param: a boolean telling if nodes/edges IDs have to be updated
     */
-    void RemoveNodes();
+    std::vector<uint32_t> RemoveNodes(bool update = true);
 
     /** \brief This methods returns the quantity of memory in bytes to store this graph */
     uint64_t GetMemorySize() const;
@@ -310,7 +315,7 @@ public:
      * \param : Other graph*/
     void InsertAtEnd(const Pointer& other)
     {
-       	m_Nodes.insert(m_Nodes.end(), other->Begin(), other->End());	
+        m_Nodes.insert(m_Nodes.end(), other->Begin(), other->End());
     }
 
     /**\brief Move the graph to the input pointer
@@ -335,9 +340,9 @@ public:
     }
 
     /**\brief Merge edge between 2 nodes by updating contour, boundary, edges, etc ...
-	 * \param: Node in
-	 * \param: Node Out*/
-	void MergeEdge(NodeType* nodeIn, NodeType* nodeOut);
+     * \param: Node in
+     * \param: Node Out*/
+    void MergeEdge(NodeType* nodeIn, NodeType* nodeOut);
 
 protected:
 
