@@ -256,7 +256,7 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
       // Allocate the shared buffer
       m_SharedBuffer.clear();
       // Header gives the real number of bytes + the sequence of bytes
-      uint64_t maxNumberOfElements = this->m_MaxNumberOfTilesPerProcessor * (IntSize + m_MaxNumberOfBytes);
+      uint64_t maxNumberOfElements = this->m_MaxNumberOfTilesPerProcessor * (sizeof(size_t) + m_MaxNumberOfBytes);
       m_SharedBuffer.assign(maxNumberOfElements, char());
 
       uint32_t tid = 0;
@@ -276,7 +276,7 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
                   }
 
                   // Move at the right location in the shared buffer.
-                  uint64_t offset = ntile * (IntSize + m_MaxNumberOfBytes);
+                  uint64_t offset = ntile * (sizeof(size_t) + m_MaxNumberOfBytes);
 
                   // Write the serialized stablity margin in the shared buffer
 		  to_stream(m_SharedBuffer,m_SerializedListOfBorderNodes,offset);
@@ -301,7 +301,7 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
     auto mpiTools = MPITools::Instance();
 
     // Creation of rma window: each processor will have its shared buffer accessible for other processors
-    uint64_t maxNumberOfElements = this->m_MaxNumberOfTilesPerProcessor * (IntSize + m_MaxNumberOfBytes);
+    uint64_t maxNumberOfElements = this->m_MaxNumberOfTilesPerProcessor * (sizeof(size_t) + m_MaxNumberOfBytes);
     MPI_Win win;
     MPI_Win_create(&m_SharedBuffer[0], maxNumberOfElements, CharSize, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
 
@@ -317,7 +317,7 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
                 auto& tile = this->m_TileMap[tid];
 
                 // Creation of the list of the adjacent serialized list of border nodes. 
-                std::vector< std::vector<char> > ajdSerializedListOfBorderNodes;
+                std::vector< std::vector<char> > adjSerializedListOfBorderNodes;
 
                 // Retrieve the neighbor tiles
                 auto neighborTiles = SpatialTools::EightConnectivity(tid, this->m_NumberOfTilesX, this->m_NumberOfTilesY);
@@ -343,22 +343,22 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
                         }
 
                         // Compute the offset of displacement.
-                        uint64_t offset = pos * (IntSize + m_MaxNumberOfBytes);
+                        uint64_t offset = pos * (sizeof(size_t) + m_MaxNumberOfBytes);
 
                         // Allocate a new serialized stability margin.
-                        ajdSerializedListOfBorderNodes.push_back( std::vector<char>(IntSize + m_MaxNumberOfBytes) );
+                        adjSerializedListOfBorderNodes.push_back( std::vector<char>(sizeof(size_t) + m_MaxNumberOfBytes) );
 
                         // Read rma operation
                         
                         //MPI_Win_fence(0, win);
                         MPI_Win_lock(MPI_LOCK_SHARED, neighRank, 0, win);
 
-                        MPI_Get(&(ajdSerializedListOfBorderNodes[ajdSerializedListOfBorderNodes.size()-1][0]), 
-                                IntSize + m_MaxNumberOfBytes,
+                        MPI_Get(&(adjSerializedListOfBorderNodes[adjSerializedListOfBorderNodes.size()-1][0]),
+                                sizeof(size_t) + m_MaxNumberOfBytes,
                                 MPI_CHAR,
                                 neighRank,
                                 offset,
-                                IntSize + m_MaxNumberOfBytes,
+                                sizeof(size_t) + m_MaxNumberOfBytes,
                                 MPI_CHAR,
                                 win);
 
@@ -373,16 +373,16 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
                 this->ReadGraphIfNecessary(ty, tx);
 
                 // Allocate the adjacent subgraph containing the border nodes of the adjacent graph
-                std::vector< OutputGraphPointerType > adjSubGraphs(ajdSerializedListOfBorderNodes.size(), nullptr);
+                std::vector< OutputGraphPointerType > adjSubGraphs(adjSerializedListOfBorderNodes.size(), nullptr);
 
                 // Deserialize the adjacent subgraphs.
-                for(uint32_t i = 0; i < ajdSerializedListOfBorderNodes.size(); i++)
+                for(uint32_t i = 0; i < adjSerializedListOfBorderNodes.size(); i++)
                 {
                     // Retrieve the serialized margin
                     std::vector< char > serializedListOfBorderNodes(0);
-		    from_stream(ajdSerializedListOfBorderNodes[i],serializedListOfBorderNodes);
+		    from_stream(adjSerializedListOfBorderNodes[i],serializedListOfBorderNodes);
 
-                    ajdSerializedListOfBorderNodes[i].clear();
+                    adjSerializedListOfBorderNodes[i].clear();
                     adjSubGraphs[i] = GraphOperationsType::DeSerializeGraph(serializedListOfBorderNodes);
                 }
 
