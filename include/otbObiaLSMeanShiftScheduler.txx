@@ -321,6 +321,9 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
 
                 // Retrieve the neighbor tiles
                 auto neighborTiles = SpatialTools::EightConnectivity(tid, this->m_NumberOfTilesX, this->m_NumberOfTilesY);
+
+                MPI_Win_fence((MPI_MODE_NOPUT | MPI_MODE_NOPRECEDE), win);
+
                 for(unsigned short n = 0; n < 8; n++)
                 {
                     if(neighborTiles[n] > -1)
@@ -368,6 +371,8 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
                     } // end if(neighborTiles[n] > -1)
 
                 } // end for(unsigned short n = 0; n < 8; n++)
+
+                MPI_Win_fence(MPI_MODE_NOSUCCEED,win);
 
                 // Read the graph if necessary
                 this->ReadGraphIfNecessary(ty, tx);
