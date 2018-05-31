@@ -121,6 +121,27 @@ InitOutput()
     outputGraph->SetImageHeight(imageHeight);
     outputGraph->SetProjectionRef(inputPtr->GetProjectionRef());
 
+    // Get no-data values
+      bool noDataPresent = false;
+      std::vector<bool> noDataFlags;
+      std::vector<double> noDataValues;
+
+      // default : no data indicated in metadata
+      if (!this->m_ProcessNoData)
+      {
+
+      	noDataPresent = otb::ReadNoDataFlags(inputPtr->GetMetaDataDictionary(), noDataFlags, noDataValues);
+      }
+      else // no data defined by user
+      {
+    	noDataPresent = true;
+    	double value = static_cast<double>(this->m_NoDataValue);
+    	noDataFlags.reserve(1);
+    	noDataValues.reserve(1);
+    	noDataFlags.push_back(true);
+    	noDataValues.push_back(value);
+      }
+
     // Set the right number of starting nodes for memory allocation
     // 1 pixel = 1 node
     outputGraph->SetNumberOfNodes(imageWidth * imageHeight);
@@ -146,10 +167,52 @@ InitOutput()
         // Add the first pixel in the list of pixels
         newNode->m_Attributes.m_ListOfPixels.push_back(id);
 
+        // If the pixel is no-data, then the node has to be removed
+        newNode->m_HasToBeRemoved = (noDataPresent && otb::IsNoData<double>(it.Get(), noDataFlags, noDataValues));
+
         // Increment the id
         id++;
 
     } // end for(it.GoToBegin(); !it.IsAtEnd(); ++it)
+
+    // Add the edges
+      for(auto nodeIt = outputGraph->Begin(); nodeIt != outputGraph->End(); nodeIt++)
+        {
+        if (!nodeIt->m_HasToBeRemoved)
+          {
+          // Count the required number of edges
+          auto neighbors = otb::obia::SpatialTools::FourConnectivity(nodeIt->m_Id, imageWidth, imageHeight);
+          uint32_t numEdges = 0;
+          for(unsigned short n = 0; n < 4; n++)
+            {
+            if(neighbors[n] > -1)
+              if  (!outputGraph->GetNodeAt(neighbors[n])->m_HasToBeRemoved)
+                numEdges++;
+
+            }
+
+          // Initialisation of the edges
+          nodeIt->m_Edges.reserve(numEdges);
+          for(unsigned short n = 0; n < 4; n++)
+            {
+            if(neighbors[n] > -1)
+              {
+              if  (!outputGraph->GetNodeAt(neighbors[n])->m_HasToBeRemoved)
+                {
+                // Add an edge to the current node targeting the adjacent node
+                auto newEdge = nodeIt->AddEdge();
+
+                // Add the target
+                newEdge->m_TargetId = neighbors[n];
+
+                // Initialisation of the boundary
+                newEdge->m_Boundary = 1;
+                }
+              }
+            }
+
+          }
+        }
 }
 
 

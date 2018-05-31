@@ -4,6 +4,7 @@
 #include "otbObiaImageToGraphFilter.h"
 #include "itkImageRegionConstIterator.h"
 #include "otbImage.h"
+#include "otbNoDataHelper.h"
 
 namespace otb
 {
