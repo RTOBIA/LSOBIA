@@ -21,15 +21,18 @@ LSOBIA provides an OTBApplication, LSSegmentation (Large Scale Segmentation).
 
 ```bash
 Parameters: 
-        -progress                          <boolean>        Report progress 
+        -io                                <group>          Set of parameters related to input/output 
         -io.im                             <string>         Input image path  (mandatory)
+        -io.out                            <group>          Output directory 
         -io.out.dir                        <string>         Output directory  (mandatory)
         -io.out.labelimage                 <string>         Label Image Name  (optional, off by default)
         -io.temp                           <string>         Directory used for temporary data  (mandatory)
         -algorithm                         <string>         Segmentation algorithm name [baatz/meanshift] (mandatory, default value is baatz)
         -algorithm.baatz.numitfirstpartial <int32>          Number of iterations for first partial segmentation  (optional, on by default, default value is 1)
         -algorithm.baatz.numitpartial      <int32>          Number of iterations for partial segmentation  (optional, on by default, default value is 1)
-        -algorithm.baatz.stopping          <float>          Value for stopping criterion  (optional, on by default, default value is 40)
+        -algorithm.baatz.maxiter           <int32>          max number of iterations  (optional, on by default, default value is 75)
+        -algorithm.baatz.mindec            <float>          minimum decreasing of accumulated Memory  (optional, on by default, default value is 0)
+        -algorithm.baatz.scale             <float>          Value for scale criterion  (optional, on by default, default value is 60)
         -algorithm.baatz.spectralweight    <float>          Value for spectral weight  (optional, on by default, default value is 0.05)
         -algorithm.baatz.geomweight        <float>          Value for geometric (shape) weight  (optional, on by default, default value is 0.95)
         -algorithm.baatz.aggregategraphs   <string>         Aggregation of graph traces [on/off] (optional, off by default, default value is on)
@@ -39,14 +42,15 @@ Parameters:
         -algorithm.meanshift.threshold     <float>          Threshold  (optional, off by default)
         -algorithm.meanshift.ranger        <float>          Spectral range ramp  (optional, off by default)
         -algorithm.meanshift.modesearch    <string>         Activation of search mode [on/off] (optional, off by default, default value is on)
+        -processing                        <group>          Set of parameters related to processing options 
         -processing.memory                 <int32>          Maximum memory to be used on the main node  (mandatory)
         -processing.maxtilesizex           <int32>          Maximum size of tiles along x axis  (mandatory)
         -processing.maxtilesizey           <int32>          Maximum size of tiles along x axis  (mandatory)
         -processing.writeimages            <string>         Activation of image traces [on/off] (mandatory, default value is on)
         -processing.writegraphs            <string>         Activation of graph traces [on/off] (mandatory, default value is on)
-        -inxml                             <string>         Load otb application from xml file  (optional, off by default)
-
-
+        -processing.nodatavalue            <float>          Definition of no data value  (optional, on by default, default value is 0)
+        -progress                          <boolean>        Report progress 
+        -help                              <string list>    Display long help (empty list), or help for given parameters keys
 ```
 
 ### Monoprocessor execution
