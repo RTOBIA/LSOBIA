@@ -160,6 +160,11 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
                 msFilter->SetRangeBandwidthRamp(m_SpectralRangeRamp);
                 msFilter->SetModeSearch(m_ModeSearch);
 
+                /* Mid-pipeline update */
+                tileExtractor->SetInput(imgReader->GetOutput());
+                msFilter->SetInput(tileExtractor->GetOutput());
+                msFilter->Update();
+
                 /** Extraction of the stable area within the smooth tile */
                 tile.m_Frame.SetSize(0, std::min(this->m_MaxTileSizeX, this->m_ImageWidth - tx * this->m_MaxTileSizeX));
                 tile.m_Frame.SetSize(1, std::min(this->m_MaxTileSizeY, this->m_ImageHeight - ty * this->m_MaxTileSizeY));
@@ -168,10 +173,10 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
                 ComputeExtractionParametersForCC(tile, startX, startY);
 
                 auto stableExtractor = MultiChannelExtractROIFilterType::New();
-                tileExtractor->SetStartX(startX);
-                tileExtractor->SetStartY(startY);
-                tileExtractor->SetSizeX(tile.m_Frame.GetSize(0));
-                tileExtractor->SetSizeY(tile.m_Frame.GetSize(1));
+                stableExtractor->SetStartX(startX);
+                stableExtractor->SetStartY(startY);
+                stableExtractor->SetSizeX(tile.m_Frame.GetSize(0));
+                stableExtractor->SetSizeY(tile.m_Frame.GetSize(1));
 
                 /** Segmentation of the smooth tile with the Connected Component algorithm */
                 auto ccFilter = CCFilterType::New();
@@ -185,10 +190,7 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
                 /** Extraction of the graph of adjacency from the segmented tile */
                 auto graphExtractor = LabelImageToGraphFilterType::New();
 
-
                 /** Pipeline branching */
-                tileExtractor->SetInput(imgReader->GetOutput());
-                msFilter->SetInput(tileExtractor->GetOutput());
                 stableExtractor->SetInput(msFilter->GetOutput());
                 ccFilter->SetInput(stableExtractor->GetOutput());
                 ccFilter->Update();
