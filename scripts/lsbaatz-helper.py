@@ -12,6 +12,9 @@ max_iter = int(sys.argv[4])
 nb_procs = int(sys.argv[5])
 mem_per_proc = int(sys.argv[6])
 
+print("\nImage is {}x{} pixels with {} bands".format(w,h,nb_bands))
+print("System has {} nodes with {} Mb available memory per node".format(nb_procs,mem_per_proc))
+print("Maximum number of initial iterations is {}".format(max_iter)) 
 
 # Compute memory used by a single pixel
 margin = 1.1
@@ -47,7 +50,7 @@ nb_tiles_h = nb_procs/nb_tiles_w
 tile_w = int(math.ceil(float(w)/nb_tiles_w))
 tile_h = int(math.ceil(float(h)/nb_tiles_h))
 
-print("Partionning: {}x{}={} tiles of {}x{} pixels".format(nb_tiles_w,nb_tiles_h,nb_tiles_h*nb_tiles_w,tile_w,tile_h))
+print("\nProposed Partionning: {}x{}={} tiles of {}x{} pixels\n".format(nb_tiles_w,nb_tiles_h,nb_tiles_h*nb_tiles_w,tile_w,tile_h))
 
 # Loop on initial number of iterations
 for it in range(1,max_iter):
