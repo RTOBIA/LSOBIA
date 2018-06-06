@@ -63,7 +63,7 @@ for it in range(1,max_iter):
 
    # Check if required memory is higher than available memory
    if used_memory_graph+used_memory_img>mem_per_proc:
-      print("For {} initial iterations: margin={}, \tnot enough memory available".format(it,margin))
+      print("For {} initial iterations: margin={}, \trequired memory={} Mb, not enough memory available".format(it,margin,int(used_memory_graph+used_memory_img)))
    else:
-      print("For {} initial iterations: margin={}, \tmem per node={} Mb (graph={} Mb, img={} Mb)".format(it,margin,used_memory_graph+used_memory_img,used_memory_graph,used_memory_img))
+      print("For {} initial iterations: margin={}, \trequired memory={} Mb".format(it,margin,int(used_memory_graph+used_memory_img)))
 
