@@ -117,6 +117,10 @@ protected:
     void ReadGraphIfNecessary(const unsigned int ty,
                               const unsigned int tx);
 
+    /**\brief Aggregate all graphs to the master graph (rank 0)
+     * */
+    void FinalGraphAgregation();
+
     /**Write graph into a label image*/
     void ConvertGraphToImage(const unsigned int ty,
             				 const unsigned int tx);

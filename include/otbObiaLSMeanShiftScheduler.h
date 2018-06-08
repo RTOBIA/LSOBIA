@@ -90,6 +90,10 @@ private:
 
     void AchieveBorderNodeConstruction();
 
+    /**\brief Aggregate all graphs to the master graph (rank 0)
+     * */
+    void FinalGraphAgregation();
+
     /** Algorithm iterative scheme will stop if convergence hasn't been reached after the maximum number of iterations. */
     unsigned int m_MaxNumberOfIterations;
 

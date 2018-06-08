@@ -543,6 +543,14 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
 template< typename TInputImage, typename TLabelPixel>
 void
 LSMeanShiftScheduler<TInputImage, TLabelPixel>
+::FinalGraphAgregation()
+{
+	SuperClass::FinalGraphAgregation();
+}
+
+template< typename TInputImage, typename TLabelPixel>
+void
+LSMeanShiftScheduler<TInputImage, TLabelPixel>
 ::PostProcessing()
 {
     auto mpiConfig = MPIConfig::Instance();
@@ -592,6 +600,8 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
 
     // Build a border pixel map: Map: pixel -> list of nodes
     AchieveBorderNodeConstruction();
+
+    FinalGraphAgregation();
 
 }
 

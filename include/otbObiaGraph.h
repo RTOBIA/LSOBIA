@@ -306,6 +306,7 @@ public:
 
     /* Debug */
     void Print();
+    void Print(int id);
 
     using NodeIterator = typename NodeListType::iterator;
     inline NodeIterator Begin(){ return m_Nodes.begin(); }

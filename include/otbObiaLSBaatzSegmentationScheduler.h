@@ -23,26 +23,25 @@ template< class TInputImage >
 {
 public:
 
-    /** Standard class alias */
-    using Self          = LSBaatzSegmentationScheduler;
-    using SuperClass   = itk::Object;
-    using Pointer      = itk::SmartPointer< Self >;
-    using ConstPointer = itk::SmartPointer< const Self >; 
-
     /** Some convenient alias */
     using InputImageType                   = TInputImage;
     using InputInternalPixelType           = typename InputImageType::InternalPixelType;
     using InputImageReaderType             = ImageFileReader<InputImageType>;
     using MultiChannelExtractROIFilterType = MultiChannelExtractROI<InputInternalPixelType,InputInternalPixelType>;
-    using ImageToBaatzGraphFilterType        = ImageToBaatzGraphFilter<InputImageType>;
+    using ImageToBaatzGraphFilterType      = ImageToBaatzGraphFilter<InputImageType>;
     using GraphType                        = typename ImageToBaatzGraphFilterType::OutputGraphType;
+    using OutputGraphType                  = GraphType;
     using NodeType                         = typename GraphType::NodeType;
     using GraphPointerType                 = typename GraphType::Pointer;
     using GraphOperationsType              = GraphOperations<GraphType>;
-    using BaatzSegmentationFilterType         = GenericRegionMergingFilter<GraphType, GraphType,
-                                                                                                    BaatzMergingCost<float, GraphType> ,
-                                                                      BaatzHeuristic<GraphType>,
-                                                                      BaatzUpdateAttribute<GraphType> >;
+    using BaatzSegmentationFilterType      = GenericRegionMergingFilter<GraphType, GraphType, BaatzMergingCost<float, GraphType> ,
+    																    BaatzHeuristic<GraphType>, BaatzUpdateAttribute<GraphType> >;
+
+    /** Standard class alias */
+        using Self          = LSBaatzSegmentationScheduler;
+        using SuperClass   = LSImageToGraphScheduler<InputImageType, OutputGraphType>;
+        using Pointer      = itk::SmartPointer< Self >;
+        using ConstPointer = itk::SmartPointer< const Self >;
 
     /** Method for creation through the object factory. */
     itkNewMacro(Self);
