@@ -164,6 +164,8 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
                 tileExtractor->SetInput(imgReader->GetOutput());
                 msFilter->SetInput(tileExtractor->GetOutput());
                 msFilter->Update();
+                
+                std::cout<<"Tile "<<tx<<", "<<ty<< " : Mean-Shift filtering done."<<std::endl;
 
                 /** Extraction of the stable area within the smooth tile */
                 tile.m_Frame.SetSize(0, std::min(this->m_MaxTileSizeX, this->m_ImageWidth - tx * this->m_MaxTileSizeX));
@@ -194,12 +196,19 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
                 stableExtractor->SetInput(msFilter->GetOutput());
                 ccFilter->SetInput(stableExtractor->GetOutput());
                 ccFilter->Update();
+
+                std::cout<<"Tile "<<tx<<", "<<ty<< " : Connected components done."<<std::endl;
+                
                 graphExtractor->SetInput(ccFilter->GetOutput());
                 graphExtractor->Update();
+
+                
                 this->m_Graph = graphExtractor->GetOutput();
 
                 /** Tile referential to image referential */
                 RescaleGraph(tile);
+
+                std::cout<<"Tile "<<tx<<", "<<ty<<" : Graph computed and rescaled."<<std::endl;
 
                 // If a processor is in charge of more than one tiles, then this graph has to be stored
                 // in the temporary local disk of the execution node.
@@ -393,6 +402,8 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
                     adjSubGraphs[i] = GraphOperationsType::DeSerializeGraph(serializedListOfBorderNodes);
                 }
 
+                std::cout<<"Tile "<<tx<<", "<<ty<< " : Adjacent graphs deserialized."<<std::endl;
+
                 std::unordered_set< uint32_t > rowBounds;
                 std::unordered_set< uint32_t > colBounds;
 
@@ -457,13 +468,22 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
                     }
                 }
 
+                std::cout<<"Tile "<<tx<<", "<<ty<< " : Border pixels listed."<<std::endl;
+                
                 // For each pixel in the reference border map, we look for this pixel in all
-                // the adjacent border and update the list of internal pixels.
+                // the adjacent border and update the list of internal
+                // pixels.
+
+                unsigned int count = 0;
                 for(auto& refKV : refBorderNodeMap)
                 {
+                std::set<NodeType *> nodesAlreadyMerged;
+
+                if(count % 100 == 0)
+                  std::cout<<"Tile "<<tx<<", "<<ty<< " : propcessing pixel "<<count<<" / "<<refBorderNodeMap.size()<<std::endl;
+                ++count;
                     // Merge the list of internal pixels.
-                    std::unordered_set< CoordValueType > setOfInternalPixels;
-                    for(auto& pix : refKV.second->m_Attributes.m_ListOfPixels){ setOfInternalPixels.insert(pix); }
+                std::unordered_set< CoordValueType > setOfInternalPixels(refKV.second->m_Attributes.m_ListOfPixels.begin(),refKV.second->m_Attributes.m_ListOfPixels.end());
 
                     for(uint32_t i = 0; i < adjBorderNodeMaps.size(); i++)
                     {
@@ -475,23 +495,31 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
                             auto refNode = refKV.second;
                             auto complNode = isHere->second;
 
-                            for(auto& pix : complNode->m_Attributes.m_ListOfPixels)
-                            {
-                                if(setOfInternalPixels.find(pix) == setOfInternalPixels.end())
-                                {
-                                    refNode->m_Attributes.m_ListOfPixels.push_back(pix);
-                                    setOfInternalPixels.insert(pix);
-                                }
-                            }
-
-                            // Fusion of the contour
-                            refNode->m_Contour.MergeWith(complNode->m_Contour, this->m_ImageWidth, this->m_ImageHeight);
-
+                            
+                            if(nodesAlreadyMerged.find(complNode) == nodesAlreadyMerged.end())
+                              {
+                              // for(auto& pix : complNode->m_Attributes.m_ListOfPixels)
+                              // {
+                              // if(setOfInternalPixels.find(pix) == setOfInternalPixels.end())
+                              // {
+                              //     refNode->m_Attributes.m_ListOfPixels.push_back(pix);
+                              setOfInternalPixels.insert(complNode->m_Attributes.m_ListOfPixels.begin(),complNode->m_Attributes.m_ListOfPixels.end());
+                              // }
+                              // }
+                              
+                              refNode->m_Attributes.m_ListOfPixels.assign(setOfInternalPixels.begin(),setOfInternalPixels.end());
+                              // Fusion of the contour
+                              refNode->m_Contour.MergeWith(complNode->m_Contour, this->m_ImageWidth, this->m_ImageHeight);
+                              
+                              nodesAlreadyMerged.insert(complNode);
+                              }
                         }
 
                     }
 
                 }
+
+                std::cout<<"Tile "<<tx<<", "<<ty<< " : Merge done."<<std::endl;
 
                 // If a processor is in charge of more than one tiles, then this graph has to be stored
                 // in the temporary local disk of the execution node.
@@ -539,6 +567,8 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
                 // Extract the border nodes and serialize them
                 SerializeListOfBorderNodes(tile);
 
+                std::cout<<"Tile "<<tx<<", "<<ty<< " : Boder nodes serialized."<<std::endl;
+
                 if(this->m_TileMap.size() > 1)
                 {
                     std::stringstream os;
@@ -558,6 +588,7 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
 
     // Build the remote window.
     FillSharedBuffer();
+    std::cout<<"Shared buffer filled"<<std::endl;
 
     // Build a border pixel map: Map: pixel -> list of nodes
     AchieveBorderNodeConstruction();
