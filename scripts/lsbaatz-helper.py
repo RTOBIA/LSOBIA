@@ -61,12 +61,15 @@ for it in range(1,max_iter):
    tile_h_margin = int(math.floor(tile_h + 2*margin))
 
    # Compute memory usage for this margin
-   used_memory_graph = (tile_w_margin+2*margin)*(tile_h_margin+2*margin)*graph_node_size/(10**6)
-   used_memory_img = (tile_w_margin+2*margin)*(tile_h_margin+2*margin)*img_node_size/(10**6)
+   used_memory_graph = tile_w_margin*tile_h_margin*graph_node_size/(10**6)
+   used_memory_img = tile_w_margin*tile_h_margin*img_node_size/(10**6)
+   
+   used_memory_margin = used_memory_img+used_memory_graph - (tile_w*tile_h*(graph_node_size+img_node_size))/(10**6)
+
 
    # Check if required memory is higher than available memory
    if used_memory_graph+used_memory_img>mem_per_proc:
-      print("For {} initial iterations: margin={}, \trequired memory={} Mb, not enough memory available".format(it,margin,int(used_memory_graph+used_memory_img)))
+      print("For {} initial iterations: margin={}, \trequired memory={} Mb (margin={} Mb), not enough memory available".format(it,margin,int(used_memory_graph+used_memory_img),int(used_memory_margin)))
    else:
-      print("For {} initial iterations: margin={}, \trequired memory={} Mb".format(it,margin,int(used_memory_graph+used_memory_img)))
+      print("For {} initial iterations: margin={}, \trequired memory={} Mb (margin={} Mb)".format(it,margin,int(used_memory_graph+used_memory_img),int(used_memory_margin)))
 
