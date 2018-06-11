@@ -90,9 +90,6 @@ private:
         AddParameter(ParameterType_Float,"algorithm.meanshift.spectralr","Spectral bandwidth");
         AddParameter(ParameterType_Float,"algorithm.meanshift.threshold","Threshold");
         AddParameter(ParameterType_Float,"algorithm.meanshift.ranger","Spectral range ramp");
-        AddParameter(ParameterType_Choice,"algorithm.meanshift.modesearch","Activation of search mode");
-        AddChoice("algorithm.meanshift.modesearch.on","Activated");
-        AddChoice("algorithm.meanshift.modesearch.off","Deactivated");
 
         // Processing Parameters
         AddParameter(ParameterType_Group,"processing","Set of parameters related to parallel processing options");
@@ -143,7 +140,6 @@ private:
         unsigned int spatialr;
         float spectralr;
         float ranger;
-        bool modeSearch = false;
 
         //SRM
         using LSSmallRegionsMergingType = otb::obia::LSSmallRegionsMergingScheduler<LSBaatzSegmentationSchedulerType::OutputGraphType>;
@@ -210,14 +206,6 @@ private:
                 spectralr = GetParameterFloat("algorithm.meanshift.spectralr");
                 threshold = GetParameterFloat("algorithm.meanshift.threshold");
                 ranger = GetParameterFloat("algorithm.meanshift.ranger");
-                switch (GetParameterInt("algorithm.meanshift.modesearch")) {
-                    case SM_ON:
-                        modeSearch = true;
-                        break;
-                    case SM_OFF:
-                        modeSearch = false;
-                        break;
-                }
 
                 lsMSFilter->SetFileName(filename);
                 lsMSFilter->SetMaxTileSizeX(maxTileWidth);
@@ -229,7 +217,6 @@ private:
                 lsMSFilter->SetSpectralRangeBandWidth(spectralr);
                 lsMSFilter->SetThreshold(threshold);
                 lsMSFilter->SetSpectralRangeRamp(ranger);
-                lsMSFilter->SetModeSearch(modeSearch);
                 lsMSFilter->SetOutputDir(outDir);
                 lsMSFilter->SetLabelImageName(labelImage);
                 lsMSFilter->SetWriteLabelImage(true);

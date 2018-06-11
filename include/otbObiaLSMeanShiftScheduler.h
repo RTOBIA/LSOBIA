@@ -52,7 +52,6 @@ class LSMeanShiftScheduler : public LSImageToGraphScheduler< TInputImage,
     inline void SetSpectralRangeBandWidth(const float spectralr){ m_SpectralRangeBandWidth = spectralr; }
     inline void SetThreshold(const float thresh){ m_Threshold = thresh; }
     inline void SetSpectralRangeRamp(const float ranger){ m_SpectralRangeRamp = ranger; }
-    inline void SetModeSearch(const bool modeSearch){ m_ModeSearch = modeSearch; }
 
 
 protected:
@@ -108,9 +107,6 @@ private:
 
     /** This coefficient makes dependent the ranger of the colorimetry of the filtered pixel : y = rangeramp*x+ranger. */
     float m_SpectralRangeRamp;
-    
-    /** If activated pixel iterative convergence is stopped if the path crosses an already converged pixel. Be careful, with this option, the result will slightly depend on thread number. */
-    bool m_ModeSearch;
 
     // The serialized list of border nodes.
     std::vector< char > m_SerializedListOfBorderNodes;

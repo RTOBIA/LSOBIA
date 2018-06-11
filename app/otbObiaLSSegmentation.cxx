@@ -107,19 +107,25 @@ private:
         MandatoryOff("algorithm.baatz.geomweight");
         SetDefaultParameterFloat("algorithm.baatz.geomweight",  0.95);
 
-        AddParameter(ParameterType_Int,"algorithm.meanshift.maxiter","max number of iterations");
+        AddParameter(ParameterType_Int,"algorithm.meanshift.maxiter","Max number of iterations");
+        MandatoryOff("algorithm.meanshift.maxiter");
+        SetDefaultParameterInt("algorithm.meanshift.maxiter",  10);
+
         AddParameter(ParameterType_Float,"algorithm.meanshift.spatialr","Spatial bandwidth");
         MandatoryOff("algorithm.meanshift.spatialr");
+        SetDefaultParameterInt("algorithm.meanshift.spatialr",  2.);
+
         AddParameter(ParameterType_Float,"algorithm.meanshift.spectralr","Spectral bandwidth");
         MandatoryOff("algorithm.meanshift.spectralr");
+        SetDefaultParameterFloat("algorithm.meanshift.spectralr",  50.);
+
         AddParameter(ParameterType_Float,"algorithm.meanshift.threshold","Threshold");
         MandatoryOff("algorithm.meanshift.threshold");
+        SetDefaultParameterFloat("algorithm.meanshift.spectralr",  0.1);
+
         AddParameter(ParameterType_Float,"algorithm.meanshift.ranger","Spectral range ramp");
         MandatoryOff("algorithm.meanshift.ranger");
-        AddParameter(ParameterType_Choice,"algorithm.meanshift.modesearch","Activation of search mode");
-        MandatoryOff("algorithm.meanshift.modesearch");
-        AddChoice("algorithm.meanshift.modesearch.on","Activated");
-        AddChoice("algorithm.meanshift.modesearch.off","Deactivated");
+        SetDefaultParameterFloat("algorithm.meanshift.spectralr",  50.);
 
         // Processing Parameters
         AddParameter(ParameterType_Group,"processing","Set of parameters related to processing options");
@@ -251,14 +257,7 @@ private:
                 float spectralr = GetParameterFloat("algorithm.meanshift.spectralr");
                 float threshold = GetParameterFloat("algorithm.meanshift.threshold");
                 float ranger = GetParameterFloat("algorithm.meanshift.ranger");
-                                bool modeSearch = false;
-                switch (GetParameterInt("algorithm.meanshift.modesearch")) {
-                    case ON:
-                        modeSearch = true;
-                                        default:
-                                                modeSearch = false;
-                }
-                                auto lsMSFilter = LSMeanShiftSchedulerType::New();
+                auto lsMSFilter = LSMeanShiftSchedulerType::New();
                 lsMSFilter->SetFileName(filename);
                 lsMSFilter->SetMaxTileSizeX(maxTileWidth);
                 lsMSFilter->SetMaxTileSizeY(maxTileHeight);
@@ -269,7 +268,6 @@ private:
                 lsMSFilter->SetSpectralRangeBandWidth(spectralr);
                 lsMSFilter->SetThreshold(threshold);
                 lsMSFilter->SetSpectralRangeRamp(ranger);
-                lsMSFilter->SetModeSearch(modeSearch);
                 lsMSFilter->SetOutputDir(outDir);
                 lsMSFilter->SetLabelImageName(labelImage);
                 lsMSFilter->SetWriteLabelImage(writeImages);

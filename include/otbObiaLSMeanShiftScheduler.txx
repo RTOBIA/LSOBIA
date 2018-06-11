@@ -16,8 +16,7 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
   m_SpatialBandWidth(5),
   m_SpectralRangeBandWidth(15),
   m_Threshold(0.1),
-  m_SpectralRangeRamp(0.0),
-  m_ModeSearch(true)
+  m_SpectralRangeRamp(0.0)
 {
 }
 
@@ -158,7 +157,7 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
                 msFilter->SetThreshold(m_Threshold);
                 msFilter->SetMaxIterationNumber(m_MaxNumberOfIterations);
                 msFilter->SetRangeBandwidthRamp(m_SpectralRangeRamp);
-                msFilter->SetModeSearch(m_ModeSearch);
+                msFilter->SetModeSearch(false);
 
                 /* Mid-pipeline update */
                 tileExtractor->SetInput(imgReader->GetOutput());
