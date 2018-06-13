@@ -507,7 +507,7 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
 							}
 						}
 					}
-				}
+				}l
 
                 for(auto tileIt = mergedNodesMaps.begin(); tileIt != mergedNodesMaps.end(); tileIt++)
 				{
@@ -517,7 +517,7 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
                 		mergeKV.second.erase(mergeKV.second.begin());
                 		for(auto nodeIt = mergeKV.second.begin(); nodeIt != mergeKV.second.end(); nodeIt++)
                 		{
-                			this-m_Graph->Merge(firstNode, *nodeIt);
+                			this->m_Graph->Merge(firstNode, *nodeIt);
                 		}
                 	}
 				}
