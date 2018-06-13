@@ -180,24 +180,24 @@ Graph<TNode>::GetNodeAt(const IdType id)
 
 template< typename TNode >
 void 
-Graph<TNode>::Print(int id)
+Graph<TNode>::Print(std::stringstream os, int id)
 {
         auto node = GetNodeAt(id);
         std::cout << node->GetFirstPixelCoords() << "(" << node->m_Id << "): ";
         for(auto edgeIt = node->m_Edges.begin(); edgeIt != node->m_Edges.end(); edgeIt++)
         {
-            std::cout << (GetNodeAt(edgeIt->m_TargetId))->GetFirstPixelCoords() << "("<< edgeIt->m_TargetId << ") \t";
+            os << (GetNodeAt(edgeIt->m_TargetId))->GetFirstPixelCoords() << "("<< edgeIt->m_TargetId << ") \t";
         }
-        std::cout << std::endl;
+        os << std::endl;
 }
 
 template< typename TNode >
 void
-Graph<TNode>::Print()
+Graph<TNode>::Print(std::stringstream os)
 {
     for(auto i = 0; i < GetNumberOfNodes(); i++)
     {
-        Print(i);
+        Print(os, i);
     }
 }
 

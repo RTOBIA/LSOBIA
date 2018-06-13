@@ -305,8 +305,8 @@ public:
     uint64_t GetMemorySize() const;
 
     /* Debug */
-    void Print();
-    void Print(int id);
+    void Print(std::stringstream os);
+    void Print(std::stringstream os, int id);
 
     using NodeIterator = typename NodeListType::iterator;
     inline NodeIterator Begin(){ return m_Nodes.begin(); }
