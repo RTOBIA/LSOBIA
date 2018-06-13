@@ -347,7 +347,15 @@ public:
 
 protected:
 
-    Graph(){}
+    Graph() :
+      m_Nodes(),
+      m_ImageWidth(0),
+      m_ImageHeight(0),
+      m_NumberOfSpectralBands(0),
+      m_OriginX(0.),
+      m_OriginY(0.),
+      m_ProjectionRef("")
+      {}
     virtual ~Graph() {}
     Graph(const Self &) =delete;
     void operator=(const Self &) =delete;
