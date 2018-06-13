@@ -473,50 +473,54 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
                 // the adjacent border and update the list of internal
                 // pixels.
 
+                std::vector< std::unordered_map< NodeType*, std::vector<NodeType* > > > mergedNodesMaps(adjSubGraphs.size());
                 unsigned int count = 0;
                 for(auto& refKV : refBorderNodeMap)
-                {
-                std::set<NodeType *> nodesAlreadyMerged;
+				{
+					// Advencement indication
+					if(count % 100 == 0)
+					  std::cout<<"Tile "<<tx<<", "<<ty<< " : propcessing pixel "<<count<<" / "<<refBorderNodeMap.size()<<std::endl;
+					++count;
 
-                if(count % 100 == 0)
-                  std::cout<<"Tile "<<tx<<", "<<ty<< " : propcessing pixel "<<count<<" / "<<refBorderNodeMap.size()<<std::endl;
-                ++count;
-                    // Merge the list of internal pixels.
-                std::unordered_set< CoordValueType > setOfInternalPixels(refKV.second->m_Attributes.m_ListOfPixels.begin(),refKV.second->m_Attributes.m_ListOfPixels.end());
+					// Merge the list of internal pixels.
+					std::unordered_set< CoordValueType > setOfInternalPixels(refKV.second->m_Attributes.m_ListOfPixels.begin(),refKV.second->m_Attributes.m_ListOfPixels.end());
+					for(uint32_t i = 0; i < adjBorderNodeMaps.size(); i++)
+					{
+						auto isHere = adjBorderNodeMaps[i].find(refKV.first);
+						if(isHere != adjBorderNodeMaps[i].end())
+						{
+							auto refNode = refKV.second;
+							auto complNode = isHere->second;
 
-                    for(uint32_t i = 0; i < adjBorderNodeMaps.size(); i++)
-                    {
+							auto alreadyMerged = mergedNodesMaps[i].find(complNode);
+							if(alreadyMerged == mergedNodesMaps[i].end())
+							{
+								setOfInternalPixels.insert(complNode->m_Attributes.m_ListOfPixels.begin(),complNode->m_Attributes.m_ListOfPixels.end());
+								refNode->m_Attributes.m_ListOfPixels.assign(setOfInternalPixels.begin(),setOfInternalPixels.end());
+								// Fusion of the contour
+								refNode->m_Contour.MergeWith(complNode->m_Contour, this->m_ImageWidth, this->m_ImageHeight);
+								mergedNodesMaps[i][complNode] = std::vector<NodeType* > {refNode};
+							}
+							else if(std::find(alreadyMerged->second.begin(), alreadyMerged->second.end(), refNode) == std::end(alreadyMerged->second))
+							{
+							alreadyMerged->second.push_back(refNode);
+							}
+						}
+					}
+				}
 
-                        auto isHere = adjBorderNodeMaps[i].find(refKV.first);
-
-                        if(isHere != adjBorderNodeMaps[i].end())
-                        {
-                            auto refNode = refKV.second;
-                            auto complNode = isHere->second;
-
-                            
-                            if(nodesAlreadyMerged.find(complNode) == nodesAlreadyMerged.end())
-                              {
-                              // for(auto& pix : complNode->m_Attributes.m_ListOfPixels)
-                              // {
-                              // if(setOfInternalPixels.find(pix) == setOfInternalPixels.end())
-                              // {
-                              //     refNode->m_Attributes.m_ListOfPixels.push_back(pix);
-                              setOfInternalPixels.insert(complNode->m_Attributes.m_ListOfPixels.begin(),complNode->m_Attributes.m_ListOfPixels.end());
-                              // }
-                              // }
-                              
-                              refNode->m_Attributes.m_ListOfPixels.assign(setOfInternalPixels.begin(),setOfInternalPixels.end());
-                              // Fusion of the contour
-                              refNode->m_Contour.MergeWith(complNode->m_Contour, this->m_ImageWidth, this->m_ImageHeight);
-                              
-                              nodesAlreadyMerged.insert(complNode);
-                              }
-                        }
-
-                    }
-
-                }
+                for(auto tileIt = mergedNodesMaps.begin(); tileIt != mergedNodesMaps.end(); tileIt++)
+				{
+                	for(auto& mergeKV: *tileIt)
+                	{
+                		NodeType* firstNode = mergeKV.second.front();
+                		mergeKV.second.erase(mergeKV.second.begin());
+                		for(auto nodeIt = mergeKV.second.begin(); nodeIt != mergeKV.second.end(); nodeIt++)
+                		{
+                			this-m_Graph->Merge(firstNode, *nodeIt);
+                		}
+                	}
+				}
 
                 std::cout<<"Tile "<<tx<<", "<<ty<< " : Merge done."<<std::endl;
 
