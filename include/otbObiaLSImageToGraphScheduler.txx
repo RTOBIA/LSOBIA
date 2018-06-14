@@ -647,6 +647,10 @@ LSImageToGraphScheduler< TInputImage, TOutputGraph>
             exit(EXIT_FAILURE);
         }
 
+        // Resizing the main graph
+        this->m_Graph->SetImageWidth(this->m_ImageWidth);
+        this->m_Graph->SetImageHeight(this->m_ImageHeight);
+
         // Deserialize and aggregate the graph into mainGraph
         std::cout << "MASTER : Deserialize and aggregate the graph into mainGraph ..."<<std::endl;
         for(unsigned int r = 1; r < mpiConfig->GetNbProcs(); r++)
@@ -808,7 +812,7 @@ LSImageToGraphScheduler<TInputImage, TOutputGraph>
 
   using StreamingGraph2LabelImgFilterType = otb::obia::StreamingGraphToImageFilter<TOutputGraph, LabelImageType>;
   auto filter = StreamingGraph2LabelImgFilterType::New();
-  filter->SetInput(m_Graph);
+  filter->SetInput(this->m_Graph);
 
   grayWriter->SetFileName(os2.str());
   grayWriter->SetInput(filter->GetOutput());
