@@ -507,7 +507,7 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
 							}
 						}
 					}
-				}l
+				}
 
                 for(auto tileIt = mergedNodesMaps.begin(); tileIt != mergedNodesMaps.end(); tileIt++)
 				{
