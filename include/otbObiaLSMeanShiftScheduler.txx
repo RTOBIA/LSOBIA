@@ -42,51 +42,24 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
                                    uint32_t& startX,
                                    uint32_t& startY)
 {
-    if(tile.m_Ty > 0)
+
+  if(tile.m_Tx < this->m_NumberOfTilesX - 1)
     {
-        // A stability margin has been considered at top.
-        startY = tile.m_MarginValues[TOP] - 1;
+    // 1 pixel overlap at right.
+    tile.m_Frame.SetSize(0, tile.m_Frame.GetSize(0) + 1);
 
-        // Update the y-index of the tile
-        tile.m_Frame.SetIndex(1, tile.m_Frame.GetIndex(1) + startY);
-      
-        // Increment the size of the tile
-        tile.m_Frame.SetSize(1, tile.m_Frame.GetSize(1) + 1);
-
-        // Update the margin value.
-        tile.m_MarginValues[TOP] = 1;
+    // Update the margin value.
+    tile.m_MarginValues[RIGHT] = 1;
     }
 
-    if(tile.m_Tx < this->m_NumberOfTilesX - 1)
+  if(tile.m_Ty < this->m_NumberOfTilesY - 1)
     {
-        // 1 pixel overlap at right.
-        tile.m_Frame.SetSize(0, tile.m_Frame.GetSize(0) + 1);
+    tile.m_Frame.SetSize(1, tile.m_Frame.GetSize(1) + 1);
 
-        // Update the margin value.
-        tile.m_MarginValues[RIGHT] = 1;
+    // Update the margin value.
+    tile.m_MarginValues[BOTTOM] = 1;
     }
 
-    if(tile.m_Ty < this->m_NumberOfTilesY - 1)
-    {
-        tile.m_Frame.SetSize(1, tile.m_Frame.GetSize(1) + 1);
-
-        // Update the margin value.
-        tile.m_MarginValues[BOTTOM] = 1;
-    }
-
-    if(tile.m_Tx > 0)
-    {
-        // A stability margin has been considered at left
-        startX = tile.m_MarginValues[3] - 1;
-
-        // Update the x-index of the tile
-        tile.m_Frame.SetIndex(0, tile.m_Frame.GetIndex(0) + startX);
-
-        // 1 pixel overlap at left
-        tile.m_Frame.SetSize(0, tile.m_Frame.GetSize(0) + 1);
-
-        tile.m_MarginValues[LEFT] = 1;
-    }    
 }
 
 template< typename TInputImage, typename TLabelPixel>
@@ -127,97 +100,85 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
   
   uint32_t tid = 0;
   
-    for(uint32_t ty = 0; ty < this->m_NumberOfTilesY; ty++)
+  for(uint32_t ty = 0; ty < this->m_NumberOfTilesY; ty++)
     {
-        for(uint32_t tx = 0; tx < this->m_NumberOfTilesX; tx++)
+    for(uint32_t tx = 0; tx < this->m_NumberOfTilesX; tx++)
+      {
+
+      if(mpiTools->IsMyTurn(tid))
         {
 
-            if(mpiTools->IsMyTurn(tid))
-            {
+        // Retrieve the current processed tile.
+        auto& tile = this->m_TileMap[tid];
 
-                // Retrieve the current processed tile.
-                auto& tile = this->m_TileMap[tid];
+        /** Image reader */
+        auto imgReader = InputImageFileReaderType::New();
+        imgReader->SetFileName(this->m_FileName);
 
-                /** Image reader */
-                auto imgReader = InputImageFileReaderType::New();
-                imgReader->SetFileName(this->m_FileName);
+        /** Tile smoothing with the Mean-Shift algorithm */
+        auto msFilter = MeanShiftSmoothingImageFilterType::New();
+        msFilter->SetSpatialBandwidth(m_SpatialBandWidth);
+        msFilter->SetRangeBandwidth(m_SpectralRangeBandWidth);
+        msFilter->SetThreshold(m_Threshold);
+        msFilter->SetMaxIterationNumber(m_MaxNumberOfIterations);
+        msFilter->SetRangeBandwidthRamp(m_SpectralRangeRamp);
+        msFilter->SetModeSearch(false);
 
-                  /** Extraction of the tile for smoothing step */
+        /* Mid-pipeline update */
+        msFilter->SetInput(imgReader->GetOutput());
 
-                auto tileExtractor = MultiChannelExtractROIFilterType::New();
-                tileExtractor->SetStartX(tile.m_Frame.GetIndex(0));
-                tileExtractor->SetStartY(tile.m_Frame.GetIndex(1));
-                tileExtractor->SetSizeX(tile.m_Frame.GetSize(0));
-                tileExtractor->SetSizeY(tile.m_Frame.GetSize(1));
+        /** Extraction of the stable area within the smooth tile */
+        tile.m_Frame.SetSize(0, std::min(this->m_MaxTileSizeX, this->m_ImageWidth - tx * this->m_MaxTileSizeX));
+        tile.m_Frame.SetSize(1, std::min(this->m_MaxTileSizeY, this->m_ImageHeight - ty * this->m_MaxTileSizeY));
+        uint32_t startX = 0;
+        uint32_t startY = 0;
+        ComputeExtractionParametersForCC(tile, startX, startY);
 
-                /** Tile smoothing with the Mean-Shift algorithm */
-                auto msFilter = MeanShiftSmoothingImageFilterType::New();
-                msFilter->SetSpatialBandwidth(m_SpatialBandWidth);
-                msFilter->SetRangeBandwidth(m_SpectralRangeBandWidth);
-                msFilter->SetThreshold(m_Threshold);
-                msFilter->SetMaxIterationNumber(m_MaxNumberOfIterations);
-                msFilter->SetRangeBandwidthRamp(m_SpectralRangeRamp);
-                msFilter->SetModeSearch(false);
+        auto stableExtractor = MultiChannelExtractROIFilterType::New();
+        stableExtractor->SetStartX(startX);
+        stableExtractor->SetStartY(startY);
+        stableExtractor->SetSizeX(tile.m_Frame.GetSize(0));
+        stableExtractor->SetSizeY(tile.m_Frame.GetSize(1));
 
-                /* Mid-pipeline update */
-                tileExtractor->SetInput(imgReader->GetOutput());
-                msFilter->SetInput(tileExtractor->GetOutput());
-                msFilter->Update();
+        /** Segmentation of the smooth tile with the Connected Component algorithm */
+        auto ccFilter = CCFilterType::New();
+        std::stringstream expr;
+        expr<<"sqrt((p1b1-p2b1)*(p1b1-p2b1)";
+        for(unsigned int i=1; i< this->m_NumberOfSpectralBands; i++)
+          expr<<"+(p1b"<<i+1<<"-p2b"<<i+1<<")*(p1b"<<i+1<<"-p2b"<<i+1<<")";
+        expr<<")"<<"<"<< m_SpectralRangeBandWidth;
+        ccFilter->GetFunctor().SetExpression(expr.str());
+
+        /** Extraction of the graph of adjacency from the segmented tile */
+        auto graphExtractor = LabelImageToGraphFilterType::New();
+
+        /** Pipeline branching */
+        stableExtractor->SetInput(msFilter->GetOutput());
+        ccFilter->SetInput(stableExtractor->GetOutput());
+        ccFilter->Update();
+
+        std::cout<<"Tile "<<tx<<", "<<ty<< " : MeanShift and Connected components done."<<std::endl;
                 
-                std::cout<<"Tile "<<tx<<", "<<ty<< " : Mean-Shift filtering done."<<std::endl;
-
-                /** Extraction of the stable area within the smooth tile */
-                tile.m_Frame.SetSize(0, std::min(this->m_MaxTileSizeX, this->m_ImageWidth - tx * this->m_MaxTileSizeX));
-                tile.m_Frame.SetSize(1, std::min(this->m_MaxTileSizeY, this->m_ImageHeight - ty * this->m_MaxTileSizeY));
-                uint32_t startX = 0;
-                uint32_t startY = 0;
-                ComputeExtractionParametersForCC(tile, startX, startY);
-
-                auto stableExtractor = MultiChannelExtractROIFilterType::New();
-                stableExtractor->SetStartX(startX);
-                stableExtractor->SetStartY(startY);
-                stableExtractor->SetSizeX(tile.m_Frame.GetSize(0));
-                stableExtractor->SetSizeY(tile.m_Frame.GetSize(1));
-
-                /** Segmentation of the smooth tile with the Connected Component algorithm */
-                auto ccFilter = CCFilterType::New();
-                std::stringstream expr;
-                expr<<"sqrt((p1b1-p2b1)*(p1b1-p2b1)";
-                for(unsigned int i=1; i< this->m_NumberOfSpectralBands; i++)
-                expr<<"+(p1b"<<i+1<<"-p2b"<<i+1<<")*(p1b"<<i+1<<"-p2b"<<i+1<<")";
-                expr<<")"<<"<"<< m_SpectralRangeBandWidth;
-                ccFilter->GetFunctor().SetExpression(expr.str());
-
-                /** Extraction of the graph of adjacency from the segmented tile */
-                auto graphExtractor = LabelImageToGraphFilterType::New();
-
-                /** Pipeline branching */
-                stableExtractor->SetInput(msFilter->GetOutput());
-                ccFilter->SetInput(stableExtractor->GetOutput());
-                ccFilter->Update();
-
-                std::cout<<"Tile "<<tx<<", "<<ty<< " : Connected components done."<<std::endl;
-                
-                graphExtractor->SetInput(ccFilter->GetOutput());
-                graphExtractor->Update();
+        graphExtractor->SetInput(ccFilter->GetOutput());
+        graphExtractor->Update();
 
                 
-                this->m_Graph = graphExtractor->GetOutput();
+        this->m_Graph = graphExtractor->GetOutput();
 
-                /** Tile referential to image referential */
-                RescaleGraph(tile);
+        /** Tile referential to image referential */
+        RescaleGraph(tile);
 
-                std::cout<<"Tile "<<tx<<", "<<ty<<" : Graph computed and rescaled."<<std::endl;
+        std::cout<<"Tile "<<tx<<", "<<ty<<" : Graph computed and rescaled."<<std::endl;
 
-                // If a processor is in charge of more than one tiles, then this graph has to be stored
-                // in the temporary local disk of the execution node.
-                this->WriteGraphIfNecessary(ty, tx);
+        // If a processor is in charge of more than one tiles, then this graph has to be stored
+        // in the temporary local disk of the execution node.
+        this->WriteGraphIfNecessary(ty, tx);
 
-            } //end if(mpiTools->IsMyTurn(tid))
+        } //end if(mpiTools->IsMyTurn(tid))
 
-              tid++;
+      tid++;
 
-        } // end for(uint32_t ty = 0; ty < this->m_NumberOfTilesX; ty++)
+      } // end for(uint32_t ty = 0; ty < this->m_NumberOfTilesX; ty++)
     } // end for(uint32_t ty = 0; ty < this->m_NumberOfTilesX; ty++)
 
   // Synchronization point
