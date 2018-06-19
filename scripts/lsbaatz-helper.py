@@ -1,8 +1,8 @@
 import sys
 import math
 
-if len(sys.argv)!=7:
-   print("Usage: {} nb_bands w h max_iter nb_proc mem_per_proc(Mb)".format(sys.argv[0]))
+if len(sys.argv)!=8:
+   print("Usage: {} nb_bands w h max_iter nb_proc mem_per_proc(Mb) tiles_per_proc".format(sys.argv[0]))
    sys.exit(1)
 
 nb_bands = int(sys.argv[1])
@@ -11,9 +11,11 @@ h = int(sys.argv[3])
 max_iter = int(sys.argv[4])
 nb_procs = int(sys.argv[5])
 mem_per_proc = int(sys.argv[6])
+nb_tiles_per_proc=int(sys.argv[7])
 
 print("\nImage is {}x{} pixels with {} bands".format(w,h,nb_bands))
 print("System has {} nodes with {} Mb available memory per node".format(nb_procs,mem_per_proc))
+print("{} tiles per proc requested.".format(nb_tiles_per_proc))
 print("Maximum number of initial iterations is {}".format(max_iter)) 
 
 # Compute memory used by a single pixel
@@ -25,8 +27,10 @@ node_size = graph_node_size + img_node_size
 # Image aspect ratio
 ratio = float(w)/float(h)
 
+nb_tiles = nb_procs*nb_tiles_per_proc
+
 # Number of pixels per tile
-nb_pixels_per_tile = float(w*h)/nb_procs
+nb_pixels_per_tile = float(w*h)/nb_tiles
 
 # Estimate a target number of divisions in width from number of pixels per tile and aspect ratio
 target_nb_tiles_w = int(w/math.floor(math.sqrt(nb_pixels_per_tile/ratio)))
@@ -35,8 +39,8 @@ target_nb_tiles_w = int(w/math.floor(math.sqrt(nb_pixels_per_tile/ratio)))
 dist = abs(target_nb_tiles_w - 1)
 best_factor=1
 
-for factor in range(2,nb_procs+1):
-   if nb_procs % factor == 0:
+for factor in range(2,nb_tiles+1):
+   if nb_tiles % factor == 0:
       new_dist = abs(target_nb_tiles_w-factor)
       if new_dist<dist:
          best_factor=factor
@@ -44,7 +48,7 @@ for factor in range(2,nb_procs+1):
 
 # Compute number of tiles in w and h
 nb_tiles_w = best_factor
-nb_tiles_h = nb_procs/nb_tiles_w
+nb_tiles_h = nb_tiles/nb_tiles_w
 
 # Compute tile width and height
 tile_w = int(math.ceil(float(w)/nb_tiles_w))
