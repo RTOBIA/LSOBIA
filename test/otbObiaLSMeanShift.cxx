@@ -18,9 +18,8 @@ int otbObiaLSMeanShift(int argc, char * argv[])
       << "Argument 8: " << "[spectral range bandwidth]\n"
       << "Argument 9: " << "[threshold]\n"
       << "Argument 10: " << "[spectral range ramp]\n"
-      << "Argument 11: " << "[enable mode search yes(1) no (0)]"
-      << "Argument 12: " << "[output directory path (must me already created)]\n"
-      << "Argument 13: " << "[output label image name]\n"
+      << "Argument 11: " << "[output directory path (must me already created)]\n"
+      << "Argument 12: " << "[output label image name]\n"
       << std::endl; 
       return 1;
     }
@@ -39,9 +38,8 @@ int otbObiaLSMeanShift(int argc, char * argv[])
   const float spectralr = atof(argv[8]);
   const float threshold = atof(argv[9]);
   const float ranger = atof(argv[10]);
-  const bool modeSearch = (atoi(argv[11]) > 0) ? true : false;
-  const std::string outDir = argv[12];
-  const std::string labelImage = argv[13];
+  const std::string outDir = argv[11];
+  const std::string labelImage = argv[12];
 
   using InputImageType              = otb::VectorImage<float, 2>;
   using LabelPixelType              = unsigned int;
@@ -58,7 +56,6 @@ int otbObiaLSMeanShift(int argc, char * argv[])
   lsMSFilter->SetSpectralRangeBandWidth(spectralr);
   lsMSFilter->SetThreshold(threshold);
   lsMSFilter->SetSpectralRangeRamp(ranger);
-  lsMSFilter->SetModeSearch(modeSearch);
   lsMSFilter->SetOutputDir(outDir);
   lsMSFilter->SetWriteLabelImage(true);
   lsMSFilter->SetWriteGraph(true);
