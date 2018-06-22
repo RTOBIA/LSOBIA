@@ -2,6 +2,7 @@
 
 void RegisterTests()
 {
-        REGISTER_TEST(otbObiaConvertGraphToImage);
+    REGISTER_TEST(otbObiaConvertGraphToImage);
 	REGISTER_TEST(otbObiaStreamUtils);
+	REGISTER_TEST(otbObiaContourTest);
 }
