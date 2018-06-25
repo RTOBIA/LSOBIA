@@ -1,9 +1,6 @@
 #include "otbObiaContour.h"
 
-namespace otb
-{
-namespace obia
-{
+using namespace otb::obia;
 
 int otbObiaContourTest(int argc, char *argv[])
 {
@@ -80,4 +77,4 @@ int otbObiaContourTest(int argc, char *argv[])
 
 	return EXIT_SUCCESS;
 }
-}}
+
