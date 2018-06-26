@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <iostream>
 #include <typeinfo>
+#include <sys/stat.h>
 
 namespace otb
 {
@@ -96,6 +97,12 @@ namespace obia
     {
       uint64_t dummy = 0;
       from_stream(stream,value,dummy);
+    }
+
+ inline bool file_exists (const std::string& name)
+    {
+      struct stat buffer;
+      return (stat (name.c_str(), &buffer) == 0);
     }
 
 }
