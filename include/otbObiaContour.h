@@ -126,6 +126,7 @@ public:
 
     inline void SetStartingCoords(const CoordValueType coords)
     {
+    	assert(coords >= 0);
         m_StartingCoords = coords;
     }
 
@@ -202,9 +203,6 @@ public:
     void PrintSelf();
 
 private:
-
-    /* Compute eight neighborhood coordinates of the pixel located at coords */
-    std::array<int64_t, 8> Get8Neighborhood(CoordValueType coords, const uint32_t gridSizeX, const uint32_t gridSizeY);
 
     /* 
     *    Create a new contour from the border pixels of

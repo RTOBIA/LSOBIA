@@ -27,10 +27,14 @@ int otbObiaContourTest(int argc, char *argv[])
 	assert(it.IsAtEnd() == false);
 	it.GoToNext(); it.GoToNext(); it.GoToNext(); it.GoToNext(); it.GoToNext(); it.GoToNext(); it.GoToNext();
 	assert(it.GetMove() == Contour::Move::UP);
+	it.GoToNext();
 	assert(it.IsAtEnd() == true);
 
 	// Test GetMemorySize
-	assert(cont1.GetMemorySize() == sizeof(Contour)+12*UInt8Size);
+	assert(cont1.GetMemorySize() == sizeof(Contour)+3*UInt8Size);
+
+	// Test GetNumberOfBytesToSerialize
+	assert(cont1.GetNumberOfBytesToSerialize() == 16);
 
 	// Test serialization
 	uint64_t dummy = 0;

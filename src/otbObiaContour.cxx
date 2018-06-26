@@ -54,6 +54,9 @@ namespace otb{
 
             // Deserialize the number of packets
 	    from_stream(serializedContour,m_Moves,position);
+
+        assert(!m_Moves.empty());
+        assert(this->Begin().>GetMove() == RIGHT);
         }
 
         void Contour::MergeWith(Contour& other, 
@@ -75,6 +78,7 @@ namespace otb{
             m_Moves.clear();
             m_Offset = 8;
             CreateNewMergedContour(borderCells, gridSizeX, gridSizeY);
+            assert(this->Begin().GetMove() == RIGHT);
         }
 
         void Contour::CreateNewMergedContour(CoordsSet& borderCells,
@@ -216,6 +220,7 @@ namespace otb{
         void Contour::GenerateBorderPixels(CoordsSet& borderCells, 
                                         const uint32_t gridSizeX)
         {    
+        	assert(this->Begin().GetMove() == RIGHT);
             borderCells.insert(m_StartingCoords);
 
             if(m_Moves.size() > 1)
