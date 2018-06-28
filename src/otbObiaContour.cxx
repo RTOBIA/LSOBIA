@@ -56,7 +56,7 @@ namespace otb{
 	    from_stream(serializedContour,m_Moves,position);
 
         assert(!m_Moves.empty());
-        assert(this->Begin().>GetMove() == RIGHT);
+        assert(this->Begin().GetMove() == RIGHT);
         }
 
         void Contour::MergeWith(Contour& other, 

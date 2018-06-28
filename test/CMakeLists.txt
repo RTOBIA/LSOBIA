@@ -135,7 +135,9 @@ set(${otb-module}TestDriver
 	otbLSOBIATestDriver.cxx
 	otbObiaStreamUtils.cxx
 	otbObiaConvertGraphToImage.cxx
+	otbObiaGraphTest.cxx
 	otbObiaContourTest.cxx
+	otbObiaGraphOperationsTest.cxx
 )	
 
 add_executable(otb${otb-module}TestDriver ${${otb-module}TestDriver})
@@ -143,7 +145,9 @@ target_link_libraries(otb${otb-module}TestDriver ${${otb-module}-Test_LIBRARIES}
 otb_module_target_label(otb${otb-module}TestDriver)
 
 otb_add_test(NAME otbObiaStreamUtilsTest COMMAND otbLSOBIATestDriver otbObiaStreamUtils)
+otb_add_test(NAME otbObiaGraphTest COMMAND otbLSOBIATestDriver otbObiaGraphTest)
 otb_add_test(NAME otbObiaContourTest COMMAND otbLSOBIATestDriver otbObiaContourTest)
+otb_add_test(NAME otbObiaGraphOperationsTest COMMAND otbLSOBIATestDriver otbObiaGraphOperationsTest)
 
 
 # ----------------------------------------------------------------------------------------------
