@@ -93,11 +93,16 @@ namespace obia
                      const GraphPointerType graph,
                      const std::string& outputPath);
 
-      /**\brief This methods writes the serialized stability margin to disk.
-       * \param: Stability margin
+      /**\brief This methods writes the serialized object to disk.
+       * \param: Serialized object
        * \param: File path for output file*/
-      static void WriteSerializedMarginToDisk(const std::vector<char>& serializedStabilityMargin,
+      static void WriteSerializedObjectToDisk(const std::vector<char>& serializedObject,
                           const std::string& outputPath);
+
+      /**\brief This methods loads a serialized object from its storage file on the disk.
+      * \param: Input file path
+      * \return: Vector of char corresponding to the serialized object*/
+      static std::vector<char> ReadSerializedObjectFromDisk(const std::string& inputPath);
 
       /**\brief This methods simply writes the bit stream to a file stored on the disk.
        * \param: Graph pointer
@@ -110,12 +115,7 @@ namespace obia
        * \return: Pointer graph*/
       static GraphPointerType ReadGraphFromDisk(const std::string & inputPath);
 
-      /**\brief This methods loads a serialized margin from its storage file on the disk.
-      * \param: Input file path
-      * \return: Vector of char corresponding to the serialized margin*/
-      static std::vector<char> ReadSerializedMarginFromDisk(const std::string& inputPath);
-
-      /**\brief Give the tile information (dimension and location in the input image), this method
+      /**\brief Given the tile information (dimension and location in the input image), this method
        * returns a list of nodes located at the borders of the tiles.
        * \param: Graph which border nodes will be extracted
        * \param: Current tile processed

@@ -40,6 +40,11 @@ GraphOperations<TGraph>::RemoveUnstableNodes(GraphPointerType graph,
                                                    upperCol,
                                                    upperRow))
         {
+        	assert(!SpatialTools::IsBboxInsideBoundaries(node.m_BoundingBox,
+                                                       lowerCol,
+                                                       lowerRow,
+                                                       upperCol,
+                                                       upperRow));
             // The node is outside, it is obviously unstable.
             stableNode = false;
         }
@@ -49,6 +54,11 @@ GraphOperations<TGraph>::RemoveUnstableNodes(GraphPointerType graph,
                                                        upperCol,
                                                        upperRow))
         {
+        	assert(!SpatialTools::IsBboxOutsideBoundaries(node.m_BoundingBox,
+                                                   lowerCol,
+                                                   lowerRow,
+                                                   upperCol,
+                                                   upperRow));
             // Second assumption: the node is not stable
             stableNode = false;
 
@@ -92,102 +102,12 @@ GraphOperations<TGraph>::RemoveUnstableNodes(GraphPointerType graph,
 }
 
 template< typename TGraph >
-typename GraphOperations<TGraph>::GraphPointerType
-GraphOperations<TGraph>::DeSerializeGraph(const std::vector<char>& serializedGraph)
-{
-    // Local variable: offset in the bit stream.
-    uint64_t position = 0;
-
-    // Initialization of the resulting graph
-    auto graph = GraphType::New();
-
-    // Read the number of nodes
-    uint64_t numNodes;
-    from_stream(serializedGraph,numNodes,position);
-    
-
-    // Reserve memory space for the graph
-    graph->SetNumberOfNodes(numNodes);
-
-    // Map: starting starting coords of each node -> its id
-    std::unordered_map< CoordValueType, IdType > startPixIdMap;
-
-    // Loop over the nodes
-    for(IdType id = 0; id < numNodes; id++)
-    {
-
-        // Add a new node at the end of the adjacency list
-        // of the graph.
-        auto newNode = graph->AddNode();
-
-        // The id of the node
-        newNode->m_Id = id;
-
-        // Set the flags appropriately
-        newNode->m_HasToBeRemoved = false;
-        newNode->m_Valid = true;
-
-        // The bounding box
-	from_stream(serializedGraph,newNode->m_BoundingBox,position);
-
-        // The contour
-        newNode->m_Contour.DeSerialize(serializedGraph, position);
-
-        // Create a new entry in the map startPixIdMap
-        assert(startPixIdMap.find(newNode->GetFirstPixelCoords()) == startPixIdMap.end());
-
-	startPixIdMap[newNode->GetFirstPixelCoords()] = id;
-	
-        // The specific attributes of the node
-        newNode->m_Attributes.DeSerialize(serializedGraph, position);
-
-        // The number of edges
-        uint32_t numEdges;
-	from_stream(serializedGraph,numEdges,position);
-
-        newNode->m_Edges.reserve(numEdges);
-
-        for(uint32_t e = 0; e < numEdges; e++)
-        {
-            // Add a new edge
-            auto newEdge = newNode->AddEdge();
-
-            // The starting coords
-	    from_stream(serializedGraph,newEdge->m_TargetId,position);
-	    
-	    // The boundary
-	    from_stream(serializedGraph,newEdge->m_Boundary,position);
-
-            // Serialize the specific attributes of the edges
-            newEdge->m_Attributes.DeSerialize(serializedGraph, position);
-
-        } // end for(uint32_t e = 0; e < numEdges; e++) 
-
-    } // end for(IdType id = 0; id < numNodes; id++)
-
-    // Update the target ids of the edges with the real ids of the nodes
-    for(auto nodeIt = graph->Begin(); nodeIt != graph->End(); nodeIt++)
-    {
-        for(auto& edg : nodeIt->m_Edges)
-        {
-            auto isInStartPixIdMap = startPixIdMap.find(edg.m_TargetId);
-
-	    assert(isInStartPixIdMap != startPixIdMap.end());
-	    edg.m_TargetId = isInStartPixIdMap->second;
-
-        } // end for(auto& edg : nodeIt->m_Edges)
-
-    } // end for(auto nodeIt = graph->Begin(); nodeIt != graph->End(); nodeIt++)
-    
-    return graph;
-}
-
-template< typename TGraph >
 std::vector< char >
 GraphOperations<TGraph>::SerializeStabilityMargin(std::unordered_map< NodeType*, uint32_t >& stabilityMargin,
                                                     const GraphPointerType graph)
 {
-    // The resulting serialized stability margin of the graph: it is jus a sequence of bytes.
+	assert(stabilityMargin.size() > 0);
+    // The resulting serialized stability margin of the graph: it is just a sequence of bytes.
     std::vector< char > serializedGraph;
 
     // The first pass consists of determining the number of bytes to write.
@@ -254,7 +174,7 @@ GraphOperations<TGraph>::SerializeStabilityMargin(std::unordered_map< NodeType*,
         auto node = kv.first;
 
         // Serialization of the bounding box
-	to_stream(serializedGraph,node->m_BoundingBox,position);
+        to_stream(serializedGraph,node->m_BoundingBox,position);
 
         // Serialization of the contour
         node->m_Contour.Serialize(serializedGraph, position);
@@ -263,19 +183,19 @@ GraphOperations<TGraph>::SerializeStabilityMargin(std::unordered_map< NodeType*,
         node->m_Attributes.Serialize(serializedGraph, position);
 
         // Serialization of the number of edges
-	to_stream(serializedGraph,numEdgesPerNode[i],position);
+        to_stream(serializedGraph,numEdgesPerNode[i],position);
 
         for(const auto& edg : node->m_Edges)
         {
-              if(stabilityMargin.find(graph->GetNodeAt(edg.m_TargetId)) != stabilityMargin.end())
+            if(stabilityMargin.find(graph->GetNodeAt(edg.m_TargetId)) != stabilityMargin.end())
             {
               
               // Serialize the first starting coords
               const CoordValueType startPix = (graph->GetNodeAt(edg.m_TargetId))->GetFirstPixelCoords();
-	      to_stream(serializedGraph,startPix,position);
+              to_stream(serializedGraph,startPix,position);
 
               // Serialize the boundary
-	      to_stream(serializedGraph,edg.m_Boundary,position);
+              to_stream(serializedGraph,edg.m_Boundary,position);
 
               // Serialize the specific attributes of the edges
               edg.m_Attributes.Serialize(serializedGraph, position);
@@ -296,6 +216,7 @@ template< typename TGraph >
 std::vector<char>
 GraphOperations<TGraph>::SerializeGraph(const GraphPointerType graph)
 {
+	assert(graph->GetNumberOfNodes() > 0);
     std::vector< char > serializedGraph;
 
     // The first pass consists of determining the number of bytes to write.
@@ -315,13 +236,11 @@ GraphOperations<TGraph>::SerializeGraph(const GraphPointerType graph)
         numberOfBytes += nodeIt->m_Attributes.GetNumberOfBytesToSerialize();
 
         // Serialization of the number of edges
-	numberOfBytes+= stream_offset(nodeIt->m_Edges.size());
+        numberOfBytes+= stream_offset(nodeIt->m_Edges.size());
 
         for(const auto& edg : nodeIt->m_Edges)
         {
-
           numberOfBytes += edg.GetNumberOfBytesToSerialize();
-
         } // end for(const auto& edg : nodeIt->m_Edges)
 
     } // end for(auto nodeIt = graph->Begin(); nodeIt != graph->End(); nodeIt++)
@@ -347,17 +266,17 @@ GraphOperations<TGraph>::SerializeGraph(const GraphPointerType graph)
 
         // Serialization of the number of edges
         const uint32_t numEdges = nodeIt->m_Edges.size();
-	to_stream(serializedGraph,numEdges,position);
+        to_stream(serializedGraph,numEdges,position);
 
         for(const auto& edg : nodeIt->m_Edges)
         {
             // Serialize the first starting coords
              const CoordValueType startPix = (graph->GetNodeAt(edg.m_TargetId))->GetFirstPixelCoords();
-	     to_stream(serializedGraph,startPix,position);
-	    //to_stream(serializedGraph,edg.m_TargetId,position);
+			 to_stream(serializedGraph,startPix,position);
+			//to_stream(serializedGraph,edg.m_TargetId,position);
 
             // Serialize the boundary
-	    to_stream(serializedGraph,edg.m_Boundary,position);
+			 to_stream(serializedGraph,edg.m_Boundary,position);
 
             // Serialize the specific attributes of the edges
             edg.m_Attributes.Serialize(serializedGraph, position);
@@ -370,6 +289,96 @@ GraphOperations<TGraph>::SerializeGraph(const GraphPointerType graph)
 }
 
 template< typename TGraph >
+typename GraphOperations<TGraph>::GraphPointerType
+GraphOperations<TGraph>::DeSerializeGraph(const std::vector<char>& serializedGraph)
+{
+    // Local variable: offset in the bit stream.
+    uint64_t position = 0;
+
+    // Initialization of the resulting graph
+    auto graph = GraphType::New();
+
+    // Read the number of nodes
+    uint64_t numNodes;
+    from_stream(serializedGraph,numNodes,position);
+    assert(numNodes > 0);
+
+    // Reserve memory space for the graph
+    graph->SetNumberOfNodes(numNodes);
+
+    // Map: starting starting coords of each node -> its id
+    std::unordered_map< CoordValueType, IdType > startPixIdMap;
+
+    // Loop over the nodes
+    for(IdType id = 0; id < numNodes; id++)
+    {
+
+        // Add a new node at the end of the adjacency list
+        // of the graph.
+        auto newNode = graph->AddNode();
+
+        // The id of the node
+        newNode->m_Id = id;
+
+        // Set the flags appropriately
+        newNode->m_HasToBeRemoved = false;
+        newNode->m_Valid = true;
+
+        // The bounding box
+        from_stream(serializedGraph,newNode->m_BoundingBox,position);
+
+        // The contour
+        newNode->m_Contour.DeSerialize(serializedGraph, position);
+
+        // Create a new entry in the map startPixIdMap
+        assert(startPixIdMap.find(newNode->GetFirstPixelCoords()) == startPixIdMap.end());
+        startPixIdMap[newNode->GetFirstPixelCoords()] = id;
+
+        // The specific attributes of the node
+        newNode->m_Attributes.DeSerialize(serializedGraph, position);
+
+        // The number of edges
+        uint32_t numEdges;
+        from_stream(serializedGraph,numEdges,position);
+
+        newNode->m_Edges.reserve(numEdges);
+
+        for(uint32_t e = 0; e < numEdges; e++)
+        {
+            // Add a new edge
+            auto newEdge = newNode->AddEdge();
+
+            // The starting coords
+			from_stream(serializedGraph,newEdge->m_TargetId,position);
+
+			// The boundary
+			from_stream(serializedGraph,newEdge->m_Boundary,position);
+
+            // Deserialize the specific attributes of the edges
+            newEdge->m_Attributes.DeSerialize(serializedGraph, position);
+
+        } // end for(uint32_t e = 0; e < numEdges; e++)
+
+    } // end for(IdType id = 0; id < numNodes; id++)
+
+    // Update the target ids of the edges with the real ids of the nodes
+    for(auto nodeIt = graph->Begin(); nodeIt != graph->End(); nodeIt++)
+    {
+        for(auto& edg : nodeIt->m_Edges)
+        {
+            auto isInStartPixIdMap = startPixIdMap.find(edg.m_TargetId);
+
+			assert(isInStartPixIdMap != startPixIdMap.end());
+			edg.m_TargetId = isInStartPixIdMap->second;
+
+        } // end for(auto& edg : nodeIt->m_Edges)
+
+    } // end for(auto nodeIt = graph->Begin(); nodeIt != graph->End(); nodeIt++)
+
+    return graph;
+}
+
+template< typename TGraph >
 void
 GraphOperations<TGraph>::WriteMarginGraphToDisk(std::unordered_map< NodeType*, uint32_t >& stabilityMargin,
                         const GraphPointerType graph,
@@ -378,27 +387,13 @@ GraphOperations<TGraph>::WriteMarginGraphToDisk(std::unordered_map< NodeType*, u
     // Serialize the stability margin
     const auto serializedStabilityMargin = SerializeStabilityMargin(stabilityMargin, graph);
 
-    // Open the file stream
-    std::ofstream outFile(outputPath, std::ios::out | std::ios::binary);
-    
-    if(outFile.good())
-    {
-        // Retrieve the number of bytes to write.
-        uint64_t numberOfBytes = serializedStabilityMargin.size();
-        outFile.write(reinterpret_cast<char*>(&numberOfBytes), UInt64Size);
-        outFile.write(&serializedStabilityMargin[0], serializedStabilityMargin.size() * CharSize);
-        outFile.close();
-    }
-    else
-    {
-        std::cerr << "Cannot open ouput file to write the graph: " << outputPath << std::endl;
-        exit(EXIT_FAILURE);
-    }
+    // Write to disk
+    WriteSerializedObjectToDisk(serializedStabilityMargin, outputPath);
 }
 
 template< typename TGraph >
 void
-GraphOperations<TGraph>::WriteSerializedMarginToDisk(const std::vector<char>& serializedStabilityMargin,
+GraphOperations<TGraph>::WriteSerializedObjectToDisk(const std::vector<char>& serializedObject,
                          const std::string& outputPath)
 {
     // Open the file stream
@@ -407,22 +402,23 @@ GraphOperations<TGraph>::WriteSerializedMarginToDisk(const std::vector<char>& se
     if(outFile.good())
     {
         // Retrieve the number of bytes to write.
-        uint64_t numberOfBytes = serializedStabilityMargin.size();
+        uint64_t numberOfBytes = serializedObject.size();
         outFile.write(reinterpret_cast<char*>(&numberOfBytes), UInt64Size);
-        outFile.write(&serializedStabilityMargin[0], serializedStabilityMargin.size() * CharSize);
+        outFile.write(&serializedObject[0], serializedObject.size() * CharSize);
         outFile.close();
     }
     else
     {
-        std::cerr << "Cannot open ouput file to write the graph: " << outputPath << std::endl;
+        std::cerr << "Cannot open ouput file to write the object: " << outputPath << std::endl;
         exit(EXIT_FAILURE);
     }
 }
 
 template< typename TGraph >
 std::vector< char >
-GraphOperations<TGraph>::ReadSerializedMarginFromDisk(const std::string& inputPath)
+GraphOperations<TGraph>::ReadSerializedObjectFromDisk(const std::string& inputPath)
 {
+	assert(file_exists(inputPath));
     // Open the file stream
     std::ifstream inFile(inputPath, std::ios::in | std::ios::binary);
 
@@ -431,14 +427,14 @@ GraphOperations<TGraph>::ReadSerializedMarginFromDisk(const std::string& inputPa
         // Retrieve the number of bytes to read.
         uint64_t numberOfBytes;
         inFile.read(reinterpret_cast<char*>(&numberOfBytes), UInt64Size);
-        std::vector<char> serializedGraph(numberOfBytes);
-        inFile.read(&serializedGraph[0], numberOfBytes * CharSize);
+        std::vector<char> serializedObject(numberOfBytes);
+        inFile.read(&serializedObject[0], numberOfBytes * CharSize);
         inFile.close();
-        return serializedGraph;
+        return serializedObject;
     }
     else
     {
-        std::cerr << "Cannot open input file to load the graph: " << inputPath << std::endl;
+        std::cerr << "Cannot open input file to load the object: " << inputPath << std::endl;
         exit(EXIT_FAILURE);
     }
 }
@@ -451,24 +447,10 @@ GraphOperations<TGraph>::WriteGraphToDisk(const GraphPointerType graph,
     // Serialize the graph
     const auto serializedGraph = SerializeGraph(graph);
 
-    // Open the file stream
-    std::ofstream outFile(outputPath, std::ios::out | std::ios::binary  | std::ios::trunc);
+    // Write to disk
+    WriteSerializedObjectToDisk(serializedGraph, outputPath);
 
-    if(outFile.good())
-    {
-        // Retrieve the number of bytes to write.
-        uint64_t numberOfBytes = serializedGraph.size();
-        outFile.write(reinterpret_cast<char*>(&numberOfBytes), UInt64Size);
-        outFile.write(&serializedGraph[0], serializedGraph.size() * CharSize);
-        outFile.close();
-    }
-    else
-    {
-        std::cerr << "Cannot open ouput file to write the graph: " << outputPath << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-    /* Ecriture du header */
+    // Write the header
     GraphOperations<TGraph>::WriteGraphHeader(outputPath, graph);
 }
 
@@ -476,35 +458,22 @@ template< typename TGraph >
 typename GraphOperations<TGraph>::GraphPointerType
 GraphOperations<TGraph>::ReadGraphFromDisk(const std::string & inputPath)
 {
-    // Open the file stream
-    std::ifstream inFile(inputPath, std::ios::in | std::ios::binary);
+	assert(file_exists(inputPath));
+	// Read the serialized graph
+	const auto serializedGraph = ReadSerializedObjectFromDisk(inputPath);
 
-    if(inFile.good())
-    {
-        // Retrieve the number of bytes to read.
-        uint64_t numberOfBytes;
-        inFile.read(reinterpret_cast<char*>(&numberOfBytes), UInt64Size);
-        std::vector<char> serializedGraph(numberOfBytes);
-        inFile.read(&serializedGraph[0], numberOfBytes * CharSize);
-        inFile.close();
-        
-        auto graph = DeSerializeGraph(serializedGraph);
+	// Convert to graph
+	auto graph = DeSerializeGraph(serializedGraph);
 
-        /* Lecture du header et update du graphe avec les informations */
-        GraphImageInfo info = GraphOperations<TGraph>::ReadGraphHeader(inputPath);
-        graph->SetImageWidth(info.m_width);
-        graph->SetImageHeight(info.m_height);
-        graph->SetNumberOfSpectralBands(info.m_nbBands);
-        graph->SetOriginX(info.m_originX);
-        graph->SetOriginY(info.m_originY);
-        graph->SetProjectionRef(info.m_projectionRef);
-        return graph;
-    }
-    else
-    {
-        std::cerr << "Cannot open input file to load the graph: " << inputPath << std::endl;
-        exit(EXIT_FAILURE);
-    }
+	// Read the headet and update graph
+	GraphImageInfo info = GraphOperations<TGraph>::ReadGraphHeader(inputPath);
+	graph->SetImageWidth(info.m_width);
+	graph->SetImageHeight(info.m_height);
+	graph->SetNumberOfSpectralBands(info.m_nbBands);
+	graph->SetOriginX(info.m_originX);
+	graph->SetOriginY(info.m_originY);
+	graph->SetProjectionRef(info.m_projectionRef);
+	return graph;
 }
 
 template< typename TGraph >
@@ -515,7 +484,6 @@ GraphOperations<TGraph>::GetListOfBorderNodes(const GraphPointerType graph,
                                               const uint32_t nbTilesY,
                                               const uint32_t inputLSImageWidth)
 {
-    // Lower and upper bounds of the tile without the margin
     // Lower and upper bounds of the tile without the margin
     const uint32_t lowerCol = tile.m_Frame.GetIndex(0);
     const uint32_t lowerRow = tile.m_Frame.GetIndex(1);

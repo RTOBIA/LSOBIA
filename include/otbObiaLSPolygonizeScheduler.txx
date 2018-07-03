@@ -328,7 +328,7 @@ LSPolygonizeScheduler<TInputGraph, TSimplifyFunc>
 		{
 			std::stringstream os;
 			os << this->m_TemporaryDirectory << "MarginGraph_" << ty << "_" << tx << ".dat";
-			GraphOperationsType::WriteSerializedMarginToDisk(m_SerializedStabilityMargin, os.str());
+			GraphOperationsType::WriteSerializedObjectToDisk(m_SerializedStabilityMargin, os.str());
 			m_SerializedStabilityMargin.clear();
 		}
 
@@ -369,7 +369,7 @@ LSPolygonizeScheduler<TInputGraph, TSimplifyFunc>
 		{
 			std::stringstream os;
 			os << this->m_TemporaryDirectory << "MarginGraph_" << ty << "_" << tx << ".dat";
-			m_SerializedStabilityMargin = GraphOperationsType::ReadSerializedMarginFromDisk(os.str());
+			m_SerializedStabilityMargin = GraphOperationsType::ReadSerializedObjectFromDisk(os.str());
 		}
 
 		// Move at the right location in the shared buffer.

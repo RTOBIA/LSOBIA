@@ -147,7 +147,9 @@ otb_module_target_label(otb${otb-module}TestDriver)
 otb_add_test(NAME otbObiaStreamUtilsTest COMMAND otbLSOBIATestDriver otbObiaStreamUtils)
 otb_add_test(NAME otbObiaGraphTest COMMAND otbLSOBIATestDriver otbObiaGraphTest)
 otb_add_test(NAME otbObiaContourTest COMMAND otbLSOBIATestDriver otbObiaContourTest)
-otb_add_test(NAME otbObiaGraphOperationsTest COMMAND otbLSOBIATestDriver otbObiaGraphOperationsTest)
+otb_add_test(NAME otbObiaGraphOperationsTest COMMAND otbLSOBIATestDriver otbObiaGraphOperationsTest
+	${TEMP_DIR}/graph_sqrt.bin
+	${LSOBIA_SOURCE_DIR}/data/graph_sqrt.bin)
 
 
 # ----------------------------------------------------------------------------------------------

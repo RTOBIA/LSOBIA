@@ -244,7 +244,7 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
           {
           std::stringstream os;
           os << this->m_TemporaryDirectory << "MarginGraph_" << ty << "_" << tx << ".dat";
-          m_SerializedListOfBorderNodes = GraphOperationsType::ReadSerializedMarginFromDisk(os.str());
+          m_SerializedListOfBorderNodes = GraphOperationsType::ReadSerializedObjectFromDisk(os.str());
           }
 
         // Move at the right location in the shared buffer.
@@ -622,7 +622,7 @@ LSMeanShiftScheduler<TInputImage, TLabelPixel>
           {
           std::stringstream os;
           os << this->m_TemporaryDirectory << "MarginGraph_" << ty << "_" << tx << ".dat";
-          GraphOperationsType::WriteSerializedMarginToDisk(m_SerializedListOfBorderNodes, os.str());
+          GraphOperationsType::WriteSerializedObjectToDisk(m_SerializedListOfBorderNodes, os.str());
           }
         } // end if(mpiTools->IsMyTurn(tid))
 
