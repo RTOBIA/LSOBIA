@@ -17,11 +17,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "otbTestMain.h"
+#include "otbObiaSpatialTools.h"
 
-void RegisterTests()
+int otbObiaSpatialTools(int argc, char * argv[])
 {
-        REGISTER_TEST(otbObiaConvertGraphToImage);
-	REGISTER_TEST(otbObiaStreamUtils);
-	REGISTER_TEST(otbObiaSpatialTools);
+
+	auto tile_parti_opti = otb::obia::SpatialTools::TilePartitionningOptimizer(3, 2000, 2000, 2, 1);
+	assert(tile_parti_opti[0] == 2000);
+	assert(tile_parti_opti[1] == 1000);
+
+	return EXIT_SUCCESS;
 }

@@ -215,6 +215,25 @@ enum Direction{
 
      /** Compare safely two float numbers...*/
      static bool AreFloatNumbersApproximatelyEqual(const float a, const float b);
+
+     /**
+      * TilePartitionningOptimizer
+      *
+      * Compute the best tile partitionning considering image caracteristics (size, number of bands) and the
+      * number of processing unitgs available on the system.
+      *
+      * @param nbBands: image's number of bands
+      * @param width: image's width
+      * @param height: image's height
+      * @param nbProcs: number of available processor units
+      * @param nbTilesPerProc: number of tiles to process on each processor
+      *
+      * @return: a std::array containing the optimal width and the height of the tiles.
+      */
+     static std::array<int64_t, 2> TilePartitionningOptimizer(const int nbBands, const int width,
+    		 const int heigth, const int nbProcs, const int nbTilesPerProc);
+
+
 };
 
 } // end of namespace obia

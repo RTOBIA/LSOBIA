@@ -19,6 +19,8 @@
  */
 #include "otbObiaSpatialTools.h"
 
+#include <math.h>
+
 namespace otb
 {
 
@@ -277,6 +279,55 @@ namespace obia
   ::AreFloatNumbersApproximatelyEqual(const float a, const float b)
   {
     return fabs(a - b) <= ( (fabs(a) < fabs(b) ? fabs(b) : fabs(a)) * std::numeric_limits<float>::epsilon() );
+  }
+
+  std::array<int64_t, 2>
+  SpatialTools
+  ::TilePartitionningOptimizer(const int nbBands, const int width, const int height,
+		  const int nbProcs, const int nbTilesPerProc)
+  {
+      // Compute memory used by a single pixel
+	  float margin = 1.1;
+	  float graphNodeSize = margin * (4 + 305 + (8 * nbBands) + 0.3 * 4 * 16 + 3* 8);
+	  float imgNodeSize = (4 + 4 + 4) * nbBands;
+	  float nodeSize = graphNodeSize + imgNodeSize;
+
+	  // Image aspect ratio
+	  float ratio = float(width) / float(height);
+	  int nbTiles = nbProcs * nbTilesPerProc;
+
+	  // Number of pixels per tile
+	  float nbPixelsPerTile = float(width * height) / nbTiles;
+
+	  // Estimate a target number of divisions in width from number of pixels per tile and aspect ratio
+	  int targetNbTilesWidth = int(width / floor(sqrt(nbPixelsPerTile / ratio)));
+
+      // Find the factor of nb procs closest to the target number of divisions in width
+      float dist = std::abs(targetNbTilesWidth - 1);
+      int bestFactor = 1;
+	  for(int factor = 2 ; factor < nbTiles + 1 ; factor++)
+	  {
+		  if(nbTiles % factor == 0)
+		  {
+			  float newDist = std::abs(targetNbTilesWidth - factor);
+			  if(newDist<dist)
+			  {
+				  bestFactor = factor;
+				  dist = newDist;
+			  }
+		  }
+	  }
+
+      // Compute number of tiles in width and heigth
+      int nbTilesWidth = bestFactor;
+      int nbTilesHeight = nbTiles / nbTilesWidth;
+
+      // Compute tile width and height
+      int tileWidth = int(ceil(float(width) / nbTilesWidth));
+      int tileHeight = int(ceil(float(height) / nbTilesHeight));
+
+      std::array<int64_t, 2> result = {tileWidth, tileHeight};
+      return result;
   }
 
 } // end of namespace obia
