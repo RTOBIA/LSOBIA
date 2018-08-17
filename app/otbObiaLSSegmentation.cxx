@@ -23,7 +23,10 @@
 #include "otbObiaLSBaatzSegmentationScheduler.h"
 #include "otbObiaLSMeanShiftScheduler.h"
 
+#include "otbImageFileReader.h"
 #include "otbVectorImage.h"
+
+#include "otbObiaSpatialTools.h"
 
 #include <string>
 #include <sstream>
@@ -143,8 +146,14 @@ private:
         // Processing Parameters
         AddParameter(ParameterType_Group,"processing","Set of parameters related to processing options");
         AddParameter(ParameterType_Int,"processing.memory","Maximum memory to be used on the main node");
+        AddParameter(ParameterType_Int,"processing.nbproc","Number of processor allocated to the processing");
+        MandatoryOff("processing.nbproc");
+        AddParameter(ParameterType_Int,"processing.nbtilesperproc","Number tiles processed on each processor");
+        MandatoryOff("processing.nbtilesperproc");
         AddParameter(ParameterType_Int,"processing.maxtilesizex","Maximum size of tiles along x axis");
+        MandatoryOff("processing.maxtilesizex");
         AddParameter(ParameterType_Int,"processing.maxtilesizey","Maximum size of tiles along x axis");
+        MandatoryOff("processing.maxtilesizey");
         AddParameter(ParameterType_Choice,"processing.writeimages","Activation of image traces");
         AddChoice("processing.writeimages.on","Activated");
         AddChoice("processing.writeimages.off","Deactivated");
@@ -164,6 +173,26 @@ private:
 
     void DoUpdateParameters()
     {
+    	// If the user doesn't provide the tile size, retrieve if from the number of processor
+    	if(!HasUserValue("processing.maxtilesizex") || !HasUserValue("processing.maxtilesizey"))
+    	{
+    		if(HasUserValue("processing.nbproc") && HasUserValue("processing.nbtilesperproc") && HasUserValue("io.im"))
+    		{
+    			typedef otb::VectorImage<float, 2> ImageType;
+    			typedef otb::ImageFileReader<ImageType> ReaderType;
+    			ReaderType::Pointer reader = ReaderType::New();
+    			reader->SetFileName(GetParameterString("io.im"));
+    			reader->UpdateOutputInformation();
+    			uint32_t nb_band = reader->GetOutput()->GetNumberOfComponentsPerPixel();
+    			uint32_t width = reader->GetOutput()->GetLargestPossibleRegion().GetSize()[0];
+    			uint32_t height = reader->GetOutput()->GetLargestPossibleRegion().GetSize()[1];
+    			uint32_t nbproc = GetParameterInt("processing.nbproc");
+    			uint32_t tilesPerProc = GetParameterInt("processing.nbtilesperproc");
+    			std::array<int64_t, 2> maxtilesize = obia::SpatialTools::TilePartitionningOptimizer(nb_band, width, height, nbproc, tilesPerProc);
+    			SetParameterInt("processing.maxtilesizex", maxtilesize[0]);
+    			SetParameterInt("processing.maxtilesizey", maxtilesize[1]);
+    		}
+    	}
     }
 
     // Execute App
@@ -176,6 +205,10 @@ private:
         std::string labelImage = GetParameterString("io.out.labelimage");
         std::string tmpDir = GetParameterString("io.temp");
         
+        if(!HasUserValue("processing.maxtilesizex") || !HasUserValue("processing.maxtilesizey"))
+        {
+        	otbAppLogFATAL(<<"You need to provide either the tiles size, or the number of processor and the number of tiles per processor.");
+        }
         uint32_t maxTileWidth = GetParameterInt("processing.maxtilesizex");
         uint32_t maxTileHeight = GetParameterInt("processing.maxtilesizey");
         unsigned long int memory = GetParameterInt("processing.memory");

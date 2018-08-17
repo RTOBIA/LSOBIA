@@ -286,6 +286,10 @@ namespace obia
   ::TilePartitionningOptimizer(const int nbBands, const int width, const int height,
 		  const int nbProcs, const int nbTilesPerProc)
   {
+	  std::cout << "Optimizing tiles size." << std::endl;
+	  std::cout << "Image is " << width << "x" << height << " pixels with " << nbBands << " bands." << std::endl;
+	  std::cout << "System has " << nbProcs << " proc, each processing " << nbTilesPerProc << " tiles." << std::endl;
+
       // Compute memory used by a single pixel
 	  float margin = 1.1;
 	  float graphNodeSize = margin * (4 + 305 + (8 * nbBands) + 0.3 * 4 * 16 + 3* 8);
@@ -327,6 +331,8 @@ namespace obia
       int tileHeight = int(ceil(float(height) / nbTilesHeight));
 
       std::array<int64_t, 2> result = {tileWidth, tileHeight};
+      std::cout << "Proposed Partionning: " << nbTilesWidth << "x" << nbTilesHeight << "tiles "
+    		  "of " << tileWidth << "x" << tileHeight << " pixels." << std::endl;
       return result;
   }
 
