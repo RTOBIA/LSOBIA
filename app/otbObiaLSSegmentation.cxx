@@ -66,6 +66,9 @@ private:
         ON,
         OFF
     };
+
+	// Tiling configuration
+    obia::TilingConfiguration tilingConf = {0, 0, 0};
     
     // Init App
     void DoInit()
@@ -174,25 +177,41 @@ private:
     void DoUpdateParameters()
     {
     	// If the user doesn't provide the tile size, retrieve if from the number of processor
-    	if(!HasUserValue("processing.maxtilesizex") || !HasUserValue("processing.maxtilesizey"))
-    	{
-    		if(HasUserValue("processing.nbproc") && HasUserValue("processing.nbtilesperproc") && HasUserValue("io.im"))
-    		{
-    			typedef otb::VectorImage<float, 2> ImageType;
-    			typedef otb::ImageFileReader<ImageType> ReaderType;
-    			ReaderType::Pointer reader = ReaderType::New();
-    			reader->SetFileName(GetParameterString("io.im"));
-    			reader->UpdateOutputInformation();
-    			uint32_t nb_band = reader->GetOutput()->GetNumberOfComponentsPerPixel();
-    			uint32_t width = reader->GetOutput()->GetLargestPossibleRegion().GetSize()[0];
-    			uint32_t height = reader->GetOutput()->GetLargestPossibleRegion().GetSize()[1];
-    			uint32_t nbproc = GetParameterInt("processing.nbproc");
-    			uint32_t tilesPerProc = GetParameterInt("processing.nbtilesperproc");
-    			std::array<int64_t, 2> maxtilesize = obia::SpatialTools::TilePartitionningOptimizer(nb_band, width, height, nbproc, tilesPerProc);
-    			SetParameterInt("processing.maxtilesizex", maxtilesize[0]);
-    			SetParameterInt("processing.maxtilesizey", maxtilesize[1]);
-    		}
+		if(!HasUserValue("processing.maxtilesizex") || !HasUserValue("processing.maxtilesizey"))
+		{
+			if(HasUserValue("processing.nbproc") && HasUserValue("processing.nbtilesperproc") && HasUserValue("io.im") && HasUserValue("processing.memory"))
+			{
+				typedef otb::VectorImage<float, 2> ImageType;
+				typedef otb::ImageFileReader<ImageType> ReaderType;
+				ReaderType::Pointer reader = ReaderType::New();
+				reader->SetFileName(GetParameterString("io.im"));
+				reader->UpdateOutputInformation();
+				uint32_t nb_band = reader->GetOutput()->GetNumberOfComponentsPerPixel();
+				uint32_t width = reader->GetOutput()->GetLargestPossibleRegion().GetSize()[0];
+				uint32_t height = reader->GetOutput()->GetLargestPossibleRegion().GetSize()[1];
+				uint32_t nbproc = GetParameterInt("processing.nbproc");
+				uint32_t tilesPerProc = GetParameterInt("processing.nbtilesperproc");
+				uint32_t memPerProc = GetParameterInt("processing.memory");
+				uint32_t maxIter = GetParameterInt("algorithm.baatz.maxiter");
+				tilingConf = obia::SpatialTools::TilePartitionningOptimizer(nb_band, width, height, nbproc, tilesPerProc, memPerProc, maxIter);
+				SetParameterInt("processing.maxtilesizex", tilingConf.tileWidth);
+				SetParameterInt("processing.maxtilesizey", tilingConf.tileHeight);
+			}
+		}
+		else if (tilingConf.tileWidth == 0 || tilingConf.tileHeight == 0)
+		{
+			tilingConf.tileWidth = GetParameterInt("processing.maxtilesizex");
+			tilingConf.tileHeight = GetParameterInt("processing.maxtilesizey");
     	}
+		if(HasUserValue("algorithm.baatz.numitfirstpartial") && tilingConf.maxIterPossible != 0)
+		{
+			if(GetParameterInt("algorithm.baatz.numitfirstpartial") > tilingConf.maxIterPossible)
+			{
+				otbAppLogWARNING("The number of iterations for first partial segmentation is higher than the maximum "
+						"possible number of iteration according to the available memory. Setting it to " << tilingConf.maxIterPossible);
+				SetParameterInt("algorithm.baatz.numitfirstpartial", tilingConf.maxIterPossible);
+			}
+		}
     }
 
     // Execute App

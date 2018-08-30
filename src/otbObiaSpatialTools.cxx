@@ -281,14 +281,14 @@ namespace obia
     return fabs(a - b) <= ( (fabs(a) < fabs(b) ? fabs(b) : fabs(a)) * std::numeric_limits<float>::epsilon() );
   }
 
-  std::array<int64_t, 2>
+  TilingConfiguration
   SpatialTools
   ::TilePartitionningOptimizer(const int nbBands, const int width, const int height,
-		  const int nbProcs, const int nbTilesPerProc)
+		  const int nbProcs, const int nbTilesPerProc, const int memPerProc, const int maxIter)
   {
 	  std::cout << "Optimizing tiles size." << std::endl;
 	  std::cout << "Image is " << width << "x" << height << " pixels with " << nbBands << " bands." << std::endl;
-	  std::cout << "System has " << nbProcs << " proc, each processing " << nbTilesPerProc << " tiles." << std::endl;
+	  std::cout << "System has " << nbProcs << " proc with " << memPerProc << "Mb memory, each processing " << nbTilesPerProc << " tiles." << std::endl;
 
       // Compute memory used by a single pixel
 	  float margin = 1.1;
@@ -327,12 +327,36 @@ namespace obia
       int nbTilesHeight = nbTiles / nbTilesWidth;
 
       // Compute tile width and height
-      int tileWidth = int(ceil(float(width) / nbTilesWidth));
-      int tileHeight = int(ceil(float(height) / nbTilesHeight));
+      uint32_t tileWidth = int(ceil(float(width) / nbTilesWidth));
+      uint32_t tileHeight = int(ceil(float(height) / nbTilesHeight));
 
-      std::array<int64_t, 2> result = {tileWidth, tileHeight};
-      std::cout << "Proposed Partionning: " << nbTilesWidth << "x" << nbTilesHeight << "tiles "
-    		  "of " << tileWidth << "x" << tileHeight << " pixels." << std::endl;
+      uint32_t maxIterPossible = maxIter;
+      // Look for optimal initial number of iteration (Baatz)
+      for(int nbIter = 1 ; nbIter < maxIter ; nbIter++)
+      {
+		// Compute tile size with margins
+		margin = std::pow(2, nbIter + 1) - 2;
+		int tile_w_margin = int(floor(tileWidth + 2 * margin));
+		int tile_h_margin = int(floor(tileHeight + 2 * margin));
+
+		// Compute memory usage for this margin
+		float used_memory_graph = tile_w_margin * tile_h_margin * graphNodeSize / std::pow(10, 6);
+		float used_memory_img = tile_w_margin * tile_h_margin * imgNodeSize / std::pow(10, 6);
+		float used_memory_margin = used_memory_img + used_memory_graph - (tileWidth * tileHeight * (graph_node_size + img_node_size)) / std::pow(10, 6);
+
+		if(used_memory_graph + used_memory_img > memPerProc)
+		{
+			maxIterPossible = nbIter - 1;
+			break;
+		}
+      }
+
+      // Return results
+      TilingConfiguration result = {tileWidth, tileHeight, maxIterPossible};
+      std::cout << "Proposed Partionning: " << nbTilesWidth << "x" << nbTilesHeight
+    		  << "tiles of " << tileWidth << "x" << tileHeight
+			  << " pixels. Maximum number of initial iteration is: " << maxIterPossible
+			  << "." << std::endl;
       return result;
   }
 

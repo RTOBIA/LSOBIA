@@ -53,6 +53,17 @@ struct ProcessingTile
     std::array<long int, 4> m_MarginValues;
 };
 
+/*
+ * TilingConfiguration
+ */
+struct TilingConfiguration
+{
+	// Tiles sizes
+	uint32_t tileWidth;
+	uint32_t tileHeight;
+	uint32_t maxIterPossible;
+};
+
 /** Create an enum class for the directions to be more readable */
 enum Direction{
     TOP = 0,
@@ -230,8 +241,13 @@ enum Direction{
       *
       * @return: a std::array containing the optimal width and the height of the tiles.
       */
-     static std::array<int64_t, 2> TilePartitionningOptimizer(const int nbBands, const int width,
-    		 const int heigth, const int nbProcs, const int nbTilesPerProc);
+     static TilingConfiguration TilePartitionningOptimizer(const int nbBands,
+    		 const int width,
+    		 const int heigth,
+			 const int nbProcs,
+			 const int nbTilesPerProc,
+			 const int memPerProc,
+			 const int maxIter);
 
 
 };
