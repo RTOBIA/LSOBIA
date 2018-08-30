@@ -27,12 +27,12 @@ int otbObiaSpatialTools(int argc, char * argv[])
 	assert(tile_parti_opti.tileHeight == 1000);
 	assert(tile_parti_opti.maxIterPossible == 10);
 
-	auto tile_parti_opti = otb::obia::SpatialTools::TilePartitionningOptimizer(13, 20000, 40000, 24, 4, 100000, 8);
+	tile_parti_opti = otb::obia::SpatialTools::TilePartitionningOptimizer(13, 20000, 40000, 24, 4, 100000, 8);
 	assert(tile_parti_opti.tileWidth == 5000);
 	assert(tile_parti_opti.tileHeight == 1667);
 	assert(tile_parti_opti.maxIterPossible == 8);
 
-	auto tile_parti_opti = otb::obia::SpatialTools::TilePartitionningOptimizer(13, 20000, 40000, 24, 4, 1000, 8);
+	tile_parti_opti = otb::obia::SpatialTools::TilePartitionningOptimizer(13, 20000, 40000, 24, 4, 1000, 8);
 	assert(tile_parti_opti.tileWidth == 5000);
 	assert(tile_parti_opti.tileHeight == 1667);
 	assert(tile_parti_opti.maxIterPossible == 0);

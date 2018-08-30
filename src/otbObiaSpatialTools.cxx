@@ -342,7 +342,7 @@ namespace obia
 		// Compute memory usage for this margin
 		float used_memory_graph = tile_w_margin * tile_h_margin * graphNodeSize / std::pow(10, 6);
 		float used_memory_img = tile_w_margin * tile_h_margin * imgNodeSize / std::pow(10, 6);
-		float used_memory_margin = used_memory_img + used_memory_graph - (tileWidth * tileHeight * (graph_node_size + img_node_size)) / std::pow(10, 6);
+		float used_memory_margin = used_memory_img + used_memory_graph - (tileWidth * tileHeight * (graphNodeSize + imgNodeSize)) / std::pow(10, 6);
 
 		if(used_memory_graph + used_memory_img > memPerProc)
 		{
