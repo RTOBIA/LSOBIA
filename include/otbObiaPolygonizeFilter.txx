@@ -29,7 +29,7 @@ template <class TGraphType>
 PolygonizeFilter<TGraphType>
 ::PolygonizeFilter()
 {
-	m_GraphToVectlorFilter = GraphToVectorFilterType::New();
+	m_GraphToVectorFilter = GraphToVectorFilterType::New();
 	m_SimplifyVectorFilter = SimplifyVectorFilterType::New(); 
 	
 	m_GraphToVectorFilter->SetXshift(0);

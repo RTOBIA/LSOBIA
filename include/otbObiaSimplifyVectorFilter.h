@@ -89,6 +89,10 @@ public:
 	 * Set the simplify function*/
 	void SetSimplifyFunc(SimplifyFunc* simplifyFunc){m_simplifyFunc = simplifyFunc;};
 
+	virtual void GraftOutput(itk::DataObject *output);
+	virtual void GraftOutput(const DataObjectIdentifierType & key, itk::DataObject *output);
+	virtual void GraftNthOutput(unsigned int idx, itk::DataObject *output);
+
 	protected:
 
 	SimplifyVectorFilter();
