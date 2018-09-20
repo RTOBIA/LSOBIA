@@ -23,6 +23,7 @@
 #include "otbObiaImageToGraphFilter.h"
 #include "itkImageRegionConstIterator.h"
 #include "otbImage.h"
+#include "otbObiaStreamUtils.h"
 
 namespace otb
 {
@@ -47,7 +48,7 @@ struct LabelNodeAttribute : GraphAttribute
 
     virtual uint64_t GetNumberOfBytesToSerialize() const 
     { 
-      return stream_offset(m_Label) + stream_offset(m_ListOfPixels);
+      return (stream_offset(m_Label) + stream_offset(m_ListOfPixels));
     }
     
     virtual void Serialize(std::vector<char>& stream, uint64_t& position) const
@@ -56,7 +57,7 @@ struct LabelNodeAttribute : GraphAttribute
         to_stream(stream,m_Label,position);
   
         // Serialize the number of pixels to write
-	to_stream(stream,m_ListOfPixels,position);
+        to_stream(stream,m_ListOfPixels,position);
     }
 
     virtual void DeSerialize(const std::vector<char>& stream, uint64_t& position)
@@ -64,8 +65,8 @@ struct LabelNodeAttribute : GraphAttribute
         // Deserialize the label value
         from_stream(stream,m_Label,position);
 
-	// Deserialize the list of pixels
-	from_stream(stream,m_ListOfPixels,position);
+        // Deserialize the list of pixels
+        from_stream(stream,m_ListOfPixels,position);
     }
 };
 

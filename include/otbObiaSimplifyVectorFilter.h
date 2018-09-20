@@ -83,7 +83,8 @@ public:
 	/**
 	* Get the output \c ogr::DataSource which is a "memory" datasource.
 	*/
-	const OGRDataSourceType * GetOutput();
+	const OGRDataSourceType * GetOutput() const;
+	OGRDataSourceType * GetOutput();
 
 	/**
 	 * Set the simplify function*/

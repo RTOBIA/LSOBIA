@@ -76,9 +76,19 @@ GraphToVectorFilter<TInputGraph>
 }
 
 template <class TInputGraph>
-const typename GraphToVectorFilter<TInputGraph>::OGRDataSourceType *
+typename GraphToVectorFilter<TInputGraph>::OGRDataSourceType *
 GraphToVectorFilter<TInputGraph>
 ::GetOutput()
+{
+//  return static_cast< const OGRDataSourceType *>(
+//              this->ProcessObject::GetOutput(0));
+  return static_cast<  OGRDataSourceType*>(this->GetPrimaryOutput() );
+}
+
+template <class TInputGraph>
+const typename GraphToVectorFilter<TInputGraph>::OGRDataSourceType *
+GraphToVectorFilter<TInputGraph>
+::GetOutput() const
 {
 //  return static_cast< const OGRDataSourceType *>(
 //              this->ProcessObject::GetOutput(0));
@@ -646,6 +656,51 @@ void GraphToVectorFilter<TInputGraph>
     t1 = this->GetMTime();
     ogrDS->SetPipelineMTime(t1);
 
+}
+
+/**
+ *
+ */
+template <class TInputGraph>
+void GraphToVectorFilter<TInputGraph>
+::GraftOutput(itk::DataObject *graft)
+{
+    this->GraftNthOutput(0, graft);
+}
+
+/**
+ *
+ */
+template <class TInputGraph>
+void GraphToVectorFilter<TInputGraph>
+::GraftOutput(const DataObjectIdentifierType & key, itk::DataObject *graft)
+{
+    if ( !graft )
+    {
+        itkExceptionMacro(<< "Requested to graft output that is a ITK_NULLPTR pointer");
+    }
+
+    // we use the process object method since all out output may not be
+    // of the same type
+    itk::DataObject *output = this->ProcessObject::GetOutput(key);
+
+    // Call GraftImage to copy meta-information, regions, and the pixel container
+    output->Graft(graft);
+}
+
+/**
+ *
+ */
+template <class TInputGraph>
+void GraphToVectorFilter<TInputGraph>
+::GraftNthOutput(unsigned int idx, itk::DataObject *graft)
+{
+    if ( idx >= this->GetNumberOfIndexedOutputs() )
+    {
+        itkExceptionMacro(<< "Requested to graft output " << idx
+                          << " but this filter only has " << this->GetNumberOfIndexedOutputs() << " indexed Outputs.");
+    }
+    this->GraftOutput( this->MakeNameFromOutputIndex(idx), graft );
 }
 
 } //End namespace obia

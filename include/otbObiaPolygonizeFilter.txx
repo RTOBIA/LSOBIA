@@ -48,9 +48,10 @@ void
 PolygonizeFilter<TGraphType>::
 GenerateData()
 {
-	m_GraphToVectorFilter->SetInput(this->m_Graph);
+	m_GraphToVectorFilter->SetInput(this->GetInput());
 	
 	m_SimplifyVectorFilter->GraftOutput(this->GetOutput());
+	
 	// TODO: Check why we have to update for each filter?
 	m_GraphToVectorFilter->Update();
 	m_SimplifyVectorFilter->Update();

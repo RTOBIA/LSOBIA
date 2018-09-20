@@ -57,9 +57,18 @@ SimplifyVectorFilter<TSimplifyFunc>
 }
 
 template <class TSimplifyFunc>
-const typename SimplifyVectorFilter<TSimplifyFunc>::OGRDataSourceType *
+typename SimplifyVectorFilter<TSimplifyFunc>::OGRDataSourceType *
 SimplifyVectorFilter<TSimplifyFunc>
 ::GetOutput()
+{
+  return static_cast< OGRDataSourceType *>(
+              this->ProcessObject::GetOutput(0));
+}
+
+template <class TSimplifyFunc>
+const typename SimplifyVectorFilter<TSimplifyFunc>::OGRDataSourceType *
+SimplifyVectorFilter<TSimplifyFunc>
+::GetOutput() const
 {
   return static_cast< const OGRDataSourceType *>(
               this->ProcessObject::GetOutput(0));
