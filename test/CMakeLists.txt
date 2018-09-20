@@ -95,8 +95,8 @@ otb_test_application(NAME apLSOBIA_BaatzOneProcLittle
 	)
 	
 otb_test_application(NAME apLSOBIA_GraphPolygonizeOneProc
-	APP GraphPolygonize
-	OPTIONS -io.gr ${LSOBIA_SOURCE_DIR}/data/Graph_little.dat
+	APP Polygonize
+	OPTIONS -io.input.gr.path ${LSOBIA_SOURCE_DIR}/data/Graph_little.dat
 	-io.out.dir ${TEMP_DIR}
 	-io.out.gmlfile "PolygonsFile.gml"
 	-io.temp ${TEMP_DIR}

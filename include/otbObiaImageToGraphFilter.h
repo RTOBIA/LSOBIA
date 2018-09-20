@@ -38,6 +38,9 @@ public:
     using Pointer      = itk::SmartPointer<Self>;
     using ConstPointer = itk::SmartPointer< const Self >;
 
+    /** Method for creation through the object factory. */
+    itkNewMacro(Self);
+
     /** Run-time type information (and related methods). */
     itkTypeMacro(ImageToGraphFilter, GraphSource);
 
