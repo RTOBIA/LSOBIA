@@ -1,90 +1,96 @@
 LSOBIA
 ======
 
-OTB Module providing Large Scale Object Based Image Analysis functionalities.
+__Large Scale Object Based Image Analysis__ (LSOBIA) is a module for
+the [Orfeo Toolbox](https://www.orfeo-toolbox.org/) (OTB). It provides
+several tools for object based, large scale remote sensing image,
+analysis.
 
-# Dependencies
+The module contains 5 OTBApplications:
+
+* __LSSegmentation__ (Large Scale Segmentation) provides several
+  methods to perform segmentation of very high resolution images.
+* __LSSmallRegionsMerging__ (Large Scale Image Small Regions Merging)
+  provides a method to perform small regions merging of very high
+  resolution images.
+* __Polygonize__ provides several methods to perform polygonization of
+  high resolution images.
+* __LSPolygonize__ (Large Scale Polygonize) is a distributed version
+  of Polygonize. _work in progress_
+* __ComputeAttributes__ computes several attributes of a vector file.
+
+# Getting Started
+
+## Dependencies
+
 * [OTB](https://www.orfeo-toolbox.org/)
-* MPI (developped and validated with mpich-3.2)
+* The C++ library for the [Message Passing
+  Interface](https://www.mpi-forum.org/) (MPI) (developed and
+  validated with mpich-3.2)
 
-# How to build it
-LSOBIA can be built like any other [otb remote module](https://wiki.orfeo-toolbox.org/index.php/How_to_write_a_remote_module)
+Since LSOBIA is a module for the OTB, one need to install the OTB in
+order to build it.
+
+LSOBIA allows the distribution of the calculation on a computation
+cluster, therefor it uses MPI for the communications between the
+clusters.
+
+## Building
+LSOBIA can be built like any other [otb remote
+module](https://wiki.orfeo-toolbox.org/index.php/How_to_write_a_remote_module)
 You can build it either from within OTB's sources or outside it.
 
+Don't forget to activate C++14 by setting the cmake parameter
+_"CMAKE\_CXX\_FLAGS"_ to _"-std=c++14"_.
 
-# How to use it
+## Usage
 
-## LSSegmentation
+LSOBIA can run on a single processor, or be distributed over multiple processors.
 
-### Parameters
-LSOBIA provides an OTBApplication, LSSegmentation (Large Scale Segmentation).
+### Mono-processor execution
 
-```bash
-Parameters: 
-        -progress                          <boolean>        Report progress 
-        -io.im                             <string>         Input image path  (mandatory)
-        -io.out.dir                        <string>         Output directory  (mandatory)
-        -io.out.labelimage                 <string>         Label Image Name  (optional, off by default)
-        -io.temp                           <string>         Directory used for temporary data  (mandatory)
-        -algorithm                         <string>         Segmentation algorithm name [baatz/meanshift] (mandatory, default value is baatz)
-        -algorithm.baatz.numitfirstpartial <int32>          Number of iterations for first partial segmentation  (optional, on by default, default value is 1)
-        -algorithm.baatz.numitpartial      <int32>          Number of iterations for partial segmentation  (optional, on by default, default value is 1)
-        -algorithm.baatz.stopping          <float>          Value for stopping criterion  (optional, on by default, default value is 40)
-        -algorithm.baatz.spectralweight    <float>          Value for spectral weight  (optional, on by default, default value is 0.05)
-        -algorithm.baatz.geomweight        <float>          Value for geometric (shape) weight  (optional, on by default, default value is 0.95)
-        -algorithm.baatz.aggregategraphs   <string>         Aggregation of graph traces [on/off] (optional, off by default, default value is on)
-        -algorithm.meanshift.maxiter       <int32>          max number of iterations  (mandatory)
-        -algorithm.meanshift.spatialr      <float>          Spatial bandwidth  (optional, off by default)
-        -algorithm.meanshift.spectralr     <float>          Spectral bandwidth  (optional, off by default)
-        -algorithm.meanshift.threshold     <float>          Threshold  (optional, off by default)
-        -algorithm.meanshift.ranger        <float>          Spectral range ramp  (optional, off by default)
-        -algorithm.meanshift.modesearch    <string>         Activation of search mode [on/off] (optional, off by default, default value is on)
-        -processing.memory                 <int32>          Maximum memory to be used on the main node  (mandatory)
-        -processing.maxtilesizex           <int32>          Maximum size of tiles along x axis  (mandatory)
-        -processing.maxtilesizey           <int32>          Maximum size of tiles along x axis  (mandatory)
-        -processing.writeimages            <string>         Activation of image traces [on/off] (mandatory, default value is on)
-        -processing.writegraphs            <string>         Activation of graph traces [on/off] (mandatory, default value is on)
-        -inxml                             <string>         Load otb application from xml file  (optional, off by default)
-
-
-```
-
-### Monoprocessor execution
+To run an application on a silgle processor, one need to call the
+application using the OTB application launcher process:
 
 ```bash
-  otbcli_LSSegmentation "-io.im" "${INPUT_IMAGE}" "-io.out.dir" "${OUTPUT_DIRECTORY}" -io.out.labelimage "LabelImage" "-io.temp" "${TEMP}" "-algorithm" "baatz" "-algorithm.baatz.numitfirstpartial" "5" "-algorithm.baatz.numitpartial" "5" "-algorithm.baatz.stopping" "40" "-algorithm.baatz.spectralweight" "0.5" "-algorithm.baatz.geomweight" "0.5" "-algorithm.baatz.aggregategraphs" "on" "-processing.writeimages" "on" "-processing.writegraphs" "on" "-processing.memory" "2000" "-processing.maxtilesizex" "1000" "-processing.maxtilesizey" "1000"
+otbApplicationLauncherCommandLine ${AppName} ${AppDirectory} ${Parameters}
 ```
 
-### Multiprocessor execution
+* ${AppName} is the name of the application (ie: LSSegmentation or
+  Polygonize).
+* ${AppDirectory} is the path to the directory containing the compiled
+  applications.
+* ${Parameters} are the parameters for the application.
 
-Simply add *mpirun -np ${NUM_PROC}* 
+Exemple:
 
 ```bash
-  mpirun -np 4 otbcli_LSSegmentation "-io.im" "${INPUT_IMAGE}" "-io.out" "${OUTPUT_DIRECTORY}" -io.out.labelimage "LabelImage" "-io.temp" "${TEMP}" "-algorithm" "baatz" "-algorithm.baatz.numitfirstpartial" "5" "-algorithm.baatz.numitpartial" "5" "-algorithm.baatz.stopping" "40" "-algorithm.baatz.spectralweight" "0.5" "-algorithm.baatz.geomweight" "0.5" "-algorithm.baatz.aggregategraphs" "on" "-processing.writeimages" "on" "-processing.writegraphs" "on" "-processing.memory" "2000" "-processing.maxtilesizex" "250" "-processing.maxtilesizey" "250"
+otbApplicationLauncherCommandLine LSSegmentation /home/me/bin/lsobia/lib/otb/applications -io.im inputimage.tif -io.out.dir /home/me/out -io.temp /tmp -algorithm baatz -algorithm.baatz.maxiter 45 -processing.memory 10000 -processing.nbproc 8 -processing.nbtilesperproc 2 -processing.writeimages on -processing.writegraphs off
 ```
 
-This produces an image output containing labels of the Baatz Segmentation algorithm.
+### Multi-processor execution
 
-## LSSmallRegionMerging
+Simply add "*mpirun -np ${NumberProcessor}*" before the previous
+command. ${NumberProcessor} is the number of processors to be used for
+the computation.
 
-## Other binaries
-You can find useful application and binaries execution examples in the unitary tests. To enable these tests, simply build the module with BUILD_TESTING=ON.
+Exemple:
 
+```bash
+mpirun -np 8 otbApplicationLauncherCommandLine LSSegmentation /home/me/bin/lsobia/lib/otb/applications -io.im inputimage.tif -io.out.dir /home/me/out -io.temp /tmp -algorithm baatz -algorithm.baatz.maxiter 45 -processing.memory 10000 -processing.nbproc 8 -processing.nbtilesperproc 2 -processing.writeimages on -processing.writegraphs off
+```
 
 # Output Samples
 
 ## Baatz segmentation
 
-The next image is obtained with the previous Monoprocessor command ran on a sample image
+We applied the LSSegmentation application with the Baatz algorith on
+this image, and obtained the following label image as output. The
+process used a single processor for the computation.
 
 ![input file](https://cloud.githubusercontent.com/assets/26165185/24074238/073c72b4-0c05-11e7-82e3-497a28d10db1.png) : 
 ![baatz-segmentation](https://cloud.githubusercontent.com/assets/26165185/24074247/3a061d62-0c05-11e7-9266-31a16d203afc.jpg)
 
-
-# TODO
-* Implement an application for small region merging algorithms
-* Implement an application for polygon simplification
-
-
-# Licence
-Please see the license for legal issues on the use of the software.
+# License
+This project is licensed under the Apache License 2.0. Please see the
+[LICENSE file](LICENSE) for legal issues on the use of the software.
