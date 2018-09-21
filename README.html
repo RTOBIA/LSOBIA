@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<title>README.html</title>
+
+</head>
+
+<body>
+
+<h1>LSOBIA</h1>
+
+<p><strong>Large Scale Object Based Image Analysis</strong> (LSOBIA) is a module for
+the <a href="https://www.orfeo-toolbox.org/">Orfeo Toolbox</a> (OTB). It provides
+several tools for object based, large scale remote sensing image,
+analysis.</p>
+
+<p>The module contains 5 OTBApplications:</p>
+
+<ul>
+<li><strong>LSSegmentation</strong> (Large Scale Segmentation) provides several
+methods to perform segmentation of very high resolution images.</li>
+<li><strong>LSSmallRegionsMerging</strong> (Large Scale Image Small Regions Merging)
+provides a method to perform small regions merging of very high
+resolution images.</li>
+<li><strong>Polygonize</strong> provides several methods to perform polygonization of
+high resolution images.</li>
+<li><strong>LSPolygonize</strong> (Large Scale Polygonize) is a distributed version
+of Polygonize. <em>work in progress</em></li>
+<li><strong>ComputeAttributes</strong> computes several attributes of a vector file.</li>
+</ul>
+
+<h1>Table of contents</h1>
+
+<ol>
+<li><a href="#getting-started">Getting started</a></li>
+<li><a href="#some-results">Some results</a></li>
+<li><a href="#under-hood">Under the hood</a></li>
+<li><a href="#license">License</a></li>
+</ol>
+
+<p><a name="getting-started"></a></p>
+
+<h1>Getting started</h1>
+
+<h2>Dependencies</h2>
+
+<ul>
+<li><a href="https://www.orfeo-toolbox.org/">OTB</a></li>
+<li>The C++ library for the <a href="https://www.mpi-forum.org/">Message Passing
+Interface</a> (MPI) (developed and
+validated with mpich-3.2)</li>
+</ul>
+
+<p>Since LSOBIA is a module for the OTB, one need to install the OTB in
+order to build it.</p>
+
+<p>LSOBIA allows the distribution of the calculation on a computation
+cluster, therefor it uses MPI for the communications between the
+clusters.</p>
+
+<h2>Building</h2>
+
+<p>LSOBIA can be built like any other <a href="https://wiki.orfeo-toolbox.org/index.php/How_to_write_a_remote_module">otb remote
+module</a>
+You can build it either from within OTB's sources or outside it.</p>
+
+<p>Don't forget to activate C++14 by setting the cmake parameter
+<em>"CMAKE_CXX_FLAGS"</em> to <em>"-std=c++14"</em>.</p>
+
+<h2>Usage</h2>
+
+<p>LSOBIA can run on a single processor, or be distributed over multiple processors.</p>
+
+<h3>Mono-processor execution</h3>
+
+<p>To run an application on a silgle processor, one need to call the
+application using the OTB application launcher process:</p>
+
+<p><code>bash
+otbApplicationLauncherCommandLine ${AppName} ${AppDirectory} ${Parameters}
+</code></p>
+
+<ul>
+<li>${AppName} is the name of the application (ie: LSSegmentation or
+Polygonize).</li>
+<li>${AppDirectory} is the path to the directory containing the compiled
+applications.</li>
+<li>${Parameters} are the parameters for the application.</li>
+</ul>
+
+<p>Example:</p>
+
+<p><code>bash
+otbApplicationLauncherCommandLine LSSegmentation /home/me/bin/lsobia/lib/otb/applications -io.im inputimage.tif -io.out.dir /home/me/out -io.temp /tmp -algorithm baatz -algorithm.baatz.maxiter 45 -processing.memory 10000 -processing.nbproc 8 -processing.nbtilesperproc 2 -processing.writeimages on -processing.writegraphs off
+</code></p>
+
+<h3>Multi-processor execution</h3>
+
+<p>Simply add "<em>mpirun -np ${NumberProcessor}</em>" before the previous
+command. ${NumberProcessor} is the number of processors to be used for
+the computation.</p>
+
+<p>Example:</p>
+
+<p><code>bash
+mpirun -np 8 otbApplicationLauncherCommandLine LSSegmentation /home/me/bin/lsobia/lib/otb/applications -io.im inputimage.tif -io.out.dir /home/me/out -io.temp /tmp -algorithm baatz -algorithm.baatz.maxiter 45 -processing.memory 10000 -processing.nbproc 8 -processing.nbtilesperproc 2 -processing.writeimages on -processing.writegraphs off
+</code></p>
+
+<p><a name="some-results"></a></p>
+
+<h1>Some results</h1>
+
+<h2>Baatz segmentation</h2>
+
+<p>We applied the LSSegmentation application with the Baatz algorith on
+this image, and obtained the following label image as output. The
+process used a single processor for the computation.</p>
+
+<p><code>bash
+otbApplicationLauncherCommandLine LSSegmentation /home/me/bin/lsobia/lib/otb/applications "-io.im" "${INPUT_IMAGE}" "-io.out.dir" "${OUTPUT_DIRECTORY}" -io.out.labelimage "LabelImage" "-io.temp" "${TEMP}" "-algorithm" "baatz" "-algorithm.baatz.numitfirstpartial" "5" "-algorithm.baatz.numitpartial" "5" "-algorithm.baatz.stopping" "40" "-algorithm.baatz.spectralweight" "0.5" "-algorithm.baatz.geomweight" "0.5" "-algorithm.baatz.aggregategraphs" "on" "-processing.writeimages" "on" "-processing.writegraphs" "on" "-processing.memory" "2000" "-processing.maxtilesizex" "1000" "-processing.maxtilesizey" "1000"
+</code></p>
+
+<p>Input image:</p>
+
+<p><img src="figures/sample_image1.png" alt="input file" title="" /></p>
+
+<p>Result:</p>
+
+<p><img src="figures/sample_result1.jpg" alt="baatz-segmentation" title="" /></p>
+
+<p><a name="under-hood"></a></p>
+
+<h1>Under the hood</h1>
+
+<h2>Base data structure</h2>
+
+<h3>Adjacency graph</h3>
+
+<p>Adcacency graph are often used when dealing with OBIA
+segmentation. They are a way to represent the objects on the image,
+and their proximity. Each node of the graph represents an object
+(eather spectral or geometric), and each edge of the graph represent
+the fact that two nodes are neighbors.</p>
+
+<p>In LSOBIA, we use a list to represent a graph. The list contains the
+nodes. Each node contains an other list: the edges to the adjacent
+nodes. As a reminder, two nodes are spatially adjacent if they share a
+common border in the image.</p>
+
+<p>For instance, let's consider a 3x3pixels image, each pixel being a
+node of the graph. Let's call <em>0</em> the pixel in the corner top left,
+and <em>8</em> the pixel in the corner bottom right. The corresponding
+agjacency graph would be as follow:</p>
+
+<p><img src="figures/adj_graph.png" alt="adjacency graph" title="" /></p>
+
+<h3>Contour</h3>
+
+<p>The position of the objects in the image is important. Therefor, each
+node also contains a contour representing the object encoded as a
+<a href="http://www.mif.vu.lt/atpazinimas/dip/FIP/fip-Contour.html">freeman
+chain</a>.</p>
+
+<h3>Edge</h3>
+
+<h3>Node</h3>
+
+<p><a name="license"></a></p>
+
+<h1>License</h1>
+
+<p>This project is licensed under the Apache License 2.0. Please see the
+<a href="LICENSE">LICENSE file</a> for legal issues on the use of the software.</p>
+
+</body>
+</html>

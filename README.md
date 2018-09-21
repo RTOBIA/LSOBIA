@@ -19,7 +19,14 @@ The module contains 5 OTBApplications:
   of Polygonize. _work in progress_
 * __ComputeAttributes__ computes several attributes of a vector file.
 
-# Getting Started
+# Table of contents
+1. [Getting started](#getting-started)
+2. [Some results](#some-results)
+3. [Under the hood](#under-hood)
+4. [License](#license)
+
+<a name="getting-started"></a>
+# Getting started
 
 ## Dependencies
 
@@ -62,7 +69,7 @@ otbApplicationLauncherCommandLine ${AppName} ${AppDirectory} ${Parameters}
   applications.
 * ${Parameters} are the parameters for the application.
 
-Exemple:
+Example:
 
 ```bash
 otbApplicationLauncherCommandLine LSSegmentation /home/me/bin/lsobia/lib/otb/applications -io.im inputimage.tif -io.out.dir /home/me/out -io.temp /tmp -algorithm baatz -algorithm.baatz.maxiter 45 -processing.memory 10000 -processing.nbproc 8 -processing.nbtilesperproc 2 -processing.writeimages on -processing.writegraphs off
@@ -74,13 +81,14 @@ Simply add "*mpirun -np ${NumberProcessor}*" before the previous
 command. ${NumberProcessor} is the number of processors to be used for
 the computation.
 
-Exemple:
+Example:
 
 ```bash
 mpirun -np 8 otbApplicationLauncherCommandLine LSSegmentation /home/me/bin/lsobia/lib/otb/applications -io.im inputimage.tif -io.out.dir /home/me/out -io.temp /tmp -algorithm baatz -algorithm.baatz.maxiter 45 -processing.memory 10000 -processing.nbproc 8 -processing.nbtilesperproc 2 -processing.writeimages on -processing.writegraphs off
 ```
 
-# Output Samples
+<a name="some-results"></a>
+# Some results
 
 ## Baatz segmentation
 
@@ -88,9 +96,53 @@ We applied the LSSegmentation application with the Baatz algorith on
 this image, and obtained the following label image as output. The
 process used a single processor for the computation.
 
-![input file](https://cloud.githubusercontent.com/assets/26165185/24074238/073c72b4-0c05-11e7-82e3-497a28d10db1.png) : 
-![baatz-segmentation](https://cloud.githubusercontent.com/assets/26165185/24074247/3a061d62-0c05-11e7-9266-31a16d203afc.jpg)
+```bash
+otbApplicationLauncherCommandLine LSSegmentation /home/me/bin/lsobia/lib/otb/applications "-io.im" "${INPUT_IMAGE}" "-io.out.dir" "${OUTPUT_DIRECTORY}" -io.out.labelimage "LabelImage" "-io.temp" "${TEMP}" "-algorithm" "baatz" "-algorithm.baatz.numitfirstpartial" "5" "-algorithm.baatz.numitpartial" "5" "-algorithm.baatz.stopping" "40" "-algorithm.baatz.spectralweight" "0.5" "-algorithm.baatz.geomweight" "0.5" "-algorithm.baatz.aggregategraphs" "on" "-processing.writeimages" "on" "-processing.writegraphs" "on" "-processing.memory" "2000" "-processing.maxtilesizex" "1000" "-processing.maxtilesizey" "1000"
+```
 
+Input image:
+
+![input file](figures/sample_image1.png)
+
+Result:
+
+![baatz-segmentation](figures/sample_result1.jpg)
+
+<a name="under-hood"></a>
+# Under the hood
+
+## Base data structure
+
+### Adjacency graph
+
+Adcacency graph are often used when dealing with OBIA
+segmentation. They are a way to represent the objects on the image,
+and their proximity. Each node of the graph represents an object
+(eather spectral or geometric), and each edge of the graph represent
+the fact that two nodes are neighbors.
+
+In LSOBIA, we use a list to represent a graph. The list contains the
+nodes. Each node contains an other list: the edges to the adjacent
+nodes. As a reminder, two nodes are spatially adjacent if they share a
+common border in the image.
+
+For instance, let's consider a 3x3pixels image, each pixel being a
+node of the graph. Let's call *0* the pixel in the corner top left,
+and *8* the pixel in the corner bottom right. The corresponding
+agjacency graph would be as follow:
+
+![adjacency graph](figures/adj_graph.png)
+
+### Contour
+
+The position of the objects in the image is important. Therefor, each
+node also contains a contour representing the object encoded as a
+[freeman
+chain](http://www.mif.vu.lt/atpazinimas/dip/FIP/fip-Contour.html).
+
+
+
+<a name="license"></a>
 # License
 This project is licensed under the Apache License 2.0. Please see the
 [LICENSE file](LICENSE) for legal issues on the use of the software.
