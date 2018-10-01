@@ -3,7 +3,7 @@ LSOBIA
 
 __Large Scale Object Based Image Analysis__ (LSOBIA) is a module for
 the [Orfeo Toolbox](https://www.orfeo-toolbox.org/) (OTB). It provides
-several tools for object based, large scale remote sensing image,
+several tools for object based, large scale, remote sensing image
 analysis.
 
 The module contains 5 OTBApplications:
@@ -16,7 +16,7 @@ The module contains 5 OTBApplications:
 * __Polygonize__ provides several methods to perform polygonization of
   high resolution images.
 * __LSPolygonize__ (Large Scale Polygonize) is a distributed version
-  of Polygonize. _work in progress_
+  of Polygonize. (_work in progress_)
 * __ComputeAttributes__ computes several attributes of a vector file.
 
 # Table of contents
@@ -44,7 +44,7 @@ clusters.
 
 ## Building
 LSOBIA can be built like any other [otb remote
-module](https://wiki.orfeo-toolbox.org/index.php/How_to_write_a_remote_module)
+module](https://wiki.orfeo-toolbox.org/index.php/How_to_write_a_remote_module).
 You can build it either from within OTB's sources or outside it.
 
 Don't forget to activate C++14 by setting the cmake parameter
@@ -56,7 +56,7 @@ LSOBIA can run on a single processor, or be distributed over multiple processors
 
 ### Mono-processor execution
 
-To run an application on a silgle processor, one need to call the
+To run an application on a single processor, one needs to call the
 application using the OTB application launcher process:
 
 ```bash
