@@ -223,13 +223,16 @@ private:
         std::string outDir = GetParameterString("io.out.dir");
         std::string labelImage = GetParameterString("io.out.labelimage");
         std::string tmpDir = GetParameterString("io.temp");
+        uint32_t maxTileWidth;
+        uint32_t maxTileHeight;
         
-        if(!HasUserValue("processing.maxtilesizex") || !HasUserValue("processing.maxtilesizey"))
-        {
+        try {
+        	maxTileWidth = GetParameterInt("processing.maxtilesizex");
+        	maxTileHeight = GetParameterInt("processing.maxtilesizey");
+        } catch (...) {
         	otbAppLogFATAL(<<"You need to provide either the tiles size, or the number of processor and the number of tiles per processor.");
         }
-        uint32_t maxTileWidth = GetParameterInt("processing.maxtilesizex");
-        uint32_t maxTileHeight = GetParameterInt("processing.maxtilesizey");
+
         unsigned long int memory = GetParameterInt("processing.memory");
         bool writeImages = false;
         bool writeGraphs = false;
