@@ -51,7 +51,7 @@ template <class TGraphType>
 
     /** Constructor */
     PolygonizeFilter();
-    ~PolygonizeFilter();
+    ~PolygonizeFilter(){};
 
     /** Does the real work. */
     virtual void GenerateData();

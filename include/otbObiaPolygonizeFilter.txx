@@ -38,9 +38,9 @@ PolygonizeFilter<TGraphType>
 	auto simplifyFunc = new otb::obia::DouglasPeukerFunc();
 	simplifyFunc->SetTolerance(1.0);
 	
-	m_SimplifyVectorFilter->SetInput(m_GraphToVectorFilter->GetOutput());
+	
 	m_SimplifyVectorFilter->SetSimplifyFunc(simplifyFunc);
-	m_SimplifyVectorFilter->SetLayerName(otb::obia::cleanedLayerName);
+	m_SimplifyVectorFilter->SetLayerName(cleanedLayerName);
 }
 
 template <class TGraphType>
@@ -54,6 +54,7 @@ GenerateData()
 	
 	// TODO: Check why we have to update for each filter?
 	m_GraphToVectorFilter->Update();
+	m_SimplifyVectorFilter->SetInput(m_GraphToVectorFilter->GetOutput());
 	m_SimplifyVectorFilter->Update();
 	this->GraftOutput(m_SimplifyVectorFilter->GetOutput());
 }
