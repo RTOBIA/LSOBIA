@@ -94,7 +94,7 @@ otb_test_application(NAME apLSOBIA_BaatzOneProcLittle
 	-processing.maxtilesizey 100
 	)
 	
-otb_test_application(NAME apLSOBIA_GraphPolygonizeOneProc
+otb_test_application(NAME apLSOBIA_PolygonizeOneProc
 	APP Polygonize
 	OPTIONS -io.input.gr.path ${LSOBIA_SOURCE_DIR}/data/Graph_little.dat
 	-io.out.dir ${TEMP_DIR}

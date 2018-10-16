@@ -135,7 +135,7 @@ SimplifyVectorFilter<TSimplifyFunc>
 	std::cout << "Generate Data for SimplifyVectorFilter" << std::endl;
 
 	//Get number of features
-	OGRLayerType layer = ogrDS->GetLayer(m_LayerName);
+	OGRLayerType layer = ogrDS->GetLayerChecked(m_LayerName);
 
 	//Get the nodata layer
 	m_NodataLayer = ogrDS->GetLayer(nodataLayerName);
