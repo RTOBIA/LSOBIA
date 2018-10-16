@@ -22,7 +22,7 @@
 #include "otbImage.h"
 #include "otbImageFileReader.h"
 #include "otbObiaGraph.h"
-#include "otbObiaImageToGraphFilter.h"
+#include "otbObiaLabelImageToGraphFilter.h"
 #include "otbObiaPolygonizeFilter.h"
 #include "otbObiaImageToGraphFilter.h"
 #include "otbObiaGraphOperations.h"
@@ -81,10 +81,10 @@ private:
 			AddChoice("io.input.img", "Input is a label image");
 
 				AddParameter(ParameterType_String,  "io.input.gr.path", "Input graph path");
-				SetParameterDescription("io.gr.path", "Path to the graph to be polygonized");
+				SetParameterDescription("io.input.gr.path", "Path to the graph to be polygonized");
 
 				AddParameter(ParameterType_String,  "io.input.img.path", "Input label image path");
-				SetParameterDescription("io.img.path", "Path to the label image to be polygonized");
+				SetParameterDescription("io.input.img.path", "Path to the label image to be polygonized");
 
 				AddParameter(ParameterType_Group, "io.out",  "Output directory");
 
@@ -109,17 +109,20 @@ private:
     {
 
         /* Global parameters */
-        std::string grfilename = GetParameterString("io.input.gr.path");
-        std::string imgfilename = GetParameterString("io.input.img.path");
         std::string outDir = GetParameterString("io.out.dir");
         std::string gmlFile = GetParameterString("io.out.gmlfile");
         std::string tmpDir = GetParameterString("io.temp");
 
+        /* Useful definitions */
+        using LabelPixelType = unsigned int;
+        using LabelImageType = otb::Image< LabelPixelType, 2 >;
+		using InputImageReader = otb::ImageFileReader< LabelImageType >;
+		using LabelImageToGraphFilterType = otb::obia::LabelImageToGraphFilter< LabelPixelType >;
+        using GraphType = typename LabelImageToGraphFilterType::OutputGraphType;
+
         /* Pipeline */
 
         // PolygonizeFilter
-        using GraphType = otb::obia::Graph< otb::obia::Node< otb::obia::DummyGraphAttribute,
-                	                                         otb::obia::DummyGraphAttribute> >;
         using PolygonizeFilterType = otb::obia::PolygonizeFilter< GraphType >;
 		auto polygonizeFilter = PolygonizeFilterType::New();
 
@@ -128,32 +131,32 @@ private:
 			case GRAPH:
 			{
 				// Read the graph from disk
-				auto graph = otb::obia::GraphOperations< GraphType >::ReadGraphFromDisk(grfilename);
+				auto graph = otb::obia::GraphOperations< GraphType >::ReadGraphFromDisk(GetParameterString("io.input.gr.path"));
 
 				// Set the graph as input of the Polygonize filter
 				polygonizeFilter->SetInput(graph);
+				polygonizeFilter->Update();
 				break;
 			}
 			case LABEL_IMAGE:
 			{
 				// Read the image
-				using LabelPixelType = unsigned int;
-				using LabelImageType = otb::Image< LabelPixelType, 2 >;
-				using InputImageReader = otb::ImageFileReader< LabelImageType >;
+
 				InputImageReader::Pointer imageReader = InputImageReader::New();
-				imageReader->SetFileName(imgfilename);
+				imageReader->SetFileName(GetParameterString("io.input.img.path"));
 
 				// Convert the label image to graph
-				using ImageToGraphFilterType = otb::obia::ImageToGraphFilter< LabelImageType, GraphType >;
-				ImageToGraphFilterType::Pointer imageToGraphFilter = ImageToGraphFilterType::New();
-				imageToGraphFilter->SetInput(imageReader->GetOutput());
+				LabelImageToGraphFilterType::Pointer labelImageToGraphFilter = LabelImageToGraphFilterType::New();
+				labelImageToGraphFilter->SetInput(imageReader->GetOutput());
+				labelImageToGraphFilter->Update();
 
 				// Set the graph as input of the Polygonize filter
-				polygonizeFilter->SetInput(imageToGraphFilter->GetOutput());
+				polygonizeFilter->SetInput(labelImageToGraphFilter->GetOutput());
 				break;
 			}
 			default:
 			{
+				otbAppLogFATAL(<< "No input provided");
 				break;
 			}
         }
