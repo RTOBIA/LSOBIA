@@ -111,11 +111,13 @@ Result:
 <a name="under-hood"></a>
 # Under the hood
 
-## Base data structure
+## Base data structures
+
+![UML representation of the data structures](figures/graph_uml.jpg)
 
 ### Adjacency graph
 
-Adcacency graph are often used when dealing with OBIA
+Adjacency graph are often used when dealing with OBIA
 segmentation. They are a way to represent the objects on the image,
 and their proximity. Each node of the graph represents an object
 (eather spectral or geometric), and each edge of the graph represent
@@ -138,9 +140,19 @@ agjacency graph would be as follow:
 The position of the objects in the image is important. Therefor, each
 node also contains a contour representing the object encoded as a
 [freeman
-chain](http://www.mif.vu.lt/atpazinimas/dip/FIP/fip-Contour.html).
+chain](http://www.mif.vu.lt/atpazinimas/dip/FIP/fip-Contour.html). It
+is optimized to reduce memory consumption. Indeed, instead of storing
+pixels coordinates, we store elementary moves. Each move takes 2 bits
+to encode.
 
+## Segmentation algorithms
 
+### Iterative segment fusion
+
+Iteratively fuse adjacent segment pairs which are similar according to
+spectral and spatial homogeneity criterions.
+
+### MeanShift
 
 <a name="license"></a>
 # License
