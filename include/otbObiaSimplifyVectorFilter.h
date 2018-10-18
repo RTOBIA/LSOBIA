@@ -224,6 +224,8 @@ public:
 
 	void operator =(const Self&);      //purposely not implemented
 
+	int GetMetadataItem(OGRDataSourceType * ogrDS, const char * metadataName);
+
 	std::string m_FieldName;
 
 	SimplifyFunc* m_simplifyFunc;

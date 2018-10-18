@@ -1071,28 +1071,12 @@ OGRPolygon* SimplifyVectorFilter<TSimplifyFunc>
 {
 	OGRDataSourceType::Pointer ogrDS = const_cast< OGRDataSourceType * >( this->GetInput() );
 
-	int originX =0, originY=0, sizeX=0, sizeY=0;
+	int originX=0, originY=0, sizeX=0, sizeY=0;
 	
-	std::string tmp = ogrDS->ogr().GetMetadataItem("OriginTileX");
-	if (!tmp.empty())
-	{
-		originX = std::stoi(tmp);
-	}
-	tmp = ogrDS->ogr().GetMetadataItem("OriginTileY");
-	if (!tmp.empty())
-	{
-		originY = std::stoi(tmp);
-	}
-	tmp = ogrDS->ogr().GetMetadataItem("TileSizeX");
-	if (!tmp.empty())
-	{
-		sizeX = std::stoi(tmp);
-	}
-	tmp = ogrDS->ogr().GetMetadataItem("TileSizeY");
-	if (!tmp.empty())
-	{
-		sizeY = std::stoi(tmp);
-	}
+	originX = GetMetadataItem(ogrDS, "OriginTileX");
+	originY = GetMetadataItem(ogrDS, "OriginTileY");
+	sizeX = GetMetadataItem(ogrDS, "TileSizeX");
+	sizeY = GetMetadataItem(ogrDS, "TileSizeY");
 
 	OGRPolygon* tilePolygon = NULL;
 
@@ -1119,6 +1103,25 @@ OGRPolygon* SimplifyVectorFilter<TSimplifyFunc>
         }
 	return tilePolygon;
 }
+
+/**
+ * 
+ */
+template <class TSimplifyFunc>
+int SimplifyVectorFilter<TSimplifyFunc>
+::GetMetadataItem(OGRDataSourceType * ogrDS, const char * metadataName)
+ {
+	const char * tmp1 = ogrDS->ogr().GetMetadataItem(metadataName);
+	if(tmp1 != NULL)
+	{
+		std::string tmp2 = std::string(tmp1);
+		if(!tmp2.empty())
+		{
+			return std::stoi(tmp2);
+		}
+	}
+	return 0;
+ }
 
 /**
  *
