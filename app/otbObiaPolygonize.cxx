@@ -87,7 +87,8 @@ private:
 				AddParameter(ParameterType_String,  "io.input.img.path", "Input label image path");
 				SetParameterDescription("io.input.img.path", "Path to the label image to be polygonized");
 
-			AddParameter(ParameterType_String, "io.output.gmlfile",  "Path to the produced GML file.");
+			AddParameter(ParameterType_String, "io.outputgmlfile",  "Output GML file path");
+			SetParameterDescription("io.outputgmlfile", "Path to the produced GML file");
 
 			AddParameter(ParameterType_Directory, "io.temp",  "Directory used for temporary data");
 			SetParameterDescription("io.temp", "Temporary directory");
@@ -103,7 +104,7 @@ private:
     {
 
         /* Global parameters */
-        std::string gmlFile = GetParameterString("io.output.gmlfile");
+        std::string gmlFile = GetParameterString("io.outputgmlfile");
         std::string tmpDir = GetParameterString("io.temp");
 
         /* Useful definitions */

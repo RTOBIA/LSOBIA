@@ -131,7 +131,6 @@ SimplifyVectorFilter<TSimplifyFunc>
 	//Initialize output
 	InitializeOutputDS();
 
-	//Loop accross all geometry
 	std::cout << "Generate Data for SimplifyVectorFilter" << std::endl;
 
 	//Get number of features
@@ -148,7 +147,7 @@ SimplifyVectorFilter<TSimplifyFunc>
 	//Creater bounding feature (bounding all the features)
 	m_BBFeature = CreateBoundingBoxFeature(true);
 
-	//add all features to a layer, and write it
+	//Add all features to a layer, and write it
 	m_EdgeLayer = ogrDS->CreateLayer("Edges"  , ITK_NULLPTR, wkbUnknown);
 	VectorOperations::CreateNewField(m_EdgeLayer, polygonEdgeFieldName, OFTInteger64List);
 
@@ -158,6 +157,7 @@ SimplifyVectorFilter<TSimplifyFunc>
 	//Maybe not usefull
 	OGRLayerType insidePolygons	= ogrDS->CreateLayer("Inside"  , ITK_NULLPTR, wkbUnknown);
 
+	//Loop accross all geometry
 	for(unsigned int fId = 0; fId < nbFeatures; ++fId)
 	{
 		std::cout << "Feature id " << fId << "/" << nbFeatures - 1 << std::endl;
@@ -219,7 +219,7 @@ void
 SimplifyVectorFilter<TSimplifyFunc>
 ::InitializeOutputDS()
 {
-	//We create 3 layers: one for valid polygon, one for unvalid polygon in order to repear these polygons
+	//We create 2 layers: one for valid polygon, one for unvalid polygon in order to repear these polygons
 	OGRDataSourceType::Pointer ogrDS = OGRDataSourceType::New();
 	OGRLayerType polyLayer 			  = ogrDS->CreateLayer(reconstructedLayerName, nullptr, wkbMultiPolygon);
 	OGRLayerType unvalidPolygonsLayer = ogrDS->CreateLayer(unvalidLayerName, ITK_NULLPTR, wkbUnknown);
@@ -233,6 +233,7 @@ SimplifyVectorFilter<TSimplifyFunc>
 	//Set output
 	this->SetNthOutput(0, ogrDS);
 }
+
 template <class TSimplifyFunc>
 typename SimplifyVectorFilter<TSimplifyFunc>::OGRFeatureType*
 SimplifyVectorFilter<TSimplifyFunc>
@@ -241,7 +242,9 @@ SimplifyVectorFilter<TSimplifyFunc>
 	OGRDataSourceType::Pointer ogrDS = const_cast< OGRDataSourceType * >( this->GetInput() );
 	double ulx, uly, lrx, lry;
 	//Maybe set false for bounding box
-	ogrDS->GetGlobalExtent(ulx, uly, lrx, lry, force) ;
+	ogrDS->GetGlobalExtent(ulx, uly, lrx, lry, force);
+	
+	std::cout << "BoundingBoxFeature (ulx: " << ulx << ") (uly: " << uly << ") (lrx: " << lrx << ") (lry: " << lry << ")" << std::endl;
 
 	//Create a feature
 	OGRFeatureDefn* bbDef = new OGRFeatureDefn();
