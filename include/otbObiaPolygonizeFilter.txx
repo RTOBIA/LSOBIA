@@ -49,12 +49,12 @@ PolygonizeFilter<TGraphType>::
 GenerateData()
 {
 	m_GraphToVectorFilter->SetInput(this->GetInput());
-	
-	m_SimplifyVectorFilter->GraftOutput(this->GetOutput());
-	
 	// TODO: Check why we have to update for each filter?
 	m_GraphToVectorFilter->Update();
+	
 	m_SimplifyVectorFilter->SetInput(m_GraphToVectorFilter->GetOutput());
+	
+	m_SimplifyVectorFilter->GraftOutput(this->GetOutput());
 	m_SimplifyVectorFilter->Update();
 	this->GraftOutput(m_SimplifyVectorFilter->GetOutput());
 }

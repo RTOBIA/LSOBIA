@@ -26,6 +26,7 @@
 #include "otbObiaPolygonizeFilter.h"
 #include "otbObiaImageToGraphFilter.h"
 #include "otbObiaGraphOperations.h"
+#include "otbObiaVectorOperations.h"
 #include <string>
 #include <sstream>
 
@@ -86,14 +87,7 @@ private:
 				AddParameter(ParameterType_String,  "io.input.img.path", "Input label image path");
 				SetParameterDescription("io.input.img.path", "Path to the label image to be polygonized");
 
-				AddParameter(ParameterType_Group, "io.out",  "Output directory");
-
-					AddParameter(ParameterType_Directory, "io.out.dir",  "Output directory");
-					SetParameterDescription("io.out.dir", "Output Directory");
-
-					AddParameter(ParameterType_String, "io.out.gmlfile",  "GML FileName");
-					SetParameterDescription("io.out.gmlfile", "GML FileName");
-					MandatoryOff("io.out.gmlfile");
+			AddParameter(ParameterType_String, "io.output.gmlfile",  "Path to the produced GML file.");
 
 			AddParameter(ParameterType_Directory, "io.temp",  "Directory used for temporary data");
 			SetParameterDescription("io.temp", "Temporary directory");
@@ -109,8 +103,7 @@ private:
     {
 
         /* Global parameters */
-        std::string outDir = GetParameterString("io.out.dir");
-        std::string gmlFile = GetParameterString("io.out.gmlfile");
+        std::string gmlFile = GetParameterString("io.output.gmlfile");
         std::string tmpDir = GetParameterString("io.temp");
 
         /* Useful definitions */
@@ -163,6 +156,9 @@ private:
 
         // Pipeline update
         polygonizeFilter->Update();
+
+        // Write output
+        otb::obia::VectorOperations::WriteOGRDataSource(polygonizeFilter->GetOutput(), gmlFile, -1);
     }
 };
 
