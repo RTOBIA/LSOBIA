@@ -114,7 +114,12 @@ public:
 	/**
 	* Get the output \c ogr::DataSource which is a "memory" datasource.
 	*/
-	const OGRDataSourceType * GetOutput();
+	OGRDataSourceType * GetOutput();
+	const OGRDataSourceType * GetOutput() const;
+
+	virtual void GraftOutput(itk::DataObject *output);
+	virtual void GraftOutput(const DataObjectIdentifierType & key, itk::DataObject *output);
+	virtual void GraftNthOutput(unsigned int idx, itk::DataObject *output);
 
 	protected:
 

@@ -83,11 +83,16 @@ public:
 	/**
 	* Get the output \c ogr::DataSource which is a "memory" datasource.
 	*/
-	const OGRDataSourceType * GetOutput();
+	const OGRDataSourceType * GetOutput() const;
+	OGRDataSourceType * GetOutput();
 
 	/**
 	 * Set the simplify function*/
 	void SetSimplifyFunc(SimplifyFunc* simplifyFunc){m_simplifyFunc = simplifyFunc;};
+
+	virtual void GraftOutput(itk::DataObject *output);
+	virtual void GraftOutput(const DataObjectIdentifierType & key, itk::DataObject *output);
+	virtual void GraftNthOutput(unsigned int idx, itk::DataObject *output);
 
 	protected:
 
@@ -218,6 +223,8 @@ public:
 	SimplifyVectorFilter(const Self &);  //purposely not implemented
 
 	void operator =(const Self&);      //purposely not implemented
+
+	int GetMetadataItem(OGRDataSourceType * ogrDS, const char * metadataName);
 
 	std::string m_FieldName;
 

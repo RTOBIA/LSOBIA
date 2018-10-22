@@ -19,15 +19,16 @@
  */
 #include "otbWrapperApplication.h"
 #include "otbWrapperApplicationFactory.h"
+#include "otbImage.h"
+#include "otbImageFileReader.h"
+#include "otbObiaGraph.h"
+#include "otbObiaLabelImageToGraphFilter.h"
+#include "otbObiaPolygonizeFilter.h"
+#include "otbObiaImageToGraphFilter.h"
 #include "otbObiaGraphOperations.h"
-#include "otbObiaGraphToVectorFilter.h"
-#include "otbObiaSimplifyVectorFilter.h"
-#include "otbObiaImageToBaatzGraphFilter.h"
-#include "otbObiaDouglasPeukerSimplify.h"
-#include "otbObiaConstExpr.h"
+#include "otbObiaVectorOperations.h"
 #include <string>
 #include <sstream>
-#define NUM_ELEMENT 4
 
 using std::string;
 using std::stringstream;
@@ -37,18 +38,25 @@ namespace otb
 namespace Wrapper
 {
 
-class GraphPolygonize : public Application
+class Polygonize : public Application
 {
 public:
 
-    typedef GraphPolygonize Self;
+    typedef Polygonize Self;
     typedef Application SuperClass;
     typedef itk::SmartPointer<Self> Pointer;
 
     itkNewMacro(Self);
-    itkTypeMacro(LSPolygonize, Application);
+    itkTypeMacro(Polygonize, Application);
 
 private:
+
+    // Available input types
+	enum InputType
+	{
+		GRAPH,
+		LABEL_IMAGE
+	};
 
 
     // Init App
@@ -56,11 +64,11 @@ private:
     {
 
         //General description
-        SetName("GraphPolygonize");
-        SetDescription("Graph Polygonize Application");
+        SetName("Polygonize");
+        SetDescription("Polygonize Application");
 
         //Documentation
-        SetDocName("Graph  Polygonization");
+        SetDocName("Polygonization");
         SetDocLongDescription("This application provides several methods to perform polygonization of very high resolution images");
         SetDocLimitations("None");
         SetDocAuthors("OBIA-Team");
@@ -68,17 +76,22 @@ private:
 
         // IO Parameters
         AddParameter(ParameterType_Group,"io","Set of parameters related to input/output");
-        AddParameter(ParameterType_String,  "io.gr",   "Input graph path");
-        SetParameterDescription("io.gr", "Graph");
-        AddParameter(ParameterType_Group, "io.out",  "Output directory");
-        AddParameter(ParameterType_Directory, "io.out.dir",  "Output directory");
-        SetParameterDescription("io.out.dir", "Output Directory");
-        AddParameter(ParameterType_String, "io.out.gmlfile",  "GML FileName");
-        SetParameterDescription("io.out.gmlfile", "GML FileName");
-                MandatoryOff("io.out.gmlfile");
 
-        AddParameter(ParameterType_Directory, "io.temp",  "Directory used for temporary data");
-        SetParameterDescription("io.temp", "Temporary directory");
+			AddParameter(ParameterType_Choice,"io.input","The object to be polygonized");
+			AddChoice("io.input.gr", "Input is a graph");
+			AddChoice("io.input.img", "Input is a label image");
+
+				AddParameter(ParameterType_String,  "io.input.gr.path", "Input graph path");
+				SetParameterDescription("io.input.gr.path", "Path to the graph to be polygonized");
+
+				AddParameter(ParameterType_String,  "io.input.img.path", "Input label image path");
+				SetParameterDescription("io.input.img.path", "Path to the label image to be polygonized");
+
+			AddParameter(ParameterType_String, "io.outputgmlfile",  "Output GML file path");
+			SetParameterDescription("io.outputgmlfile", "Path to the produced GML file");
+
+			AddParameter(ParameterType_Directory, "io.temp",  "Directory used for temporary data");
+			SetParameterDescription("io.temp", "Temporary directory");
 
     }
 
@@ -91,48 +104,65 @@ private:
     {
 
         /* Global parameters */
-        std::string filename = GetParameterString("io.gr");
-        std::string outDir = GetParameterString("io.out.dir");
-        std::string gmlFile = GetParameterString("io.out.gmlfile");
+        std::string gmlFile = GetParameterString("io.outputgmlfile");
         std::string tmpDir = GetParameterString("io.temp");
 
-        // Polygonize
-        using InputGraphType = otb::obia::Graph< otb::obia::Node<
-                                                 otb::obia::BaatzNodeAttribute,
-                                                 otb::obia::BaatzEdgeAttribute> >;
+        /* Useful definitions */
+        using LabelPixelType = unsigned int;
+        using LabelImageType = otb::Image< LabelPixelType, 2 >;
+		using InputImageReader = otb::ImageFileReader< LabelImageType >;
+		using LabelImageToGraphFilterType = otb::obia::LabelImageToGraphFilter< LabelPixelType >;
+        using GraphType = typename LabelImageToGraphFilterType::OutputGraphType;
 
-        using GraphToVectorFilterType = otb::obia::GraphToVectorFilter<InputGraphType>;
+        /* Pipeline */
 
-        //Read graph from disk
-        auto graph = otb::obia::GraphOperations<InputGraphType>::ReadGraphFromDisk(filename);
+        // PolygonizeFilter
+        using PolygonizeFilterType = otb::obia::PolygonizeFilter< GraphType >;
+		auto polygonizeFilter = PolygonizeFilterType::New();
 
-        //Create filter to vectorize
-        auto graphToVectorFilter = GraphToVectorFilterType::New();
-        graphToVectorFilter->SetInput(graph);
-        graphToVectorFilter->SetXshift(0);
-        graphToVectorFilter->SetYshift(0);
+        switch(GetParameterInt("io.input"))
+        {
+			case GRAPH:
+			{
+				// Read the graph from disk
+				auto graph = otb::obia::GraphOperations< GraphType >::ReadGraphFromDisk(GetParameterString("io.input.gr.path"));
 
-        //TODO : Modify in order to call Update only on last filter...
-        graphToVectorFilter->Update();
+				// Set the graph as input of the Polygonize filter
+				polygonizeFilter->SetInput(graph);
+				polygonizeFilter->Update();
+				break;
+			}
+			case LABEL_IMAGE:
+			{
+				// Read the image
 
-        std::cout << "After graph filter" <<std::endl;
+				InputImageReader::Pointer imageReader = InputImageReader::New();
+				imageReader->SetFileName(GetParameterString("io.input.img.path"));
 
-        //Create filter to simplify
-        using SimplifyVectorFilterType = otb::obia::SimplifyVectorFilter<otb::obia::DouglasPeukerFunc>;
-        auto simplifyVectorFilter = SimplifyVectorFilterType::New();
-        auto simplifyFunc = new otb::obia::DouglasPeukerFunc();
-        simplifyFunc->SetTolerance(1.0);
-        simplifyVectorFilter->SetSimplifyFunc(simplifyFunc);
-        simplifyVectorFilter->SetInput(graphToVectorFilter->GetOutput());
-        simplifyVectorFilter->SetLayerName(otb::obia::cleanedLayerName);
+				// Convert the label image to graph
+				LabelImageToGraphFilterType::Pointer labelImageToGraphFilter = LabelImageToGraphFilterType::New();
+				labelImageToGraphFilter->SetInput(imageReader->GetOutput());
+				labelImageToGraphFilter->Update();
 
-        //Check why we have to update for each filter?
-        simplifyVectorFilter->Update();
+				// Set the graph as input of the Polygonize filter
+				polygonizeFilter->SetInput(labelImageToGraphFilter->GetOutput());
+				break;
+			}
+			default:
+			{
+				otbAppLogFATAL(<< "No input provided");
+				break;
+			}
+        }
 
-        std::cout << "End application" << std::endl;
+        // Pipeline update
+        polygonizeFilter->Update();
+
+        // Write output
+        otb::obia::VectorOperations::WriteOGRDataSource(polygonizeFilter->GetOutput(), gmlFile, -1);
     }
 };
 
-OTB_APPLICATION_EXPORT(GraphPolygonize)
+OTB_APPLICATION_EXPORT(Polygonize)
 }
 }

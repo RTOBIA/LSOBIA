@@ -57,9 +57,18 @@ SimplifyVectorFilter<TSimplifyFunc>
 }
 
 template <class TSimplifyFunc>
-const typename SimplifyVectorFilter<TSimplifyFunc>::OGRDataSourceType *
+typename SimplifyVectorFilter<TSimplifyFunc>::OGRDataSourceType *
 SimplifyVectorFilter<TSimplifyFunc>
 ::GetOutput()
+{
+  return static_cast< OGRDataSourceType *>(
+              this->ProcessObject::GetOutput(0));
+}
+
+template <class TSimplifyFunc>
+const typename SimplifyVectorFilter<TSimplifyFunc>::OGRDataSourceType *
+SimplifyVectorFilter<TSimplifyFunc>
+::GetOutput() const
 {
   return static_cast< const OGRDataSourceType *>(
               this->ProcessObject::GetOutput(0));
@@ -122,11 +131,10 @@ SimplifyVectorFilter<TSimplifyFunc>
 	//Initialize output
 	InitializeOutputDS();
 
-	//Loop accross all geometry
 	std::cout << "Generate Data for SimplifyVectorFilter" << std::endl;
 
 	//Get number of features
-	OGRLayerType layer = ogrDS->GetLayer(m_LayerName);
+	OGRLayerType layer = ogrDS->GetLayerChecked(m_LayerName);
 
 	//Get the nodata layer
 	m_NodataLayer = ogrDS->GetLayer(nodataLayerName);
@@ -139,7 +147,7 @@ SimplifyVectorFilter<TSimplifyFunc>
 	//Creater bounding feature (bounding all the features)
 	m_BBFeature = CreateBoundingBoxFeature(true);
 
-	//add all features to a layer, and write it
+	//Add all features to a layer, and write it
 	m_EdgeLayer = ogrDS->CreateLayer("Edges"  , ITK_NULLPTR, wkbUnknown);
 	VectorOperations::CreateNewField(m_EdgeLayer, polygonEdgeFieldName, OFTInteger64List);
 
@@ -149,6 +157,7 @@ SimplifyVectorFilter<TSimplifyFunc>
 	//Maybe not usefull
 	OGRLayerType insidePolygons	= ogrDS->CreateLayer("Inside"  , ITK_NULLPTR, wkbUnknown);
 
+	//Loop accross all geometry
 	for(unsigned int fId = 0; fId < nbFeatures; ++fId)
 	{
 		std::cout << "Feature id " << fId << "/" << nbFeatures - 1 << std::endl;
@@ -210,7 +219,7 @@ void
 SimplifyVectorFilter<TSimplifyFunc>
 ::InitializeOutputDS()
 {
-	//We create 3 layers: one for valid polygon, one for unvalid polygon in order to repear these polygons
+	//We create 2 layers: one for valid polygon, one for unvalid polygon in order to repear these polygons
 	OGRDataSourceType::Pointer ogrDS = OGRDataSourceType::New();
 	OGRLayerType polyLayer 			  = ogrDS->CreateLayer(reconstructedLayerName, nullptr, wkbMultiPolygon);
 	OGRLayerType unvalidPolygonsLayer = ogrDS->CreateLayer(unvalidLayerName, ITK_NULLPTR, wkbUnknown);
@@ -224,6 +233,7 @@ SimplifyVectorFilter<TSimplifyFunc>
 	//Set output
 	this->SetNthOutput(0, ogrDS);
 }
+
 template <class TSimplifyFunc>
 typename SimplifyVectorFilter<TSimplifyFunc>::OGRFeatureType*
 SimplifyVectorFilter<TSimplifyFunc>
@@ -232,7 +242,9 @@ SimplifyVectorFilter<TSimplifyFunc>
 	OGRDataSourceType::Pointer ogrDS = const_cast< OGRDataSourceType * >( this->GetInput() );
 	double ulx, uly, lrx, lry;
 	//Maybe set false for bounding box
-	ogrDS->GetGlobalExtent(ulx, uly, lrx, lry, force) ;
+	ogrDS->GetGlobalExtent(ulx, uly, lrx, lry, force);
+	
+	std::cout << "BoundingBoxFeature (ulx: " << ulx << ") (uly: " << uly << ") (lrx: " << lrx << ") (lry: " << lry << ")" << std::endl;
 
 	//Create a feature
 	OGRFeatureDefn* bbDef = new OGRFeatureDefn();
@@ -1062,28 +1074,12 @@ OGRPolygon* SimplifyVectorFilter<TSimplifyFunc>
 {
 	OGRDataSourceType::Pointer ogrDS = const_cast< OGRDataSourceType * >( this->GetInput() );
 
-	int originX =0, originY=0, sizeX=0, sizeY=0;
+	int originX=0, originY=0, sizeX=0, sizeY=0;
 	
-	std::string tmp = ogrDS->ogr().GetMetadataItem("OriginTileX");
-	if (!tmp.empty())
-	{
-		originX = std::stoi(tmp);
-	}
-	tmp = ogrDS->ogr().GetMetadataItem("OriginTileY");
-	if (!tmp.empty())
-	{
-		originY = std::stoi(tmp);
-	}
-	tmp = ogrDS->ogr().GetMetadataItem("TileSizeX");
-	if (!tmp.empty())
-	{
-		sizeX = std::stoi(tmp);
-	}
-	tmp = ogrDS->ogr().GetMetadataItem("TileSizeY");
-	if (!tmp.empty())
-	{
-		sizeY = std::stoi(tmp);
-	}
+	originX = GetMetadataItem(ogrDS, "OriginTileX");
+	originY = GetMetadataItem(ogrDS, "OriginTileY");
+	sizeX = GetMetadataItem(ogrDS, "TileSizeX");
+	sizeY = GetMetadataItem(ogrDS, "TileSizeY");
 
 	OGRPolygon* tilePolygon = NULL;
 
@@ -1109,6 +1105,70 @@ OGRPolygon* SimplifyVectorFilter<TSimplifyFunc>
 	    tilePolygon->addRingDirectly(bbGeom);
         }
 	return tilePolygon;
+}
+
+/**
+ * 
+ */
+template <class TSimplifyFunc>
+int SimplifyVectorFilter<TSimplifyFunc>
+::GetMetadataItem(OGRDataSourceType * ogrDS, const char * metadataName)
+ {
+	const char * tmp1 = ogrDS->ogr().GetMetadataItem(metadataName);
+	if(tmp1 != NULL)
+	{
+		std::string tmp2 = std::string(tmp1);
+		if(!tmp2.empty())
+		{
+			return std::stoi(tmp2);
+		}
+	}
+	return 0;
+ }
+
+/**
+ *
+ */
+template <class TSimplifyFunc>
+void SimplifyVectorFilter<TSimplifyFunc>
+::GraftOutput(itk::DataObject *graft)
+{
+    this->GraftNthOutput(0, graft);
+}
+
+/**
+ *
+ */
+template <class TSimplifyFunc>
+void SimplifyVectorFilter<TSimplifyFunc>
+::GraftOutput(const DataObjectIdentifierType & key, itk::DataObject *graft)
+{
+    if ( !graft )
+    {
+        itkExceptionMacro(<< "Requested to graft output that is a ITK_NULLPTR pointer");
+    }
+
+    // we use the process object method since all out output may not be
+    // of the same type
+    itk::DataObject *output = this->ProcessObject::GetOutput(key);
+
+    // Call GraftImage to copy meta-information, regions, and the pixel container
+    output->Graft(graft);
+}
+
+/**
+ *
+ */
+template <class TSimplifyFunc>
+void SimplifyVectorFilter<TSimplifyFunc>
+::GraftNthOutput(unsigned int idx, itk::DataObject *graft)
+{
+    if ( idx >= this->GetNumberOfIndexedOutputs() )
+    {
+        itkExceptionMacro(<< "Requested to graft output " << idx
+                          << " but this filter only has " << this->GetNumberOfIndexedOutputs() << " indexed Outputs.");
+    }
+    this->GraftOutput( this->MakeNameFromOutputIndex(idx), graft );
 }
 
 } //End namespace obia
