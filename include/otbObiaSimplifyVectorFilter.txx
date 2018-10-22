@@ -160,17 +160,12 @@ SimplifyVectorFilter<TSimplifyFunc>
 	//Loop accross all geometry
 	for(unsigned int fId = 0; fId < nbFeatures; ++fId)
 	{
-		std::cout << "Feature id " << fId << "/" << nbFeatures - 1 << std::endl;
+		std::cout << "Feature id " << fId + 1 << "/" << nbFeatures << "\t" << std::endl;
 		//Current feature
 		OGRFeatureType curFeature = layer.GetFeature(fId);
-		std::cout<<"Feature : "<<fId<<std::endl;
 		//Compute intersection with BB
 		m_CurrentCoords = curFeature.ogr().GetFieldAsInteger64(startingCoordsFieldName.c_str());
 		m_bbEdges[m_CurrentCoords] = IntersectWithBoundaries(curFeature);
-		if(m_CurrentCoords == 517731 && MPIConfig::Instance()->GetMyRank() == 0)
-		{
-			std::cout << "PROBLEM WITH " << curFeature.GetGeometry()->exportToGML() << std::endl;
-		}
 
 		//Initialize is englobed map value
 		if(m_IsEnglobedMap.find(m_CurrentCoords) == m_IsEnglobedMap.end())
@@ -297,7 +292,7 @@ SimplifyVectorFilter<TSimplifyFunc>
 			std::vector<OGRGeometry*> edges =  VectorOperations::IntersectGeoms(geomRef, nodataGeom);
 			allEdges.insert(allEdges.end(), edges.begin(), edges.end());
 		}
-        }
+      }
 
 	return allEdges;
 }
