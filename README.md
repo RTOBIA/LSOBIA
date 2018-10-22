@@ -152,7 +152,91 @@ to encode.
 Iteratively fuse adjacent segment pairs which are similar according to
 spectral and spatial homogeneity criterions.
 
+#### The algorithm
+
+Graph initialization: each pixel of the image is a node of the graph,
+edges are added to connected pixels.
+
+For each iteration:
+
+* Computation of the cost function for each pair of node.
+* Go through the graph and select pairs of connected nodes (N1, N2)
+  where N1 is best neighbour for N2 and conversely (Local Mutual Best
+  Fitting).
+* Fuse the nodes (update attributes, fuse contours and bounding boxes,
+  remove extra edges) if cost(N1, N2) < Threshold.
+  
+#### Stability margin
+
+The algorithm requires a stability margin to function. Indeed, to find
+the best neighbour, the algorithm need to know all the neighbours,
+even those processed by other processors. The size of the stability
+margin depends on the number of iteration, following this law : Mn =
+2^(n+1)-2. This means that for 15 iterations, the size of the margin
+needs to be 65534 pixels. To avoid such an explotion of the stability
+margin, the algorithm works by batches of fusions : 
+
+* Work on a small number of iterations of fusion
+* If convergence is reached, stop
+* Else, communicate with other processors to share the new margins
+* Iterate
+
+#### Parameters
+
+* **io.im** path to the input image
+* **io.out.dir** path to the output directory
+* **io.out.labelimage** _optional_ name of the output label image
+* **io.temp** path to the temporary directory
+* **algorithm.baatz.numitfirstpartial** _optional_ number of iterations for first fusion batch _default 1_
+* **algorithm.baatz.numitpartial** _optional_ number of iterations for fusion batch _default 1_
+* **algorithm.baatz.maxiter** _optional_ max number of iterations _default 75_
+* **algorithm.baatz.mindec** _optional_ minimum decreasing of accumulated memory _default 0.0_
+* **algorithm.baatz.scale** _optional_ value for scale criterion _default 60.0_
+* **algorithm.baatz.spectralweight** _optional_ value for spectral weight _default 0.05_
+* **algorithm.baatz.geomweight** _optional_ value for geometric (shape) weight _default 0.95_
+* **processing.memory** maximum memory to be used on the main node (Mo)
+* **processing.nbproc** _optional_ number of processor allocated to the processing
+* **processing.nbtilesperproc** _optional_ number tiles processed on each processor
+* **processing.maxtilesizex** _optional_ maximum size of tiles along x axis
+* **processing.maxtilesizey** _optional_ maximum size of tiles along y axis
+* **processing.writeimages** _optional_ activation of image traces
+* **processing.writegraphs** _optional_ activation of graph traces
+* **algorithm.baatz.aggregategraphs** _optional_ aggregation of graph traces
+* **processing.nodatavalue** _optional_ definition of no data value _default 0.0_
+
 ### MeanShift
+
+Chaining of a MeanShift filter and a connected components segmentation
+
+#### The algorithm
+Two step segmentation: 
+
+* **MeanShift** Create classes of pixels by selecting local maximums (modes) in the
+probability density of the image and associating each pixel to the
+closest mode.
+* **Connected components segmentation** Agregating connected pixels
+  with same mode
+
+#### Parameters
+
+* **io.im** path to the input image
+* **io.out.dir** path to the output directory
+* **io.out.labelimage** _optional_ name of the output label image
+* **io.temp** path to the temporary directory
+* **algorithm.meanshift.maxiter** max number of iterations
+* **algorithm.meanshift.spatialr** _optional_ spatial bandwidth
+* **algorithm.meanshift.spectralr** _optional_ spectral bandwidth
+* **algorithm.meanshift.threshold** _optional_ threshold
+* **algorithm.meanshift.ranger** _optional_ spectral range ramp
+* **algorithm.meanshift.modesearch** _optional_ activation of search mode
+* **processing.memory** maximum memory to be used on the main node (Mo)
+* **processing.nbproc** _optional_ number of processor allocated to the processing
+* **processing.nbtilesperproc** _optional_ number tiles processed on each processor
+* **processing.maxtilesizex** _optional_ maximum size of tiles along x axis
+* **processing.maxtilesizey** _optional_ maximum size of tiles along y axis
+* **processing.writeimages** _optional_ activation of image traces
+* **processing.writegraphs** _optional_ activation of graph traces
+* **processing.nodatavalue** _optional_ definition of no data value _default 0.0_
 
 <a name="license"></a>
 # License

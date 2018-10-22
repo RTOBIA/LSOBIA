@@ -88,10 +88,10 @@ private:
         // IO Parameters
         AddParameter(ParameterType_Group,"io","Set of parameters related to input/output");
         AddParameter(ParameterType_String,  "io.im",   "Input image path");
-        SetParameterDescription("io.im", "Image");
+        SetParameterDescription("io.im", "Path to the input image");
         AddParameter(ParameterType_Group, "io.out",  "Output directory");
         AddParameter(ParameterType_Directory, "io.out.dir",  "Output directory");
-        SetParameterDescription("io.out.dir", "Output Directory");
+        SetParameterDescription("io.out.dir", "path to the output directory");
         AddParameter(ParameterType_String, "io.out.labelimage",  "Label Image Name");
         SetParameterDescription("io.out.labelimage", "Label Image Name");
         MandatoryOff("io.out.labelimage");
